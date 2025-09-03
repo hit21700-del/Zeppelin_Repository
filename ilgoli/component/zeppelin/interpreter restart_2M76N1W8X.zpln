@@ -1,0 +1,201 @@
+{
+  "paragraphs": [
+    {
+      "text": "import json\n\nimport os\ninput \u003d z.input(\u0027node_nm\u0027)\n#value \u003d z.input(\u0027value\u0027)\nconfigValue \u003d z.input(\u0027data_info\u0027)\ninput3 \u003d z.input(\u0027table_info\u0027)\n\nbeforeHdfsPath \u003d z.input(\u0027before_hdfs_path\u0027)\nschemaPath \u003d z.input(\u0027schema_path\u0027)\nhdfsPath \u003d z.input(\u0027hdfs_path\u0027)\n\n#value \u003d value.replace(\"\u0027\", \u0027\"\u0027)\nconfigValue \u003d configValue.replace(\"\u0027\", \u0027\"\u0027)\n\nconfigData \u003d json.loads(configValue)\n#valueJson \u003d json.loads(value)\n\n# 테스트 코드(임시)\n\nbeforeSchemaPath \u003d z.input(\u0027beforeSchemaPath\u0027)\nbeforeHdfsPath \u003d z.input(\u0027beforeHdfsPath\u0027)\n\ndockerBasePath \u003d \u0027/opt/zeppelin/result/\u0027\nif beforeHdfsPath.strip() !\u003d \"\":\n    csv_path \u003d \u0027/opt/zeppelin/result/\u0027 + beforeHdfsPath.replace(\"\\\\\", \"/\") + \"/result.csv\"\n    print(\"CSV 파일 경로:\", csv_path)\n    \n    if os.path.exists(csv_path):\n        inputDf \u003d pd.read_csv(csv_path)\n        print(\"Read DataFrame from:\", csv_path)\n        print(inputDf)\n    else:\n        print(\"result.csv 파일을 찾을 수 없습니다:\", csv_path)",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-03 15:42:53.779",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "node_nm": "",
+          "data_info": "",
+          "table_info": "",
+          "before_hdfs_path": "",
+          "schema_path": "",
+          "hdfs_path": ""
+        },
+        "forms": {
+          "node_nm": {
+            "type": "TextBox",
+            "name": "node_nm",
+            "displayName": "node_nm",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "data_info": {
+            "type": "TextBox",
+            "name": "data_info",
+            "displayName": "data_info",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "table_info": {
+            "type": "TextBox",
+            "name": "table_info",
+            "displayName": "table_info",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "before_hdfs_path": {
+            "type": "TextBox",
+            "name": "before_hdfs_path",
+            "displayName": "before_hdfs_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "schema_path": {
+            "type": "TextBox",
+            "name": "schema_path",
+            "displayName": "schema_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "hdfs_path": {
+            "type": "TextBox",
+            "name": "hdfs_path",
+            "displayName": "hdfs_path",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 16: configData \u003d json.loads(configValue)\nTraceback (most recent call last):\n  File \"/tmp/python7303579041715128618/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 16, in \u003cmodule\u003e\n  File \"/usr/lib/python3.10/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n  File \"/usr/lib/python3.10/json/decoder.py\", line 337, in decode\n    obj, end \u003d self.raw_decode(s, idx\u003d_w(s, 0).end())\n  File \"/usr/lib/python3.10/json/decoder.py\", line 355, in raw_decode\n    raise JSONDecodeError(\"Expecting value\", s, err.value) from None\njson.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756880260771_1191323686",
+      "id": "paragraph_1756880260771_1191323686",
+      "dateCreated": "2025-09-03 15:17:40.771",
+      "dateStarted": "2025-09-03 15:42:53.781",
+      "dateFinished": "2025-09-03 15:42:53.792",
+      "status": "ERROR"
+    },
+    {
+      "text": "\nimport requests\n\nzeppelin_host \u003d \u0027http://host.docker.internal:18085\u0027  \n\nurl \u003d f\"{zeppelin_host}/api/interpreter/setting/restart/{configData[\u0027interpreterId\u0027]}\"\n\n# 요청 페이로드: 인터프리터 ID를 지정\npayload \u003d {\n    \"noteId\": configData[\u0027noteId\u0027]\n}\n\nheaders \u003d {\n    \"Content-Type\": \"application/json\"\n}\n\n# POST 요청 전송\nresponse \u003d requests.put(url, json\u003dpayload, headers\u003dheaders)\n\n# 결과 출력\nif response.ok:\n    print(\"인터프리터 초기화 성공:\")\n    print(response.json())\nelse:\n    print(\"인터프리터 초기화 실패:\")\n    print(response.status_code, response.text)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-03 15:42:55.376",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 6: url \u003d f\"{zeppelin_host}/api/interpreter/setting/restart/{configData[\u0027interpreterId\u0027]}\"\nTraceback (most recent call last):\n  File \"/tmp/python7303579041715128618/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 6, in \u003cmodule\u003e\nNameError: name \u0027configData\u0027 is not defined\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756880266774_951436865",
+      "id": "paragraph_1756880266774_951436865",
+      "dateCreated": "2025-09-03 15:17:46.774",
+      "dateStarted": "2025-09-03 15:42:55.379",
+      "dateFinished": "2025-09-03 15:42:55.443",
+      "status": "ERROR"
+    },
+    {
+      "text": "\n\n# OUTPUT 데이터 저장 예제 (최종 데이터프레임: resultDf)\nimport os\nimport pandas as pd\n\ntry:\n    if not isinstance(resultDf, pd.DataFrame):\n        resultDf \u003d pd.DataFrame()\nexcept NameError:\n    resultDf \u003d pd.DataFrame()\n\nmakePath \u003d dockerBasePath + \"/\" + hdfsPath\nmakePath \u003d makePath.replace(\"\\\\\", \"/\")\n\nif not os.path.exists(makePath):\n    os.makedirs(makePath)\n\nfinal_csv_file_path \u003d os.path.join(makePath, \"result.csv\")\nresultDf.to_csv(final_csv_file_path, index\u003dFalse)\nprint(\"Final CSV saved at:\", final_csv_file_path)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-03 15:42:56.400",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 5: import pandas as pd\nTraceback (most recent call last):\n  File \"/tmp/python7303579041715128618/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 5, in \u003cmodule\u003e\nModuleNotFoundError: No module named \u0027pandas\u0027\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756881770239_492736326",
+      "id": "paragraph_1756881770239_492736326",
+      "dateCreated": "2025-09-03 15:42:50.239",
+      "dateStarted": "2025-09-03 15:42:56.402",
+      "dateFinished": "2025-09-03 15:42:56.409",
+      "status": "ERROR"
+    },
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756881776402_650555313",
+      "id": "paragraph_1756881776402_650555313",
+      "dateCreated": "2025-09-03 15:42:56.402",
+      "status": "READY"
+    }
+  ],
+  "name": "exec_zepp",
+  "id": "2M76N1W8X",
+  "defaultInterpreterGroup": "python",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
