@@ -844,7 +844,7 @@
       "status": "READY"
     }
   ],
-  "name": "Test 1",
+  "name": "Quantum_Guide(파일업로드)",
   "id": "2M4CSKQ8M",
   "defaultInterpreterGroup": "spark",
   "version": "0.11.1",
