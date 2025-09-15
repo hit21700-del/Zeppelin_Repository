@@ -1,0 +1,858 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark\r\nprintln(\"master \u003d \" + sc.master)                           // \u0027yarn\u0027 이어야 정상\r\nprintln(\"deployMode \u003d \" + sc.getConf.get(\"spark.submit.deployMode\",\"n/a\"))\r\nprintln(\"appId \u003d \" + sc.applicationId) ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:30.608",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "master \u003d yarn\ndeployMode \u003d client\nappId \u003d application_1757292002088_0009\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756876556357_1343639603",
+      "id": "paragraph_1756876556357_1343639603",
+      "dateCreated": "2025-09-03 14:15:56.357",
+      "dateStarted": "2025-09-08 12:50:30.610",
+      "dateFinished": "2025-09-08 12:50:30.799",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark\r\nprintln(spark.conf.get(\"spark.sql.catalogImplementation\"))          // -\u003e hive 여야 정상\r\nprintln(spark.conf.get(\"spark.hadoop.hive.metastore.uris\"))         // → 여기에 값이 찍혀야 함\r\nprintln(spark.sparkContext.hadoopConfiguration.get(\"hive.metastore.uris\"))  // Hadoop conf에서 직접 확인\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-15 13:05:49.010",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "hive\nthrift://10.10.17.47:9083\nthrift://10.10.17.47:9083\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903099_853205641",
+      "id": "paragraph_1756078216541_1472407371",
+      "dateCreated": "2025-09-02 13:05:03.099",
+      "dateStarted": "2025-09-15 13:05:49.011",
+      "dateFinished": "2025-09-15 13:05:49.138",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\ncreate table zepp_test.emon as select * from emon",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-15 13:09:31.524",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "namespace": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757908361746_705029948",
+      "id": "paragraph_1757908361746_705029948",
+      "dateCreated": "2025-09-15 12:52:41.746",
+      "dateStarted": "2025-09-15 13:09:31.525",
+      "dateFinished": "2025-09-15 13:11:05.118",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark\r\nprintln(sc.master)                      // yarn\r\nprintln(sc.getConf.get(\"spark.submit.deployMode\")) // client\r\nprintln(sc.applicationId)               // 앱 ID가 찍혀야 정상 제출\r\nsc.range(1,1000000).count      ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-03 13:51:00.856",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_223618486",
+      "id": "paragraph_1755508509167_473193331",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "dateStarted": "2025-09-03 13:51:00.869",
+      "dateFinished": "2025-09-02 13:22:22.651",
+      "status": "ABORT"
+    },
+    {
+      "text": "%spark\r\nval emonDF \u003d spark.read.json(\"/Logs_TB/emon/*\")\r\nemonDF.createOrReplaceTempView(\"emon\")\r\n// val kmonDF \u003d spark.read.json(\"/Logs_TB/kmon/*\")\r\n// kmonDF.createOrReplaceTempView(\"kmon\")\r\n// val kmonewDF \u003d spark.read.json(\"/Logs_TB/kmonnew/*\")\r\n// kmonewDF.createOrReplaceTempView(\"kmonnew\")\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-15 13:06:39.718",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[1m\u001b[34memonDF\u001b[0m: \u001b[1m\u001b[32morg.apache.spark.sql.DataFrame\u001b[0m \u003d [absolute_steering_angle: bigint, ac_input_voltage: bigint ... 97 more fields]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1611284907",
+      "id": "paragraph_1755130887285_758103300",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "dateStarted": "2025-09-15 13:06:39.719",
+      "dateFinished": "2025-09-15 13:08:52.021",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\nselect * from zepp_test.emon limit 10\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-15 13:12:05.594",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "absolute_steering_angle": "string",
+                      "ac_input_voltage": "string",
+                      "accel_pedal_depth": "string",
+                      "accumulated_fast_charge_count": "string",
+                      "accumulated_fast_charge_duration": "string",
+                      "accumulated_slow_charge_count": "string",
+                      "accumulated_slow_charge_duration": "string",
+                      "aircondition_compressor_rpm": "string",
+                      "battery_accumulated_charge": "string",
+                      "battery_accumulated_discharge": "string",
+                      "battery_busbar_temperature": "string",
+                      "battery_cell_voltage_diff": "string",
+                      "battery_charge_detail": "string",
+                      "battery_charged_energy": "string",
+                      "battery_discharged_energy": "string",
+                      "battery_external_temperature": "string",
+                      "battery_max_charge_power": "string",
+                      "battery_max_discharge_power": "string",
+                      "battery_module_temperatures": "string",
+                      "battery_pack_current": "string",
+                      "battery_pack_voltage": "string",
+                      "bms_status_detail": "string",
+                      "break_detail": "string",
+                      "car_code": "string",
+                      "cell_voltages": "string",
+                      "charge_status_detail": "string",
+                      "coolant_inlet_temperature": "string",
+                      "created_at": "string",
+                      "device_id": "string",
+                      "display_soc": "string",
+                      "drive_motor_phase_current_rms": "string",
+                      "external_temperature": "string",
+                      "front_left_wheel_speed": "string",
+                      "front_right_wheel_speed": "string",
+                      "heat_sink_temperature": "string",
+                      "heater1_temperature": "string",
+                      "id": "string",
+                      "igbt_temperature": "string",
+                      "insulation_resistance": "string",
+                      "internal_temperature_front": "string",
+                      "inverter_capacitor_voltage": "string",
+                      "inverter_dc_input_voltage": "string",
+                      "inverter_temperature": "string",
+                      "is_battery_charge": "string",
+                      "is_battery_heater_relay": "string",
+                      "is_bms_battery_usable": "string",
+                      "is_bms_fault": "string",
+                      "is_bms_fused": "string",
+                      "is_bms_main_relay_on": "string",
+                      "is_bms_warning": "string",
+                      "is_break": "string",
+                      "is_charge_normal": "string",
+                      "is_ev_ready": "string",
+                      "is_fast_charge_connected": "string",
+                      "is_hvptc_drive": "string",
+                      "is_mcu_controllable": "string",
+                      "is_mcu_fault": "string",
+                      "is_mcu_main_relay_off": "string",
+                      "is_mcu_motor_controllable": "string",
+                      "is_mcu_ready": "string",
+                      "is_mcu_torque_limited": "string",
+                      "is_motor_pwm": "string",
+                      "is_obc_charge_complete": "string",
+                      "is_obc_fault": "string",
+                      "is_paddle_shift_switch_down": "string",
+                      "is_paddle_shift_switch_up": "string",
+                      "is_slow_charge_connected": "string",
+                      "is_winter_mode_active": "string",
+                      "latitude": "string",
+                      "ldc_input_voltage": "string",
+                      "ldc_output_voltage": "string",
+                      "longitude": "string",
+                      "ltr_outlet_temperature": "string",
+                      "max_cell_temperature": "string",
+                      "max_cell_voltage": "string",
+                      "max_cell_voltage_num": "string",
+                      "mcu_motor_speed": "string",
+                      "message_code": "string",
+                      "min_cell_temperature": "string",
+                      "min_cell_voltage": "string",
+                      "min_cell_voltage_num": "string",
+                      "motor_rpm": "string",
+                      "motor_temperature": "string",
+                      "motor_torque_actual": "string",
+                      "obc_output_current": "string",
+                      "obc_output_voltage": "string",
+                      "rear_left_wheel_speed": "string",
+                      "rear_right_wheel_speed": "string",
+                      "soh": "string",
+                      "speed": "string",
+                      "steering_column_speed": "string",
+                      "steering_column_torque": "string",
+                      "sub_battery_current": "string",
+                      "sub_battery_soh": "string",
+                      "sub_battery_temperature": "string",
+                      "sub_battery_voltage": "string",
+                      "table_type": "string",
+                      "total_active_time": "string",
+                      "total_mileage": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "absolute_steering_angle\tac_input_voltage\taccel_pedal_depth\taccumulated_fast_charge_count\taccumulated_fast_charge_duration\taccumulated_slow_charge_count\taccumulated_slow_charge_duration\taircondition_compressor_rpm\tbattery_accumulated_charge\tbattery_accumulated_discharge\tbattery_busbar_temperature\tbattery_cell_voltage_diff\tbattery_charge_detail\tbattery_charged_energy\tbattery_discharged_energy\tbattery_external_temperature\tbattery_max_charge_power\tbattery_max_discharge_power\tbattery_module_temperatures\tbattery_pack_current\tbattery_pack_voltage\tbms_status_detail\tbreak_detail\tcar_code\tcell_voltages\tcharge_status_detail\tcoolant_inlet_temperature\tcreated_at\tdevice_id\tdisplay_soc\tdrive_motor_phase_current_rms\texternal_temperature\tfront_left_wheel_speed\tfront_right_wheel_speed\theat_sink_temperature\theater1_temperature\tid\tigbt_temperature\tinsulation_resistance\tinternal_temperature_front\tinverter_capacitor_voltage\tinverter_dc_input_voltage\tinverter_temperature\tis_battery_charge\tis_battery_heater_relay\tis_bms_battery_usable\tis_bms_fault\tis_bms_fused\tis_bms_main_relay_on\tis_bms_warning\tis_break\tis_charge_normal\tis_ev_ready\tis_fast_charge_connected\tis_hvptc_drive\tis_mcu_controllable\tis_mcu_fault\tis_mcu_main_relay_off\tis_mcu_motor_controllable\tis_mcu_ready\tis_mcu_torque_limited\tis_motor_pwm\tis_obc_charge_complete\tis_obc_fault\tis_paddle_shift_switch_down\tis_paddle_shift_switch_up\tis_slow_charge_connected\tis_winter_mode_active\tlatitude\tldc_input_voltage\tldc_output_voltage\tlongitude\tltr_outlet_temperature\tmax_cell_temperature\tmax_cell_voltage\tmax_cell_voltage_num\tmcu_motor_speed\tmessage_code\tmin_cell_temperature\tmin_cell_voltage\tmin_cell_voltage_num\tmotor_rpm\tmotor_temperature\tmotor_torque_actual\tobc_output_current\tobc_output_voltage\trear_left_wheel_speed\trear_right_wheel_speed\tsoh\tspeed\tsteering_column_speed\tsteering_column_torque\tsub_battery_current\tsub_battery_soh\tsub_battery_temperature\tsub_battery_voltage\ttable_type\ttotal_active_time\ttotal_mileage\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n5\t220\t25\t12\t640\t35\t1200\t1200\t150000\t140000\t32\t5\t[80,350]\t12000\t11500\t26\t80000\t85000\t[35,36,34,33,...]\t78\t356\t[false,false]\t[true,false]\tEV6\t[4.21,4.20,4.18,4.17,...]\t[fast,78]\t28\t2025-06-11T14:30:00Z\tDEVICE1234567890\t72\t35\t24\t55\t56\t48\t45\t46b0a5c6-1a3f-4a17-9b70-bc0f6a9d3e91\t60\t500000\t25\t360\t345\t50\t1\t0\t1\t0\t0\t1\t0\t0\t1\t1\t1\t0\t1\t0\t0\t1\t1\t0\t1\t0\t0\t1\t0\t0\t0\t37000000\t14.0\t13.5\t127030000\t27\t38\t4.21\t24\t3100\t1\t30\t4.16\t3\t3200\t55\t220\t42\t355\t54\t54\t94\t52\t30\t12\t3.2\t89\t35\t12.7\temon\t987654\t45230\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757395369081_1770710673",
+      "id": "paragraph_1757395369081_1770710673",
+      "dateCreated": "2025-09-09 14:22:49.081",
+      "dateStarted": "2025-09-15 13:12:03.956",
+      "dateFinished": "2025-09-15 13:12:05.494",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM emon\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-09 07:43:41.841",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "hour\tcnt\n2025-06-11 23:00:00\t367706\n2025-07-21 09:00:00\t1000\n2025-07-21 10:00:00\t225948\n2025-07-21 11:00:00\t1000\n2025-07-21 12:00:00\t1000\n2025-07-21 13:00:00\t1000\n2025-07-21 14:00:00\t1000\n2025-07-21 15:00:00\t1000\n2025-07-21 16:00:00\t1000\n2025-07-21 17:00:00\t1000\n2025-07-21 18:00:00\t1000\n2025-07-21 19:00:00\t1000\n2025-07-21 20:00:00\t1000\n2025-07-21 21:00:00\t1000\n2025-07-21 22:00:00\t1000\n2025-07-21 23:00:00\t1000\n2025-07-22 00:00:00\t1000\n2025-07-22 01:00:00\t1000\n2025-07-22 02:00:00\t1000\n2025-07-22 03:00:00\t1000\n2025-07-22 04:00:00\t1000\n2025-07-22 05:00:00\t1000\n2025-07-22 06:00:00\t1000\n2025-07-22 07:00:00\t1000\n2025-07-22 08:00:00\t1000\n2025-07-22 09:00:00\t1000\n2025-07-22 10:00:00\t1000\n2025-07-22 11:00:00\t1000\n2025-07-22 12:00:00\t1000\n2025-07-22 13:00:00\t1000\n2025-07-22 14:00:00\t1000\n2025-07-22 15:00:00\t1000\n2025-07-22 16:00:00\t1000\n2025-07-22 17:00:00\t1000\n2025-07-22 18:00:00\t1000\n2025-07-22 19:00:00\t1000\n2025-07-22 20:00:00\t1000\n2025-07-22 21:00:00\t1000\n2025-07-22 22:00:00\t1000\n2025-07-22 23:00:00\t1000\n2025-07-23 00:00:00\t1000\n2025-07-23 01:00:00\t1000\n2025-07-23 02:00:00\t1000\n2025-07-23 03:00:00\t1000\n2025-07-23 04:00:00\t1000\n2025-07-23 05:00:00\t1000\n2025-07-23 06:00:00\t1000\n2025-07-23 07:00:00\t1000\n2025-07-23 08:00:00\t1000\n2025-07-23 09:00:00\t1000\n2025-07-23 10:00:00\t1000\n2025-07-23 11:00:00\t1000\n2025-07-23 12:00:00\t1000\n2025-07-23 13:00:00\t1000\n2025-07-23 14:00:00\t1000\n2025-07-23 15:00:00\t1000\n2025-07-23 16:00:00\t1000\n2025-07-23 17:00:00\t1000\n2025-07-23 18:00:00\t1000\n2025-07-23 19:00:00\t1000\n2025-07-23 20:00:00\t1000\n2025-07-23 21:00:00\t1000\n2025-07-23 22:00:00\t1000\n2025-07-23 23:00:00\t1000\n2025-07-24 00:00:00\t1000\n2025-07-24 01:00:00\t1000\n2025-07-24 02:00:00\t1000\n2025-07-24 03:00:00\t1000\n2025-07-24 04:00:00\t1000\n2025-07-24 05:00:00\t1000\n2025-07-24 06:00:00\t1000\n2025-07-24 07:00:00\t1000\n2025-07-24 08:00:00\t1000\n2025-07-24 09:00:00\t1000\n2025-07-24 10:00:00\t1000\n2025-07-24 11:00:00\t1000\n2025-07-24 12:00:00\t1000\n2025-07-24 13:00:00\t1000\n2025-07-24 14:00:00\t1000\n2025-07-24 15:00:00\t1000\n2025-07-24 16:00:00\t1000\n2025-07-24 17:00:00\t1000\n2025-07-24 18:00:00\t1000\n2025-07-24 19:00:00\t1000\n2025-07-24 20:00:00\t1000\n2025-07-24 21:00:00\t1000\n2025-07-24 22:00:00\t1000\n2025-07-24 23:00:00\t1000\n2025-07-25 00:00:00\t1000\n2025-07-25 01:00:00\t1000\n2025-07-25 02:00:00\t1000\n2025-07-25 03:00:00\t1000\n2025-07-25 04:00:00\t1000\n2025-07-25 05:00:00\t1000\n2025-07-25 06:00:00\t1000\n2025-07-25 07:00:00\t1000\n2025-07-25 08:00:00\t1000\n2025-07-25 09:00:00\t1000\n2025-07-25 10:00:00\t1000\n2025-07-25 11:00:00\t1000\n2025-07-25 12:00:00\t1000\n2025-07-25 13:00:00\t1000\n2025-07-25 14:00:00\t1000\n2025-07-25 15:00:00\t1000\n2025-07-25 16:00:00\t1000\n2025-07-25 17:00:00\t1000\n2025-07-25 18:00:00\t1000\n2025-07-25 19:00:00\t1000\n2025-07-25 20:00:00\t1000\n2025-07-25 21:00:00\t1000\n2025-07-25 22:00:00\t1000\n2025-07-25 23:00:00\t1000\n2025-07-26 00:00:00\t1000\n2025-07-26 01:00:00\t1000\n2025-07-26 02:00:00\t1000\n2025-07-26 03:00:00\t1000\n2025-07-26 04:00:00\t1000\n2025-07-26 05:00:00\t1000\n2025-07-26 06:00:00\t1000\n2025-07-26 07:00:00\t1000\n2025-07-26 08:00:00\t1000\n2025-07-26 09:00:00\t1000\n2025-07-26 10:00:00\t1000\n2025-07-26 11:00:00\t1000\n2025-07-26 12:00:00\t1000\n2025-07-26 13:00:00\t1000\n2025-07-26 14:00:00\t1000\n2025-07-26 15:00:00\t1000\n2025-07-26 16:00:00\t1000\n2025-07-26 17:00:00\t1000\n2025-07-26 18:00:00\t1000\n2025-07-26 19:00:00\t1000\n2025-07-26 20:00:00\t1000\n2025-07-26 21:00:00\t1000\n2025-07-26 22:00:00\t1000\n2025-07-26 23:00:00\t1000\n2025-07-27 00:00:00\t1000\n2025-07-27 01:00:00\t1000\n2025-07-27 02:00:00\t1000\n2025-07-27 03:00:00\t1000\n2025-07-27 04:00:00\t1000\n2025-07-27 05:00:00\t1000\n2025-07-27 06:00:00\t1000\n2025-07-27 07:00:00\t1000\n2025-07-27 08:00:00\t1000\n2025-07-27 09:00:00\t1000\n2025-07-27 10:00:00\t1000\n2025-07-27 11:00:00\t1000\n2025-07-27 12:00:00\t1000\n2025-07-27 13:00:00\t1000\n2025-07-27 14:00:00\t1000\n2025-07-27 15:00:00\t1000\n2025-07-27 16:00:00\t1000\n2025-07-27 17:00:00\t1000\n2025-07-27 18:00:00\t1000\n2025-07-27 19:00:00\t1000\n2025-07-27 20:00:00\t1000\n2025-07-27 21:00:00\t1000\n2025-07-27 22:00:00\t1000\n2025-07-27 23:00:00\t1000\n2025-07-28 00:00:00\t1000\n2025-07-28 01:00:00\t1000\n2025-07-28 02:00:00\t1000\n2025-07-28 03:00:00\t1000\n2025-07-28 04:00:00\t1000\n2025-07-28 05:00:00\t1000\n2025-07-28 06:00:00\t1000\n2025-07-28 07:00:00\t1000\n2025-07-28 08:00:00\t1000\n2025-09-07 23:00:00\t50002\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1658338457",
+      "id": "paragraph_1755130894868_1020586835",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "dateStarted": "2025-09-09 07:43:41.842",
+      "dateFinished": "2025-09-09 07:44:11.247",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM kmon\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-09 07:44:18.696",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "hour\tcnt\n2025-06-11 23:00:00\t227008\n2025-07-21 09:00:00\t1000\n2025-07-21 10:00:00\t375000\n2025-07-21 11:00:00\t1000\n2025-07-21 12:00:00\t1000\n2025-07-21 13:00:00\t1000\n2025-07-21 14:00:00\t1000\n2025-07-21 15:00:00\t1000\n2025-07-21 16:00:00\t1000\n2025-07-21 17:00:00\t1000\n2025-07-21 18:00:00\t1000\n2025-07-21 19:00:00\t1000\n2025-07-21 20:00:00\t1000\n2025-07-21 21:00:00\t1000\n2025-07-21 22:00:00\t1000\n2025-07-21 23:00:00\t1000\n2025-07-22 00:00:00\t1000\n2025-07-22 01:00:00\t1000\n2025-07-22 02:00:00\t1000\n2025-07-22 03:00:00\t1000\n2025-07-22 04:00:00\t1000\n2025-07-22 05:00:00\t1000\n2025-07-22 06:00:00\t1000\n2025-07-22 07:00:00\t1000\n2025-07-22 08:00:00\t1000\n2025-07-22 09:00:00\t1000\n2025-07-22 10:00:00\t1000\n2025-07-22 11:00:00\t1000\n2025-07-22 12:00:00\t1000\n2025-07-22 13:00:00\t1000\n2025-07-22 14:00:00\t1000\n2025-07-22 15:00:00\t1000\n2025-07-22 16:00:00\t1000\n2025-07-22 17:00:00\t1000\n2025-07-22 18:00:00\t1000\n2025-07-22 19:00:00\t1000\n2025-07-22 20:00:00\t1000\n2025-07-22 21:00:00\t1000\n2025-07-22 22:00:00\t1000\n2025-07-22 23:00:00\t1000\n2025-07-23 00:00:00\t1000\n2025-07-23 01:00:00\t1000\n2025-07-23 02:00:00\t1000\n2025-07-23 03:00:00\t1000\n2025-07-23 04:00:00\t1000\n2025-07-23 05:00:00\t1000\n2025-07-23 06:00:00\t1000\n2025-07-23 07:00:00\t1000\n2025-07-23 08:00:00\t1000\n2025-07-23 09:00:00\t1000\n2025-07-23 10:00:00\t1000\n2025-07-23 11:00:00\t1000\n2025-07-23 12:00:00\t1000\n2025-07-23 13:00:00\t1000\n2025-07-23 14:00:00\t1000\n2025-07-23 15:00:00\t1000\n2025-07-23 16:00:00\t1000\n2025-07-23 17:00:00\t1000\n2025-07-23 18:00:00\t1000\n2025-07-23 19:00:00\t1000\n2025-07-23 20:00:00\t1000\n2025-07-23 21:00:00\t1000\n2025-07-23 22:00:00\t1000\n2025-07-23 23:00:00\t1000\n2025-07-24 00:00:00\t1000\n2025-07-24 01:00:00\t1000\n2025-07-24 02:00:00\t1000\n2025-07-24 03:00:00\t1000\n2025-07-24 04:00:00\t1000\n2025-07-24 05:00:00\t1000\n2025-07-24 06:00:00\t1000\n2025-07-24 07:00:00\t1000\n2025-07-24 08:00:00\t1000\n2025-07-24 09:00:00\t1000\n2025-07-24 10:00:00\t1000\n2025-07-24 11:00:00\t1000\n2025-07-24 12:00:00\t1000\n2025-07-24 13:00:00\t1000\n2025-07-24 14:00:00\t1000\n2025-07-24 15:00:00\t1000\n2025-07-24 16:00:00\t1000\n2025-07-24 17:00:00\t1000\n2025-07-24 18:00:00\t1000\n2025-07-24 19:00:00\t1000\n2025-07-24 20:00:00\t1000\n2025-07-24 21:00:00\t1000\n2025-07-24 22:00:00\t1000\n2025-07-24 23:00:00\t1000\n2025-07-25 00:00:00\t1000\n2025-07-25 01:00:00\t1000\n2025-07-25 02:00:00\t1000\n2025-07-25 03:00:00\t1000\n2025-07-25 04:00:00\t1000\n2025-07-25 05:00:00\t1000\n2025-07-25 06:00:00\t1000\n2025-07-25 07:00:00\t1000\n2025-07-25 08:00:00\t1000\n2025-07-25 09:00:00\t1000\n2025-07-25 10:00:00\t1000\n2025-07-25 11:00:00\t1000\n2025-07-25 12:00:00\t1000\n2025-07-25 13:00:00\t1000\n2025-07-25 14:00:00\t1000\n2025-07-25 15:00:00\t1000\n2025-07-25 16:00:00\t1000\n2025-07-25 17:00:00\t1000\n2025-07-25 18:00:00\t1000\n2025-07-25 19:00:00\t1000\n2025-07-25 20:00:00\t1000\n2025-07-25 21:00:00\t1000\n2025-07-25 22:00:00\t1000\n2025-07-25 23:00:00\t1000\n2025-07-26 00:00:00\t1000\n2025-07-26 01:00:00\t1000\n2025-07-26 02:00:00\t1000\n2025-07-26 03:00:00\t1000\n2025-07-26 04:00:00\t1000\n2025-07-26 05:00:00\t1000\n2025-07-26 06:00:00\t1000\n2025-07-26 07:00:00\t1000\n2025-07-26 08:00:00\t1000\n2025-07-26 09:00:00\t1000\n2025-07-26 10:00:00\t1000\n2025-07-26 11:00:00\t1000\n2025-07-26 12:00:00\t1000\n2025-07-26 13:00:00\t1000\n2025-07-26 14:00:00\t1000\n2025-07-26 15:00:00\t1000\n2025-07-26 16:00:00\t1000\n2025-07-26 17:00:00\t1000\n2025-07-26 18:00:00\t1000\n2025-07-26 19:00:00\t1000\n2025-07-26 20:00:00\t1000\n2025-07-26 21:00:00\t1000\n2025-07-26 22:00:00\t1000\n2025-07-26 23:00:00\t1000\n2025-07-27 00:00:00\t1000\n2025-07-27 01:00:00\t1000\n2025-07-27 02:00:00\t1000\n2025-07-27 03:00:00\t1000\n2025-07-27 04:00:00\t1000\n2025-07-27 05:00:00\t1000\n2025-07-27 06:00:00\t1000\n2025-07-27 07:00:00\t1000\n2025-07-27 08:00:00\t1000\n2025-07-27 09:00:00\t1000\n2025-07-27 10:00:00\t1000\n2025-07-27 11:00:00\t1000\n2025-07-27 12:00:00\t1000\n2025-07-27 13:00:00\t1000\n2025-07-27 14:00:00\t1000\n2025-07-27 15:00:00\t1000\n2025-07-27 16:00:00\t1000\n2025-07-27 17:00:00\t1000\n2025-07-27 18:00:00\t1000\n2025-07-27 19:00:00\t1000\n2025-07-27 20:00:00\t1000\n2025-07-27 21:00:00\t1000\n2025-07-27 22:00:00\t1000\n2025-07-27 23:00:00\t1000\n2025-07-28 00:00:00\t1000\n2025-07-28 01:00:00\t1000\n2025-07-28 02:00:00\t1000\n2025-07-28 03:00:00\t1000\n2025-07-28 04:00:00\t1000\n2025-07-28 05:00:00\t1000\n2025-07-28 06:00:00\t1000\n2025-07-28 07:00:00\t1000\n2025-07-28 08:00:00\t1000\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_2066598777",
+      "id": "paragraph_1755131260131_840440213",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "dateStarted": "2025-09-09 07:44:18.697",
+      "dateFinished": "2025-09-09 07:45:00.327",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM kmonnew\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-09 07:45:10.357",
+      "progress": 95,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "hour\tcnt\n2025-06-11 23:00:00\t173406\n2025-07-21 09:00:00\t1000\n2025-07-21 10:00:00\t450004\n2025-07-21 11:00:00\t1000\n2025-07-21 12:00:00\t1000\n2025-07-21 13:00:00\t1000\n2025-07-21 14:00:00\t1000\n2025-07-21 15:00:00\t1000\n2025-07-21 16:00:00\t1000\n2025-07-21 17:00:00\t1000\n2025-07-21 18:00:00\t1000\n2025-07-21 19:00:00\t1000\n2025-07-21 20:00:00\t1000\n2025-07-21 21:00:00\t1000\n2025-07-21 22:00:00\t1000\n2025-07-21 23:00:00\t1000\n2025-07-22 00:00:00\t1000\n2025-07-22 01:00:00\t1000\n2025-07-22 02:00:00\t1000\n2025-07-22 03:00:00\t1000\n2025-07-22 04:00:00\t1000\n2025-07-22 05:00:00\t1000\n2025-07-22 06:00:00\t1000\n2025-07-22 07:00:00\t1000\n2025-07-22 08:00:00\t1000\n2025-07-22 09:00:00\t1000\n2025-07-22 10:00:00\t1000\n2025-07-22 11:00:00\t1000\n2025-07-22 12:00:00\t1000\n2025-07-22 13:00:00\t1000\n2025-07-22 14:00:00\t1000\n2025-07-22 15:00:00\t1000\n2025-07-22 16:00:00\t1000\n2025-07-22 17:00:00\t1000\n2025-07-22 18:00:00\t1000\n2025-07-22 19:00:00\t1000\n2025-07-22 20:00:00\t1000\n2025-07-22 21:00:00\t1000\n2025-07-22 22:00:00\t1000\n2025-07-22 23:00:00\t1000\n2025-07-23 00:00:00\t1000\n2025-07-23 01:00:00\t1000\n2025-07-23 02:00:00\t1000\n2025-07-23 03:00:00\t1000\n2025-07-23 04:00:00\t1000\n2025-07-23 05:00:00\t1000\n2025-07-23 06:00:00\t1000\n2025-07-23 07:00:00\t1000\n2025-07-23 08:00:00\t1000\n2025-07-23 09:00:00\t1000\n2025-07-23 10:00:00\t1000\n2025-07-23 11:00:00\t1000\n2025-07-23 12:00:00\t1000\n2025-07-23 13:00:00\t1000\n2025-07-23 14:00:00\t1000\n2025-07-23 15:00:00\t1000\n2025-07-23 16:00:00\t1000\n2025-07-23 17:00:00\t1000\n2025-07-23 18:00:00\t1000\n2025-07-23 19:00:00\t1000\n2025-07-23 20:00:00\t1000\n2025-07-23 21:00:00\t1000\n2025-07-23 22:00:00\t1000\n2025-07-23 23:00:00\t1000\n2025-07-24 00:00:00\t1000\n2025-07-24 01:00:00\t1000\n2025-07-24 02:00:00\t1000\n2025-07-24 03:00:00\t1000\n2025-07-24 04:00:00\t1000\n2025-07-24 05:00:00\t1000\n2025-07-24 06:00:00\t1000\n2025-07-24 07:00:00\t1000\n2025-07-24 08:00:00\t1000\n2025-07-24 09:00:00\t1000\n2025-07-24 10:00:00\t1000\n2025-07-24 11:00:00\t1000\n2025-07-24 12:00:00\t1000\n2025-07-24 13:00:00\t1000\n2025-07-24 14:00:00\t1000\n2025-07-24 15:00:00\t1000\n2025-07-24 16:00:00\t1000\n2025-07-24 17:00:00\t1000\n2025-07-24 18:00:00\t1000\n2025-07-24 19:00:00\t1000\n2025-07-24 20:00:00\t1000\n2025-07-24 21:00:00\t1000\n2025-07-24 22:00:00\t1000\n2025-07-24 23:00:00\t1000\n2025-07-25 00:00:00\t1000\n2025-07-25 01:00:00\t1000\n2025-07-25 02:00:00\t1000\n2025-07-25 03:00:00\t1000\n2025-07-25 04:00:00\t1000\n2025-07-25 05:00:00\t1000\n2025-07-25 06:00:00\t1000\n2025-07-25 07:00:00\t1000\n2025-07-25 08:00:00\t1000\n2025-07-25 09:00:00\t1000\n2025-07-25 10:00:00\t1000\n2025-07-25 11:00:00\t1000\n2025-07-25 12:00:00\t1000\n2025-07-25 13:00:00\t1000\n2025-07-25 14:00:00\t1000\n2025-07-25 15:00:00\t1000\n2025-07-25 16:00:00\t1000\n2025-07-25 17:00:00\t1000\n2025-07-25 18:00:00\t1000\n2025-07-25 19:00:00\t1000\n2025-07-25 20:00:00\t1000\n2025-07-25 21:00:00\t1000\n2025-07-25 22:00:00\t1000\n2025-07-25 23:00:00\t1000\n2025-07-26 00:00:00\t1000\n2025-07-26 01:00:00\t1000\n2025-07-26 02:00:00\t1000\n2025-07-26 03:00:00\t1000\n2025-07-26 04:00:00\t1000\n2025-07-26 05:00:00\t1000\n2025-07-26 06:00:00\t1000\n2025-07-26 07:00:00\t1000\n2025-07-26 08:00:00\t1000\n2025-07-26 09:00:00\t1000\n2025-07-26 10:00:00\t1000\n2025-07-26 11:00:00\t1000\n2025-07-26 12:00:00\t1000\n2025-07-26 13:00:00\t1000\n2025-07-26 14:00:00\t1000\n2025-07-26 15:00:00\t1000\n2025-07-26 16:00:00\t1000\n2025-07-26 17:00:00\t1000\n2025-07-26 18:00:00\t1000\n2025-07-26 19:00:00\t1000\n2025-07-26 20:00:00\t1000\n2025-07-26 21:00:00\t1000\n2025-07-26 22:00:00\t1000\n2025-07-26 23:00:00\t1000\n2025-07-27 00:00:00\t1000\n2025-07-27 01:00:00\t1000\n2025-07-27 02:00:00\t1000\n2025-07-27 03:00:00\t1000\n2025-07-27 04:00:00\t1000\n2025-07-27 05:00:00\t1000\n2025-07-27 06:00:00\t1000\n2025-07-27 07:00:00\t1000\n2025-07-27 08:00:00\t1000\n2025-07-27 09:00:00\t1000\n2025-07-27 10:00:00\t1000\n2025-07-27 11:00:00\t1000\n2025-07-27 12:00:00\t1000\n2025-07-27 13:00:00\t1000\n2025-07-27 14:00:00\t1000\n2025-07-27 15:00:00\t1000\n2025-07-27 16:00:00\t1000\n2025-07-27 17:00:00\t1000\n2025-07-27 18:00:00\t1000\n2025-07-27 19:00:00\t1000\n2025-07-27 20:00:00\t1000\n2025-07-27 21:00:00\t1000\n2025-07-27 22:00:00\t1000\n2025-07-27 23:00:00\t1000\n2025-07-28 00:00:00\t1000\n2025-07-28 01:00:00\t1000\n2025-07-28 02:00:00\t1000\n2025-07-28 03:00:00\t1000\n2025-07-28 04:00:00\t1000\n2025-07-28 05:00:00\t1000\n2025-07-28 06:00:00\t1000\n2025-07-28 07:00:00\t1000\n2025-07-28 08:00:00\t1000\n2025-09-07 23:00:00\t50000\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1088378530",
+      "id": "paragraph_1755131262444_644112882",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "dateStarted": "2025-09-09 07:45:10.358",
+      "dateFinished": "2025-09-09 07:45:54.326",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark\nval emonDF \u003d spark.read.option(\"multiLine\", true).option(\"header\", true).csv(\"/Data/TEST/*\")\nemonDF.createOrReplaceTempView(\"SVOD_RVOD_RAW\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-02 13:05:03.100",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[1m\u001b[34memonDF\u001b[0m: \u001b[1m\u001b[32morg.apache.spark.sql.DataFrame\u001b[0m \u003d [TRX_DTTM: string, TRX_TP: string ... 23 more fields]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1333024436",
+      "id": "paragraph_1755131279084_664137442",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\r\nselect\r\n--   date_format(to_timestamp(A.TRX_DTTM,\u0027yyyyMMddHHmmss\u0027),\u0027yyyyMMdd\u0027) as p_dt,\r\n--   A.SO_CD,\r\n  A.SP_ID,\r\n  count(*) as trx_cnt,\r\n  count(distinct A.TRX_DTTM)\r\nfrom SVOD_RVOD_RAW A\r\ngroup by\r\n  A.SP_ID",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-02 13:05:03.100",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "SP_ID": "string",
+                      "trx_cnt": "string",
+                      "count(DISTINCT TRX_DTTM)": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "SP_ID\ttrx_cnt\tcount(DISTINCT TRX_DTTM)\nCJHV\t3923312\t3741047\nHCN\t1202954\t1170990\nJCN\t192502\t190890\nDLIVE\t6509\t6463\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1481016541",
+      "id": "paragraph_1755145298636_2034979490",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\nselect count(*) from SVOD_RVOD_RAW",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-02 13:05:03.100",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "count(1)": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:76)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:861)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.ParallelScheduler.lambda$runJobInScheduler$0(ParallelScheduler.java:46)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\nCaused by: org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:76)\n\tat org.apache.zeppelin.interpreter.Interpreter.getInterpreterInTheSameSessionByClassName(Interpreter.java:322)\n\tat org.apache.zeppelin.interpreter.Interpreter.getInterpreterInTheSameSessionByClassName(Interpreter.java:333)\n\tat org.apache.zeppelin.spark.SparkSqlInterpreter.open(SparkSqlInterpreter.java:57)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:70)\n\t... 8 more\nCaused by: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.spark.SparkInterpreter.open(SparkInterpreter.java:140)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:70)\n\t... 12 more\nCaused by: java.net.ConnectException: Your endpoint configuration is wrong; For more details see:  http://wiki.apache.org/hadoop/UnsetHostnameOrPort\n\tat sun.reflect.GeneratedConstructorAccessor9.newInstance(Unknown Source)\n\tat sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)\n\tat java.lang.reflect.Constructor.newInstance(Constructor.java:423)\n\tat org.apache.hadoop.net.NetUtils.wrapWithMessage(NetUtils.java:913)\n\tat org.apache.hadoop.net.NetUtils.wrapException(NetUtils.java:824)\n\tat org.apache.hadoop.ipc.Client.getRpcResponse(Client.java:1616)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1558)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1455)\n\tat org.apache.hadoop.ipc.ProtobufRpcEngine2$Invoker.invoke(ProtobufRpcEngine2.java:242)\n\tat org.apache.hadoop.ipc.ProtobufRpcEngine2$Invoker.invoke(ProtobufRpcEngine2.java:129)\n\tat com.sun.proxy.$Proxy30.getNewApplication(Unknown Source)\n\tat org.apache.hadoop.yarn.api.impl.pb.client.ApplicationClientProtocolPBClientImpl.getNewApplication(ApplicationClientProtocolPBClientImpl.java:286)\n\tat sun.reflect.GeneratedMethodAccessor4.invoke(Unknown Source)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler.invokeMethod(RetryInvocationHandler.java:422)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeMethod(RetryInvocationHandler.java:165)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invoke(RetryInvocationHandler.java:157)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeOnce(RetryInvocationHandler.java:95)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler.invoke(RetryInvocationHandler.java:359)\n\tat com.sun.proxy.$Proxy31.getNewApplication(Unknown Source)\n\tat org.apache.hadoop.yarn.client.api.impl.YarnClientImpl.getNewApplication(YarnClientImpl.java:284)\n\tat org.apache.hadoop.yarn.client.api.impl.YarnClientImpl.createApplication(YarnClientImpl.java:292)\n\tat org.apache.spark.deploy.yarn.Client.submitApplication(Client.scala:195)\n\tat org.apache.spark.scheduler.cluster.YarnClientSchedulerBackend.start(YarnClientSchedulerBackend.scala:62)\n\tat org.apache.spark.scheduler.TaskSchedulerImpl.start(TaskSchedulerImpl.scala:235)\n\tat org.apache.spark.SparkContext.\u003cinit\u003e(SparkContext.scala:604)\n\tat org.apache.spark.SparkContext$.getOrCreate(SparkContext.scala:2888)\n\tat org.apache.spark.sql.SparkSession$Builder.$anonfun$getOrCreate$2(SparkSession.scala:1099)\n\tat scala.Option.getOrElse(Option.scala:189)\n\tat org.apache.spark.sql.SparkSession$Builder.getOrCreate(SparkSession.scala:1093)\n\tat org.apache.zeppelin.spark.AbstractSparkScalaInterpreter.createSparkContext(AbstractSparkScalaInterpreter.java:201)\n\tat org.apache.zeppelin.spark.AbstractSparkScalaInterpreter.open(AbstractSparkScalaInterpreter.java:117)\n\tat org.apache.zeppelin.spark.SparkInterpreter.open(SparkInterpreter.java:124)\n\t... 13 more\nCaused by: java.net.ConnectException: Connection refused\n\tat sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)\n\tat sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:716)\n\tat org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:205)\n\tat org.apache.hadoop.net.NetUtils.connect(NetUtils.java:586)\n\tat org.apache.hadoop.ipc.Client$Connection.setupConnection(Client.java:711)\n\tat org.apache.hadoop.ipc.Client$Connection.setupIOstreams(Client.java:833)\n\tat org.apache.hadoop.ipc.Client$Connection.access$3800(Client.java:414)\n\tat org.apache.hadoop.ipc.Client.getConnection(Client.java:1677)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1502)\n\t... 40 more\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1608008085",
+      "id": "paragraph_1755146019449_599527730",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\nselect * from TEST",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-02 13:05:03.100",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\nError happens in sql: \nselect * from TEST\norg.apache.spark.sql.AnalysisException: Since Spark 2.3, the queries from raw JSON/CSV files are disallowed when the\nreferenced columns only include the internal corrupt record column\n(named _corrupt_record by default). For example:\nspark.read.schema(schema).csv(file).filter($\"_corrupt_record\".isNotNull).count()\nand spark.read.schema(schema).csv(file).select(\"_corrupt_record\").show().\nInstead, you can cache or save the parsed results and then send the same query.\nFor example, val df \u003d spark.read.schema(schema).csv(file).cache() and then\ndf.filter($\"_corrupt_record\".isNotNull).count().\n\tat org.apache.spark.sql.errors.QueryCompilationErrors$.queryFromRawFilesIncludeCorruptRecordColumnError(QueryCompilationErrors.scala:2897)\n\tat org.apache.spark.sql.execution.datasources.json.JsonFileFormat.buildReader(JsonFileFormat.scala:113)\n\tat org.apache.spark.sql.execution.datasources.FileFormat.buildReaderWithPartitionValues(FileFormat.scala:138)\n\tat org.apache.spark.sql.execution.datasources.FileFormat.buildReaderWithPartitionValues$(FileFormat.scala:129)\n\tat org.apache.spark.sql.execution.datasources.TextBasedFileFormat.buildReaderWithPartitionValues(FileFormat.scala:346)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.inputRDD$lzycompute(DataSourceScanExec.scala:548)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.inputRDD(DataSourceScanExec.scala:537)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.doExecute(DataSourceScanExec.scala:575)\n\tat org.apache.spark.sql.execution.SparkPlan.$anonfun$execute$1(SparkPlan.scala:195)\n\tat org.apache.spark.sql.execution.SparkPlan.$anonfun$executeQuery$1(SparkPlan.scala:246)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)\n\tat org.apache.spark.sql.execution.SparkPlan.executeQuery(SparkPlan.scala:243)\n\tat org.apache.spark.sql.execution.SparkPlan.execute(SparkPlan.scala:191)\n\tat org.apache.spark.sql.execution.SparkPlan.getByteArrayRdd(SparkPlan.scala:364)\n\tat org.apache.spark.sql.execution.SparkPlan.executeTake(SparkPlan.scala:498)\n\tat org.apache.spark.sql.execution.SparkPlan.executeTake(SparkPlan.scala:483)\n\tat org.apache.spark.sql.execution.CollectLimitExec.executeCollect(limit.scala:61)\n\tat org.apache.spark.sql.Dataset.collectFromPlan(Dataset.scala:4332)\n\tat org.apache.spark.sql.Dataset.$anonfun$head$1(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$2(Dataset.scala:4322)\n\tat org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:546)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$1(Dataset.scala:4320)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$6(SQLExecution.scala:125)\n\tat org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:201)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$1(SQLExecution.scala:108)\n\tat org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)\n\tat org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:66)\n\tat org.apache.spark.sql.Dataset.withAction(Dataset.scala:4320)\n\tat org.apache.spark.sql.Dataset.head(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.take(Dataset.scala:3537)\n\tat org.apache.spark.sql.Dataset.takeAsList(Dataset.scala:3560)\n\tat org.apache.zeppelin.spark.Spark3Shims.showDataFrame(Spark3Shims.java:74)\n\tat org.apache.zeppelin.spark.SparkZeppelinContext.showData(SparkZeppelinContext.scala:68)\n\tat org.apache.zeppelin.spark.SparkSqlInterpreter.internalInterpret(SparkSqlInterpreter.java:103)\n\tat org.apache.zeppelin.interpreter.AbstractInterpreter.interpret(AbstractInterpreter.java:55)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:108)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:877)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.ParallelScheduler.lambda$runJobInScheduler$0(ParallelScheduler.java:46)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903100_1301964761",
+      "id": "paragraph_1755131796657_1335777160",
+      "dateCreated": "2025-09-02 13:05:03.100",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-02 13:05:03.101",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1756785903101_1830297320",
+      "id": "paragraph_1755145265088_9300687",
+      "dateCreated": "2025-09-02 13:05:03.101",
+      "status": "READY"
+    }
+  ],
+  "name": "Test 1",
+  "id": "2M4CSKQ8M",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
