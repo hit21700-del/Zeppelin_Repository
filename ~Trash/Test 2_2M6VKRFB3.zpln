@@ -1,0 +1,621 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark\r\nprintln(\"master \u003d \" + sc.master)                           // \u0027yarn\u0027 이어야 정상\r\nprintln(\"deployMode \u003d \" + sc.getConf.get(\"spark.submit.deployMode\",\"n/a\"))\r\nprintln(\"appId \u003d \" + sc.applicationId) ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.844",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "master \u003d yarn\ndeployMode \u003d client\nappId \u003d application_1757292002088_0009\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431844_1261389726",
+      "id": "paragraph_1756876556357_1343639603",
+      "dateCreated": "2025-09-08 12:50:31.844",
+      "status": "READY"
+    },
+    {
+      "text": "%python\nprint(\"!!!!\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "!!!!\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431844_2079232011",
+      "id": "paragraph_1756078216541_1472407371",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%spark\r\nprintln(sc.master)                      // yarn\r\nprintln(sc.getConf.get(\"spark.submit.deployMode\")) // client\r\nprintln(sc.applicationId)               // 앱 ID가 찍혀야 정상 제출\r\nsc.range(1,1000000).count      ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_2034139944",
+      "id": "paragraph_1755508509167_473193331",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%spark\r\nval emonDF \u003d spark.read.json(\"/Logs_TB/emon/*\")\r\nemonDF.createOrReplaceTempView(\"emon\")\r\nval kmonDF \u003d spark.read.json(\"/Logs_TB/kmon/*\")\r\nkmonDF.createOrReplaceTempView(\"kmon\")\r\nval kmonewDF \u003d spark.read.json(\"/Logs_TB/kmonnew/*\")\r\nkmonewDF.createOrReplaceTempView(\"kmonnew\")\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-09 14:34:50.901",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "org.apache.spark.SparkException: Job 1 cancelled because SparkContext was shut down\n  at org.apache.spark.scheduler.DAGScheduler.$anonfun$cleanUpAfterSchedulerStop$1(DAGScheduler.scala:1253)\n  at org.apache.spark.scheduler.DAGScheduler.$anonfun$cleanUpAfterSchedulerStop$1$adapted(DAGScheduler.scala:1251)\n  at scala.collection.mutable.HashSet.foreach(HashSet.scala:79)\n  at org.apache.spark.scheduler.DAGScheduler.cleanUpAfterSchedulerStop(DAGScheduler.scala:1251)\n  at org.apache.spark.scheduler.DAGSchedulerEventProcessLoop.onStop(DAGScheduler.scala:3087)\n  at org.apache.spark.util.EventLoop.stop(EventLoop.scala:84)\n  at org.apache.spark.scheduler.DAGScheduler.$anonfun$stop$3(DAGScheduler.scala:2973)\n  at org.apache.spark.util.Utils$.tryLogNonFatalError(Utils.scala:1375)\n  at org.apache.spark.scheduler.DAGScheduler.stop(DAGScheduler.scala:2973)\n  at org.apache.spark.SparkContext.$anonfun$stop$12(SparkContext.scala:2263)\n  at org.apache.spark.util.Utils$.tryLogNonFatalError(Utils.scala:1375)\n  at org.apache.spark.SparkContext.stop(SparkContext.scala:2263)\n  at org.apache.spark.SparkContext.stop(SparkContext.scala:2216)\n  at org.apache.spark.scheduler.cluster.YarnClientSchedulerBackend$MonitorThread.run(YarnClientSchedulerBackend.scala:125)\n  at org.apache.spark.scheduler.DAGScheduler.runJob(DAGScheduler.scala:989)\n  at org.apache.spark.SparkContext.runJob(SparkContext.scala:2398)\n  at org.apache.spark.SparkContext.runJob(SparkContext.scala:2493)\n  at org.apache.spark.sql.catalyst.json.JsonInferSchema.infer(JsonInferSchema.scala:120)\n  at org.apache.spark.sql.execution.datasources.json.TextInputJsonDataSource$.$anonfun$inferFromDataset$5(JsonDataSource.scala:109)\n  at org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:201)\n  at org.apache.spark.sql.execution.datasources.json.TextInputJsonDataSource$.inferFromDataset(JsonDataSource.scala:109)\n  at org.apache.spark.sql.execution.datasources.json.TextInputJsonDataSource$.infer(JsonDataSource.scala:98)\n  at org.apache.spark.sql.execution.datasources.json.JsonDataSource.inferSchema(JsonDataSource.scala:64)\n  at org.apache.spark.sql.execution.datasources.json.JsonFileFormat.inferSchema(JsonFileFormat.scala:59)\n  at org.apache.spark.sql.execution.datasources.DataSource.$anonfun$getOrInferFileFormatSchema$11(DataSource.scala:208)\n  at scala.Option.orElse(Option.scala:447)\n  at org.apache.spark.sql.execution.datasources.DataSource.getOrInferFileFormatSchema(DataSource.scala:205)\n  at org.apache.spark.sql.execution.datasources.DataSource.resolveRelation(DataSource.scala:407)\n  at org.apache.spark.sql.DataFrameReader.loadV1Source(DataFrameReader.scala:229)\n  at org.apache.spark.sql.DataFrameReader.$anonfun$load$2(DataFrameReader.scala:211)\n  at scala.Option.getOrElse(Option.scala:189)\n  at org.apache.spark.sql.DataFrameReader.load(DataFrameReader.scala:211)\n  at org.apache.spark.sql.DataFrameReader.json(DataFrameReader.scala:362)\n  at org.apache.spark.sql.DataFrameReader.json(DataFrameReader.scala:341)\n  ... 46 elided\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1746152322",
+      "id": "paragraph_1755130887285_758103300",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "dateStarted": "2025-09-09 14:34:50.904",
+      "dateFinished": "2025-09-09 15:07:35.869",
+      "status": "ERROR"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM emon\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-09 14:34:51.834",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\nError happens in sql: \r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM emon\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour\njava.lang.IllegalStateException: Cannot call methods on a stopped SparkContext.\nThis stopped SparkContext was created at:\n\norg.apache.spark.sql.SparkSession$Builder.getOrCreate(SparkSession.scala:1093)\norg.apache.zeppelin.spark.AbstractSparkScalaInterpreter.createSparkContext(AbstractSparkScalaInterpreter.java:201)\norg.apache.zeppelin.spark.AbstractSparkScalaInterpreter.open(AbstractSparkScalaInterpreter.java:117)\norg.apache.zeppelin.spark.SparkInterpreter.open(SparkInterpreter.java:124)\norg.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:70)\norg.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:861)\norg.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\norg.apache.zeppelin.scheduler.Job.run(Job.java:186)\norg.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\norg.apache.zeppelin.scheduler.FIFOScheduler.lambda$runJobInScheduler$0(FIFOScheduler.java:42)\njava.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\njava.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\njava.lang.Thread.run(Thread.java:750)\n\nThe currently active SparkContext was created at:\n\n(No active SparkContext.)\n         \n\tat org.apache.spark.SparkContext.assertNotStopped(SparkContext.scala:122)\n\tat org.apache.spark.SparkContext.defaultParallelism(SparkContext.scala:2707)\n\tat org.apache.spark.sql.execution.adaptive.CoalesceShufflePartitions.$anonfun$apply$1(CoalesceShufflePartitions.scala:61)\n\tat scala.runtime.java8.JFunction0$mcI$sp.apply(JFunction0$mcI$sp.java:23)\n\tat scala.Option.getOrElse(Option.scala:189)\n\tat org.apache.spark.sql.execution.adaptive.CoalesceShufflePartitions.apply(CoalesceShufflePartitions.scala:58)\n\tat org.apache.spark.sql.execution.adaptive.CoalesceShufflePartitions.apply(CoalesceShufflePartitions.scala:34)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.$anonfun$optimizeQueryStage$2(AdaptiveSparkPlanExec.scala:169)\n\tat scala.collection.LinearSeqOptimized.foldLeft(LinearSeqOptimized.scala:126)\n\tat scala.collection.LinearSeqOptimized.foldLeft$(LinearSeqOptimized.scala:122)\n\tat scala.collection.immutable.List.foldLeft(List.scala:91)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.optimizeQueryStage(AdaptiveSparkPlanExec.scala:168)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.newQueryStage(AdaptiveSparkPlanExec.scala:588)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.createQueryStages(AdaptiveSparkPlanExec.scala:538)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.$anonfun$createQueryStages$2(AdaptiveSparkPlanExec.scala:577)\n\tat scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:286)\n\tat scala.collection.Iterator.foreach(Iterator.scala:943)\n\tat scala.collection.Iterator.foreach$(Iterator.scala:943)\n\tat scala.collection.AbstractIterator.foreach(Iterator.scala:1431)\n\tat scala.collection.IterableLike.foreach(IterableLike.scala:74)\n\tat scala.collection.IterableLike.foreach$(IterableLike.scala:73)\n\tat scala.collection.AbstractIterable.foreach(Iterable.scala:56)\n\tat scala.collection.TraversableLike.map(TraversableLike.scala:286)\n\tat scala.collection.TraversableLike.map$(TraversableLike.scala:279)\n\tat scala.collection.AbstractTraversable.map(Traversable.scala:108)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.createQueryStages(AdaptiveSparkPlanExec.scala:577)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.$anonfun$createQueryStages$2(AdaptiveSparkPlanExec.scala:577)\n\tat scala.collection.TraversableLike.$anonfun$map$1(TraversableLike.scala:286)\n\tat scala.collection.Iterator.foreach(Iterator.scala:943)\n\tat scala.collection.Iterator.foreach$(Iterator.scala:943)\n\tat scala.collection.AbstractIterator.foreach(Iterator.scala:1431)\n\tat scala.collection.IterableLike.foreach(IterableLike.scala:74)\n\tat scala.collection.IterableLike.foreach$(IterableLike.scala:73)\n\tat scala.collection.AbstractIterable.foreach(Iterable.scala:56)\n\tat scala.collection.TraversableLike.map(TraversableLike.scala:286)\n\tat scala.collection.TraversableLike.map$(TraversableLike.scala:279)\n\tat scala.collection.AbstractTraversable.map(Traversable.scala:108)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.createQueryStages(AdaptiveSparkPlanExec.scala:577)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.$anonfun$getFinalPhysicalPlan$1(AdaptiveSparkPlanExec.scala:277)\n\tat org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.getFinalPhysicalPlan(AdaptiveSparkPlanExec.scala:272)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.withFinalPlanUpdate(AdaptiveSparkPlanExec.scala:417)\n\tat org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec.executeCollect(AdaptiveSparkPlanExec.scala:390)\n\tat org.apache.spark.sql.Dataset.collectFromPlan(Dataset.scala:4332)\n\tat org.apache.spark.sql.Dataset.$anonfun$head$1(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$2(Dataset.scala:4322)\n\tat org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:546)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$1(Dataset.scala:4320)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$6(SQLExecution.scala:125)\n\tat org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:201)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$1(SQLExecution.scala:108)\n\tat org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)\n\tat org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:66)\n\tat org.apache.spark.sql.Dataset.withAction(Dataset.scala:4320)\n\tat org.apache.spark.sql.Dataset.head(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.take(Dataset.scala:3537)\n\tat org.apache.spark.sql.Dataset.takeAsList(Dataset.scala:3560)\n\tat org.apache.zeppelin.spark.Spark3Shims.showDataFrame(Spark3Shims.java:74)\n\tat org.apache.zeppelin.spark.SparkZeppelinContext.showData(SparkZeppelinContext.scala:68)\n\tat org.apache.zeppelin.spark.SparkSqlInterpreter.internalInterpret(SparkSqlInterpreter.java:103)\n\tat org.apache.zeppelin.interpreter.AbstractInterpreter.interpret(AbstractInterpreter.java:55)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:108)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:877)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.ParallelScheduler.lambda$runJobInScheduler$0(ParallelScheduler.java:46)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_2144300141",
+      "id": "paragraph_1755130894868_1020586835",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "dateStarted": "2025-09-09 15:07:35.871",
+      "dateFinished": "2025-09-09 15:07:36.454",
+      "status": "ERROR"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM kmon\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 13:47:06.126",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "hour\tcnt\n2025-06-11 23:00:00\t227008\n2025-07-21 09:00:00\t1000\n2025-07-21 10:00:00\t375000\n2025-07-21 11:00:00\t1000\n2025-07-21 12:00:00\t1000\n2025-07-21 13:00:00\t1000\n2025-07-21 14:00:00\t1000\n2025-07-21 15:00:00\t1000\n2025-07-21 16:00:00\t1000\n2025-07-21 17:00:00\t1000\n2025-07-21 18:00:00\t1000\n2025-07-21 19:00:00\t1000\n2025-07-21 20:00:00\t1000\n2025-07-21 21:00:00\t1000\n2025-07-21 22:00:00\t1000\n2025-07-21 23:00:00\t1000\n2025-07-22 00:00:00\t1000\n2025-07-22 01:00:00\t1000\n2025-07-22 02:00:00\t1000\n2025-07-22 03:00:00\t1000\n2025-07-22 04:00:00\t1000\n2025-07-22 05:00:00\t1000\n2025-07-22 06:00:00\t1000\n2025-07-22 07:00:00\t1000\n2025-07-22 08:00:00\t1000\n2025-07-22 09:00:00\t1000\n2025-07-22 10:00:00\t1000\n2025-07-22 11:00:00\t1000\n2025-07-22 12:00:00\t1000\n2025-07-22 13:00:00\t1000\n2025-07-22 14:00:00\t1000\n2025-07-22 15:00:00\t1000\n2025-07-22 16:00:00\t1000\n2025-07-22 17:00:00\t1000\n2025-07-22 18:00:00\t1000\n2025-07-22 19:00:00\t1000\n2025-07-22 20:00:00\t1000\n2025-07-22 21:00:00\t1000\n2025-07-22 22:00:00\t1000\n2025-07-22 23:00:00\t1000\n2025-07-23 00:00:00\t1000\n2025-07-23 01:00:00\t1000\n2025-07-23 02:00:00\t1000\n2025-07-23 03:00:00\t1000\n2025-07-23 04:00:00\t1000\n2025-07-23 05:00:00\t1000\n2025-07-23 06:00:00\t1000\n2025-07-23 07:00:00\t1000\n2025-07-23 08:00:00\t1000\n2025-07-23 09:00:00\t1000\n2025-07-23 10:00:00\t1000\n2025-07-23 11:00:00\t1000\n2025-07-23 12:00:00\t1000\n2025-07-23 13:00:00\t1000\n2025-07-23 14:00:00\t1000\n2025-07-23 15:00:00\t1000\n2025-07-23 16:00:00\t1000\n2025-07-23 17:00:00\t1000\n2025-07-23 18:00:00\t1000\n2025-07-23 19:00:00\t1000\n2025-07-23 20:00:00\t1000\n2025-07-23 21:00:00\t1000\n2025-07-23 22:00:00\t1000\n2025-07-23 23:00:00\t1000\n2025-07-24 00:00:00\t1000\n2025-07-24 01:00:00\t1000\n2025-07-24 02:00:00\t1000\n2025-07-24 03:00:00\t1000\n2025-07-24 04:00:00\t1000\n2025-07-24 05:00:00\t1000\n2025-07-24 06:00:00\t1000\n2025-07-24 07:00:00\t1000\n2025-07-24 08:00:00\t1000\n2025-07-24 09:00:00\t1000\n2025-07-24 10:00:00\t1000\n2025-07-24 11:00:00\t1000\n2025-07-24 12:00:00\t1000\n2025-07-24 13:00:00\t1000\n2025-07-24 14:00:00\t1000\n2025-07-24 15:00:00\t1000\n2025-07-24 16:00:00\t1000\n2025-07-24 17:00:00\t1000\n2025-07-24 18:00:00\t1000\n2025-07-24 19:00:00\t1000\n2025-07-24 20:00:00\t1000\n2025-07-24 21:00:00\t1000\n2025-07-24 22:00:00\t1000\n2025-07-24 23:00:00\t1000\n2025-07-25 00:00:00\t1000\n2025-07-25 01:00:00\t1000\n2025-07-25 02:00:00\t1000\n2025-07-25 03:00:00\t1000\n2025-07-25 04:00:00\t1000\n2025-07-25 05:00:00\t1000\n2025-07-25 06:00:00\t1000\n2025-07-25 07:00:00\t1000\n2025-07-25 08:00:00\t1000\n2025-07-25 09:00:00\t1000\n2025-07-25 10:00:00\t1000\n2025-07-25 11:00:00\t1000\n2025-07-25 12:00:00\t1000\n2025-07-25 13:00:00\t1000\n2025-07-25 14:00:00\t1000\n2025-07-25 15:00:00\t1000\n2025-07-25 16:00:00\t1000\n2025-07-25 17:00:00\t1000\n2025-07-25 18:00:00\t1000\n2025-07-25 19:00:00\t1000\n2025-07-25 20:00:00\t1000\n2025-07-25 21:00:00\t1000\n2025-07-25 22:00:00\t1000\n2025-07-25 23:00:00\t1000\n2025-07-26 00:00:00\t1000\n2025-07-26 01:00:00\t1000\n2025-07-26 02:00:00\t1000\n2025-07-26 03:00:00\t1000\n2025-07-26 04:00:00\t1000\n2025-07-26 05:00:00\t1000\n2025-07-26 06:00:00\t1000\n2025-07-26 07:00:00\t1000\n2025-07-26 08:00:00\t1000\n2025-07-26 09:00:00\t1000\n2025-07-26 10:00:00\t1000\n2025-07-26 11:00:00\t1000\n2025-07-26 12:00:00\t1000\n2025-07-26 13:00:00\t1000\n2025-07-26 14:00:00\t1000\n2025-07-26 15:00:00\t1000\n2025-07-26 16:00:00\t1000\n2025-07-26 17:00:00\t1000\n2025-07-26 18:00:00\t1000\n2025-07-26 19:00:00\t1000\n2025-07-26 20:00:00\t1000\n2025-07-26 21:00:00\t1000\n2025-07-26 22:00:00\t1000\n2025-07-26 23:00:00\t1000\n2025-07-27 00:00:00\t1000\n2025-07-27 01:00:00\t1000\n2025-07-27 02:00:00\t1000\n2025-07-27 03:00:00\t1000\n2025-07-27 04:00:00\t1000\n2025-07-27 05:00:00\t1000\n2025-07-27 06:00:00\t1000\n2025-07-27 07:00:00\t1000\n2025-07-27 08:00:00\t1000\n2025-07-27 09:00:00\t1000\n2025-07-27 10:00:00\t1000\n2025-07-27 11:00:00\t1000\n2025-07-27 12:00:00\t1000\n2025-07-27 13:00:00\t1000\n2025-07-27 14:00:00\t1000\n2025-07-27 15:00:00\t1000\n2025-07-27 16:00:00\t1000\n2025-07-27 17:00:00\t1000\n2025-07-27 18:00:00\t1000\n2025-07-27 19:00:00\t1000\n2025-07-27 20:00:00\t1000\n2025-07-27 21:00:00\t1000\n2025-07-27 22:00:00\t1000\n2025-07-27 23:00:00\t1000\n2025-07-28 00:00:00\t1000\n2025-07-28 01:00:00\t1000\n2025-07-28 02:00:00\t1000\n2025-07-28 03:00:00\t1000\n2025-07-28 04:00:00\t1000\n2025-07-28 05:00:00\t1000\n2025-07-28 06:00:00\t1000\n2025-07-28 07:00:00\t1000\n2025-07-28 08:00:00\t1000\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1973300492",
+      "id": "paragraph_1755131260131_840440213",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "dateStarted": "2025-09-08 13:54:03.871",
+      "dateFinished": "2025-09-08 13:55:19.118",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sql\r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM kmonnew\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 13:47:06.796",
+      "progress": 61,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 4.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "hour": "string",
+                      "cnt": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\nError happens in sql: \r\nSELECT date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027) AS hour, COUNT(*) AS cnt\r\nFROM kmonnew\r\nGROUP BY date_format(created_at,\u0027yyyy-MM-dd HH:00:00\u0027)\r\nORDER BY hour\njava.io.FileNotFoundException: /data/yarn/local/usercache/kadap/appcache/application_1757292002088_0016/blockmgr-f9801b8f-f56c-4a8e-ae7c-4a7a86be425f/12/temp_shuffle_a743ec40-2064-47ce-8116-67da90b392bf (No such file or directory)\n\tat java.io.FileOutputStream.open0(Native Method)\n\tat java.io.FileOutputStream.open(FileOutputStream.java:270)\n\tat java.io.FileOutputStream.\u003cinit\u003e(FileOutputStream.java:213)\n\tat org.apache.spark.storage.DiskBlockObjectWriter.initialize(DiskBlockObjectWriter.scala:141)\n\tat org.apache.spark.storage.DiskBlockObjectWriter.open(DiskBlockObjectWriter.scala:161)\n\tat org.apache.spark.storage.DiskBlockObjectWriter.write(DiskBlockObjectWriter.scala:308)\n\tat org.apache.spark.shuffle.sort.BypassMergeSortShuffleWriter.write(BypassMergeSortShuffleWriter.java:171)\n\tat org.apache.spark.shuffle.ShuffleWriteProcessor.write(ShuffleWriteProcessor.scala:59)\n\tat org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:104)\n\tat org.apache.spark.scheduler.ShuffleMapTask.runTask(ShuffleMapTask.scala:54)\n\tat org.apache.spark.TaskContext.runTaskWithListeners(TaskContext.scala:166)\n\tat org.apache.spark.scheduler.Task.run(Task.scala:141)\n\tat org.apache.spark.executor.Executor$TaskRunner.$anonfun$run$4(Executor.scala:620)\n\tat org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally(SparkErrorUtils.scala:64)\n\tat org.apache.spark.util.SparkErrorUtils.tryWithSafeFinally$(SparkErrorUtils.scala:61)\n\tat org.apache.spark.util.Utils$.tryWithSafeFinally(Utils.scala:94)\n\tat org.apache.spark.executor.Executor$TaskRunner.run(Executor.scala:623)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1044621330",
+      "id": "paragraph_1755131262444_644112882",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "dateStarted": "2025-09-08 13:55:19.121",
+      "dateFinished": "2025-09-08 13:56:34.334",
+      "status": "ERROR"
+    },
+    {
+      "text": "%spark\nval emonDF \u003d spark.read.option(\"multiLine\", true).option(\"header\", true).csv(\"/Data/TEST/*\")\nemonDF.createOrReplaceTempView(\"SVOD_RVOD_RAW\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[1m\u001b[34memonDF\u001b[0m: \u001b[1m\u001b[32morg.apache.spark.sql.DataFrame\u001b[0m \u003d [TRX_DTTM: string, TRX_TP: string ... 23 more fields]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1443258322",
+      "id": "paragraph_1755131279084_664137442",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\r\nselect\r\n--   date_format(to_timestamp(A.TRX_DTTM,\u0027yyyyMMddHHmmss\u0027),\u0027yyyyMMdd\u0027) as p_dt,\r\n--   A.SO_CD,\r\n  A.SP_ID,\r\n  count(*) as trx_cnt,\r\n  count(distinct A.TRX_DTTM)\r\nfrom SVOD_RVOD_RAW A\r\ngroup by\r\n  A.SP_ID",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "SP_ID": "string",
+                      "trx_cnt": "string",
+                      "count(DISTINCT TRX_DTTM)": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "SP_ID\ttrx_cnt\tcount(DISTINCT TRX_DTTM)\nCJHV\t3923312\t3741047\nHCN\t1202954\t1170990\nJCN\t192502\t190890\nDLIVE\t6509\t6463\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_2144849424",
+      "id": "paragraph_1755145298636_2034979490",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\nselect count(*) from SVOD_RVOD_RAW",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 6.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "count(1)": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:76)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:861)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.ParallelScheduler.lambda$runJobInScheduler$0(ParallelScheduler.java:46)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\nCaused by: org.apache.zeppelin.interpreter.InterpreterException: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:76)\n\tat org.apache.zeppelin.interpreter.Interpreter.getInterpreterInTheSameSessionByClassName(Interpreter.java:322)\n\tat org.apache.zeppelin.interpreter.Interpreter.getInterpreterInTheSameSessionByClassName(Interpreter.java:333)\n\tat org.apache.zeppelin.spark.SparkSqlInterpreter.open(SparkSqlInterpreter.java:57)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:70)\n\t... 8 more\nCaused by: org.apache.zeppelin.interpreter.InterpreterException: Fail to open SparkInterpreter\n\tat org.apache.zeppelin.spark.SparkInterpreter.open(SparkInterpreter.java:140)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.open(LazyOpenInterpreter.java:70)\n\t... 12 more\nCaused by: java.net.ConnectException: Your endpoint configuration is wrong; For more details see:  http://wiki.apache.org/hadoop/UnsetHostnameOrPort\n\tat sun.reflect.GeneratedConstructorAccessor9.newInstance(Unknown Source)\n\tat sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)\n\tat java.lang.reflect.Constructor.newInstance(Constructor.java:423)\n\tat org.apache.hadoop.net.NetUtils.wrapWithMessage(NetUtils.java:913)\n\tat org.apache.hadoop.net.NetUtils.wrapException(NetUtils.java:824)\n\tat org.apache.hadoop.ipc.Client.getRpcResponse(Client.java:1616)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1558)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1455)\n\tat org.apache.hadoop.ipc.ProtobufRpcEngine2$Invoker.invoke(ProtobufRpcEngine2.java:242)\n\tat org.apache.hadoop.ipc.ProtobufRpcEngine2$Invoker.invoke(ProtobufRpcEngine2.java:129)\n\tat com.sun.proxy.$Proxy30.getNewApplication(Unknown Source)\n\tat org.apache.hadoop.yarn.api.impl.pb.client.ApplicationClientProtocolPBClientImpl.getNewApplication(ApplicationClientProtocolPBClientImpl.java:286)\n\tat sun.reflect.GeneratedMethodAccessor4.invoke(Unknown Source)\n\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)\n\tat java.lang.reflect.Method.invoke(Method.java:498)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler.invokeMethod(RetryInvocationHandler.java:422)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeMethod(RetryInvocationHandler.java:165)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invoke(RetryInvocationHandler.java:157)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler$Call.invokeOnce(RetryInvocationHandler.java:95)\n\tat org.apache.hadoop.io.retry.RetryInvocationHandler.invoke(RetryInvocationHandler.java:359)\n\tat com.sun.proxy.$Proxy31.getNewApplication(Unknown Source)\n\tat org.apache.hadoop.yarn.client.api.impl.YarnClientImpl.getNewApplication(YarnClientImpl.java:284)\n\tat org.apache.hadoop.yarn.client.api.impl.YarnClientImpl.createApplication(YarnClientImpl.java:292)\n\tat org.apache.spark.deploy.yarn.Client.submitApplication(Client.scala:195)\n\tat org.apache.spark.scheduler.cluster.YarnClientSchedulerBackend.start(YarnClientSchedulerBackend.scala:62)\n\tat org.apache.spark.scheduler.TaskSchedulerImpl.start(TaskSchedulerImpl.scala:235)\n\tat org.apache.spark.SparkContext.\u003cinit\u003e(SparkContext.scala:604)\n\tat org.apache.spark.SparkContext$.getOrCreate(SparkContext.scala:2888)\n\tat org.apache.spark.sql.SparkSession$Builder.$anonfun$getOrCreate$2(SparkSession.scala:1099)\n\tat scala.Option.getOrElse(Option.scala:189)\n\tat org.apache.spark.sql.SparkSession$Builder.getOrCreate(SparkSession.scala:1093)\n\tat org.apache.zeppelin.spark.AbstractSparkScalaInterpreter.createSparkContext(AbstractSparkScalaInterpreter.java:201)\n\tat org.apache.zeppelin.spark.AbstractSparkScalaInterpreter.open(AbstractSparkScalaInterpreter.java:117)\n\tat org.apache.zeppelin.spark.SparkInterpreter.open(SparkInterpreter.java:124)\n\t... 13 more\nCaused by: java.net.ConnectException: Connection refused\n\tat sun.nio.ch.SocketChannelImpl.checkConnect(Native Method)\n\tat sun.nio.ch.SocketChannelImpl.finishConnect(SocketChannelImpl.java:716)\n\tat org.apache.hadoop.net.SocketIOWithTimeout.connect(SocketIOWithTimeout.java:205)\n\tat org.apache.hadoop.net.NetUtils.connect(NetUtils.java:586)\n\tat org.apache.hadoop.ipc.Client$Connection.setupConnection(Client.java:711)\n\tat org.apache.hadoop.ipc.Client$Connection.setupIOstreams(Client.java:833)\n\tat org.apache.hadoop.ipc.Client$Connection.access$3800(Client.java:414)\n\tat org.apache.hadoop.ipc.Client.getConnection(Client.java:1677)\n\tat org.apache.hadoop.ipc.Client.call(Client.java:1502)\n\t... 40 more\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1876488200",
+      "id": "paragraph_1755146019449_599527730",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\nselect * from TEST",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.845",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sql",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sql",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\nError happens in sql: \nselect * from TEST\norg.apache.spark.sql.AnalysisException: Since Spark 2.3, the queries from raw JSON/CSV files are disallowed when the\nreferenced columns only include the internal corrupt record column\n(named _corrupt_record by default). For example:\nspark.read.schema(schema).csv(file).filter($\"_corrupt_record\".isNotNull).count()\nand spark.read.schema(schema).csv(file).select(\"_corrupt_record\").show().\nInstead, you can cache or save the parsed results and then send the same query.\nFor example, val df \u003d spark.read.schema(schema).csv(file).cache() and then\ndf.filter($\"_corrupt_record\".isNotNull).count().\n\tat org.apache.spark.sql.errors.QueryCompilationErrors$.queryFromRawFilesIncludeCorruptRecordColumnError(QueryCompilationErrors.scala:2897)\n\tat org.apache.spark.sql.execution.datasources.json.JsonFileFormat.buildReader(JsonFileFormat.scala:113)\n\tat org.apache.spark.sql.execution.datasources.FileFormat.buildReaderWithPartitionValues(FileFormat.scala:138)\n\tat org.apache.spark.sql.execution.datasources.FileFormat.buildReaderWithPartitionValues$(FileFormat.scala:129)\n\tat org.apache.spark.sql.execution.datasources.TextBasedFileFormat.buildReaderWithPartitionValues(FileFormat.scala:346)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.inputRDD$lzycompute(DataSourceScanExec.scala:548)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.inputRDD(DataSourceScanExec.scala:537)\n\tat org.apache.spark.sql.execution.FileSourceScanExec.doExecute(DataSourceScanExec.scala:575)\n\tat org.apache.spark.sql.execution.SparkPlan.$anonfun$execute$1(SparkPlan.scala:195)\n\tat org.apache.spark.sql.execution.SparkPlan.$anonfun$executeQuery$1(SparkPlan.scala:246)\n\tat org.apache.spark.rdd.RDDOperationScope$.withScope(RDDOperationScope.scala:151)\n\tat org.apache.spark.sql.execution.SparkPlan.executeQuery(SparkPlan.scala:243)\n\tat org.apache.spark.sql.execution.SparkPlan.execute(SparkPlan.scala:191)\n\tat org.apache.spark.sql.execution.SparkPlan.getByteArrayRdd(SparkPlan.scala:364)\n\tat org.apache.spark.sql.execution.SparkPlan.executeTake(SparkPlan.scala:498)\n\tat org.apache.spark.sql.execution.SparkPlan.executeTake(SparkPlan.scala:483)\n\tat org.apache.spark.sql.execution.CollectLimitExec.executeCollect(limit.scala:61)\n\tat org.apache.spark.sql.Dataset.collectFromPlan(Dataset.scala:4332)\n\tat org.apache.spark.sql.Dataset.$anonfun$head$1(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$2(Dataset.scala:4322)\n\tat org.apache.spark.sql.execution.QueryExecution$.withInternalError(QueryExecution.scala:546)\n\tat org.apache.spark.sql.Dataset.$anonfun$withAction$1(Dataset.scala:4320)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$6(SQLExecution.scala:125)\n\tat org.apache.spark.sql.execution.SQLExecution$.withSQLConfPropagated(SQLExecution.scala:201)\n\tat org.apache.spark.sql.execution.SQLExecution$.$anonfun$withNewExecutionId$1(SQLExecution.scala:108)\n\tat org.apache.spark.sql.SparkSession.withActive(SparkSession.scala:900)\n\tat org.apache.spark.sql.execution.SQLExecution$.withNewExecutionId(SQLExecution.scala:66)\n\tat org.apache.spark.sql.Dataset.withAction(Dataset.scala:4320)\n\tat org.apache.spark.sql.Dataset.head(Dataset.scala:3314)\n\tat org.apache.spark.sql.Dataset.take(Dataset.scala:3537)\n\tat org.apache.spark.sql.Dataset.takeAsList(Dataset.scala:3560)\n\tat org.apache.zeppelin.spark.Spark3Shims.showDataFrame(Spark3Shims.java:74)\n\tat org.apache.zeppelin.spark.SparkZeppelinContext.showData(SparkZeppelinContext.scala:68)\n\tat org.apache.zeppelin.spark.SparkSqlInterpreter.internalInterpret(SparkSqlInterpreter.java:103)\n\tat org.apache.zeppelin.interpreter.AbstractInterpreter.interpret(AbstractInterpreter.java:55)\n\tat org.apache.zeppelin.interpreter.LazyOpenInterpreter.interpret(LazyOpenInterpreter.java:108)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:877)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreterServer$InterpretJob.jobRun(RemoteInterpreterServer.java:769)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.ParallelScheduler.lambda$runJobInScheduler$0(ParallelScheduler.java:46)\n\tat java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)\n\tat java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)\n\tat java.lang.Thread.run(Thread.java:750)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_1326264201",
+      "id": "paragraph_1755131796657_1335777160",
+      "dateCreated": "2025-09-08 12:50:31.845",
+      "status": "READY"
+    },
+    {
+      "text": "%sql\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-08 12:50:31.846",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757303431845_2059934906",
+      "id": "paragraph_1755145265088_9300687",
+      "dateCreated": "2025-09-08 12:50:31.846",
+      "status": "READY"
+    }
+  ],
+  "name": "Test 2",
+  "id": "2M6VKRFB3",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
