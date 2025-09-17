@@ -1,7 +1,9 @@
 {
   "paragraphs": [
     {
+      "text": "",
       "user": "anonymous",
+      "dateUpdated": "2025-09-16 11:07:03.509",
       "progress": 0,
       "config": {},
       "settings": {
@@ -15,9 +17,25 @@
       "id": "paragraph_1757986275194_1564070146",
       "dateCreated": "2025-09-16 10:31:15.194",
       "status": "READY"
+    },
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1757988463445_446633923",
+      "id": "paragraph_1757988463445_446633923",
+      "dateCreated": "2025-09-16 11:07:43.445",
+      "status": "READY"
     }
   ],
-  "name": "test",
+  "name": "tes",
   "id": "2M66SY9MW",
   "defaultInterpreterGroup": "spark",
   "version": "0.11.1",
@@ -25,7 +43,9 @@
   "noteForms": {},
   "angularObjects": {},
   "config": {
-    "isZeppelinNotebookCronEnable": false
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
   },
   "info": {}
 }
