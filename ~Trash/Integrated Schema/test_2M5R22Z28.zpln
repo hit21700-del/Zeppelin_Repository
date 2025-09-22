@@ -1,0 +1,64 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql.functions import input_file_name\r\n\r\n# 전체 디렉토리 경로로\r\nBASE_PATH \u003d \"/QH/TEST_DATA\"  # HDFS 루트\r\n\r\n# 단일 CSV 파일 경로\r\nFILE_PATH \u003d \"/QH/TEST_DATA/part-00000-3560c061-d7ff-4041-b1a2-7f775112f8b2-c000.csv\"\r\n\r\nREAD_OPTS \u003d {\r\n    \"header\": \"true\",\r\n    \"inferSchema\": \"true\",\r\n    \"mode\": \"PERMISSIVE\",\r\n    \"columnNameOfCorruptRecord\": \"_corrupt_record\",\r\n    \"badRecordsPath\": \"/QH/_bad_records_raw\",\r\n    \"multiLine\": \"false\",\r\n    \"escape\": \"\\\\\",\r\n    \"quote\": \"\\\"\",\r\n}\r\n\r\n# 단일 파일만 읽기\r\ndf \u003d (spark.read\r\n      .options(**READ_OPTS)\r\n      .csv(FILE_PATH)                      # ← 단일 파일 지정\r\n      .withColumn(\"_src_file\", input_file_name()))\r\n\r\ndf.show(5)        # 데이터 일부 확인\r\nprint(\"Row count:\", df.count())\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-22 13:19:16.738",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758513864101_27232694",
+      "id": "paragraph_1758513864101_27232694",
+      "dateCreated": "2025-09-22 13:04:24.101",
+      "dateStarted": "2025-09-22 13:04:27.417",
+      "status": "RUNNING"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-22 13:04:27.417",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758513867417_14845508",
+      "id": "paragraph_1758513867417_14845508",
+      "dateCreated": "2025-09-22 13:04:27.417",
+      "status": "READY"
+    }
+  ],
+  "name": "test",
+  "id": "2M5R22Z28",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
