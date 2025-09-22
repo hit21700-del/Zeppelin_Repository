@@ -1,0 +1,259 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql.functions import input_file_name\r\n\r\n# 전체 디렉토리 경로로\r\nBASE_PATH \u003d \"/QH/TEST_DATA\"  # HDFS 루트\r\n\r\n# 단일 CSV 파일 경로\r\nFILE_PATH \u003d \"/QH/TEST_DATA/part-00000-3560c061-d7ff-4041-b1a2-7f775112f8b2-c000.csv\"\r\n\r\nREAD_OPTS \u003d {\r\n    \"header\": \"true\",\r\n    \"inferSchema\": \"true\",\r\n    \"mode\": \"PERMISSIVE\",\r\n    \"columnNameOfCorruptRecord\": \"_corrupt_record\",\r\n    \"badRecordsPath\": \"/QH/_bad_records_raw\",\r\n    \"multiLine\": \"false\",\r\n    \"escape\": \"\\\\\",\r\n    \"quote\": \"\\\"\",\r\n}\r\n\r\n# 단일 파일만 읽기\r\ndf \u003d (spark.read\r\n      .options(**READ_OPTS)\r\n      .csv(FILE_PATH)                      # ← 단일 파일 지정\r\n      .withColumn(\"_src_file\", input_file_name()))\r\n\r\ndf.show(5)        # 데이터 일부 확인\r\nprint(\"Row count:\", df.count())\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-22 13:04:08.068",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758075112764_77334374",
+      "id": "paragraph_1758075112764_77334374",
+      "dateCreated": "2025-09-17 11:11:52.764",
+      "dateStarted": "2025-09-22 13:04:08.070",
+      "dateFinished": "2025-09-22 13:00:12.673",
+      "status": "RUNNING"
+    },
+    {
+      "text": "%spark.pyspark\nimport sys\nimport os\nsys.path.append(\"/home/kadap/python/pre_processing\")\nfrom typing import Optional, List, Dict, Any\n\nfrom pyspark.sql import SparkSession, DataFrame\nfrom pyspark.sql.functions import (\n    col, lit, when, count, sum as sum_, min, max, avg, \n    to_timestamp, unix_timestamp, from_unixtime,\n    date_format, hour, minute, second, \n    lag, lead, window, expr, round\n)\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.types import (\n    StructType, StructField, StringType, IntegerType, \n    DoubleType, TimestampType, BooleanType\n)\n\nfrom kslab_config import PP_IO_CONFIG, PROCESSING_PARAMS, DB_CONFIG, SELECTED_COLUMNS, SELECTED_COLUMNS_FINAL, DB_QUERY_KMON_DATA, DB_QUERY_MASTER_DATA\nfrom kslab_utils import (\n    print_timestamp, print_dfcount, create_spark_session,\n    load_data_from_db, load_data_from_csv, save_to_csv, save_to_db\n)\n\nfrom kslab_pp_func import (\n    convert_df_new, bit_process, add_status, select_columns, remove_outlier1,\n    remove_outlier2, add_columns, add_sox\n)\n\nprint(DB_CONFIG[\"dbname\"], PP_IO_CONFIG[\"output\"][\"format\"])\n\n#from kslab_anomaly_label_func import AnomalyLabeler\n#import pandas as pd",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-21 17:16:34.957",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "KSLAB csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758080520920_1308409271",
+      "id": "paragraph_1758080520920_1308409271",
+      "dateCreated": "2025-09-17 12:42:00.921",
+      "dateStarted": "2025-09-21 17:16:34.958",
+      "dateFinished": "2025-09-21 17:16:34.966",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\nimport sqlalchemy, psycopg2\nprint(\"sqlalchemy \u003d\", sqlalchemy.__version__)\nprint(\"psycopg2   \u003d\", psycopg2.__version__)",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-21 17:15:30.079",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "sqlalchemy \u003d 2.0.43\npsycopg2   \u003d 2.9.10 (dt dec pq3 ext lo64)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758167277753_1999066652",
+      "id": "paragraph_1758167277753_1999066652",
+      "dateCreated": "2025-09-18 12:47:57.753",
+      "dateStarted": "2025-09-21 17:15:30.081",
+      "dateFinished": "2025-09-21 17:15:30.089",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\n# df.printSchema()\r\n# df.limit(5).show(truncate\u003dFalse)\r\n# total \u003d df.count()\r\n# print(f\"total rows \u003d {total}\")\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-21 17:13:08.045",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758075054645_1719994669",
+      "id": "paragraph_1758075054645_1719994669",
+      "dateCreated": "2025-09-17 11:10:54.646",
+      "dateStarted": "2025-09-21 17:13:08.046",
+      "dateFinished": "2025-09-21 17:13:08.052",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\ndef process_data(spark: SparkSession) -\u003e DataFrame: # DataFrame 대신에 None을 입력하고 return값을 없앤뒤 main() 사용\n\n    # Step 1: Load data (csv or db) \n    print_timestamp(\"Step 1\u003e Loading data\")\n    if PP_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027csv\u0027: \n        df \u003d load_data_from_csv(spark, PP_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027])\n    else:  # \u0027db\u0027\n        df \u003d load_data_from_db(spark,DB_QUERY_KMON_DATA)\n    \n    if df.count() \u003e 0:\n        print(f\"Loaded Data Count: {df.count()} rows\")\n    else:\n        print(\"No Data Loaded\")\n        sys.exit(\"Program terminated due to empty input data.\")\n\n    #step 2: Load master data and add group_code \n    df_master \u003d load_data_from_db(spark,DB_QUERY_MASTER_DATA)\n    \n    df \u003d df.join(\n        df_master.select(\"sensor_num\", \"group_cd\", \"car_num\"),\n        df.id \u003d\u003d df_master.sensor_num,\n        \"left\"\n    ).drop(\"sensor_num\").fillna({\"group_cd\": 0, \"car_num\": \"\"})\n    \n    # Step 3: 컬럼명,데이터타입 변환작업 -\u003e kmon_new 단말 적용\n    print_timestamp(\"Step 2\u003e Converting column names and data types\")\n    df \u003d convert_df_new(df)\n\n    # Step 4: 비트연산\n    print_timestamp(\"Step 3\u003e Processing bit operation\") \n    df \u003d bit_process(df)\n   \n    # Step 5: status컬럼 추가\n    print_timestamp(\"Step 4\u003e Adding status column\")\n    df \u003d add_status(df)\n\n    # Step 6: Save results\n    print_timestamp(\"Step 11\u003e Saving results\")\n    if PP_IO_CONFIG[\u0027output\u0027][\u0027format\u0027].lower() \u003d\u003d \u0027csv\u0027:\n        output_path \u003d PP_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027]\n        import os\n        os.makedirs(os.path.dirname(output_path), exist_ok\u003dTrue)\n        # PySpark DataFrame을 직접 CSV로 저장\n        df.write.mode(\u0027overwrite\u0027).option(\u0027header\u0027, True).csv(output_path)\n        print(f\"Results saved to: {output_path}\")\n    else:  # \u0027db\u0027\n        save_to_db(df, PP_IO_CONFIG[\u0027output\u0027][\u0027db_table\u0027], spark)\n        print(f\"Results saved to database table: {PP_IO_CONFIG[\u0027output\u0027][\u0027db_table\u0027]}\")\n    \n    print_timestamp(\"Processing complete.\")\n    return df\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-17 12:42:53.336",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758075976221_933056906",
+      "id": "paragraph_1758075976221_933056906",
+      "dateCreated": "2025-09-17 11:26:16.221",
+      "status": "READY"
+    },
+    {
+      "text": "%spark.pyspark\ndf\u003dprocess_data(spark)",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-17 12:43:00.495",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758080577970_441514677",
+      "id": "paragraph_1758080577970_441514677",
+      "dateCreated": "2025-09-17 12:42:57.970",
+      "status": "READY"
+    },
+    {
+      "text": "%spark.pyspark\ndf.show(10) ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-17 12:43:19.781",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758080591002_1601097879",
+      "id": "paragraph_1758080591002_1601097879",
+      "dateCreated": "2025-09-17 12:43:11.002",
+      "status": "READY"
+    }
+  ],
+  "name": "pre_processing",
+  "id": "2M5CEQMRS",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false,
+    "looknfeel": "default",
+    "personalizedMode": "false"
+  },
+  "info": {
+    "isRunning": false
+  }
+}
