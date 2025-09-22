@@ -1,0 +1,58 @@
+{
+  "paragraphs": [
+    {
+      "text": "# hdfs에 파일 수동 업로드\r\n%spark.pyspark\r\nimport os\r\n\r\nlocal_csv \u003d \"/home/kadap/upload/part-00000-3560c061-d7ff-4041-b1a2-7f775112f8b2-c000.csv\" # 경로에 미리 파일 저장\r\nhdfs_dir \u003d \"/QH/TEST_DATA/\"\r\n\r\n# put (업로드)\r\nos.system(f\"hdfs dfs -put -f {local_csv} {hdfs_dir}\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-22 12:49:46.680",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "0\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758512878498_1056205049",
+      "id": "paragraph_1758512878498_1056205049",
+      "dateCreated": "2025-09-22 12:47:58.498",
+      "dateStarted": "2025-09-22 12:49:00.314",
+      "dateFinished": "2025-09-22 12:49:05.705",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "settings",
+  "id": "2M4TUP2HW",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false
+  }
+}
