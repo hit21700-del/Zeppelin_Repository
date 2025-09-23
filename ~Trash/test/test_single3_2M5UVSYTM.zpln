@@ -1,0 +1,357 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_single.pyspark\nimport sys\nsys.path.append(\"/home/kadap/python/pre_processing\")\nfrom typing import Optional, List, Dict, Any\n\nfrom pyspark.sql import SparkSession, DataFrame\nfrom pyspark.sql.functions import (\n    col, lit, when, count, sum as sum_, min, max, avg, \n    to_timestamp, unix_timestamp, from_unixtime,\n    date_format, hour, minute, second, \n    lag, lead, window, expr, round\n)\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.types import (\n    StructType, StructField, StringType, IntegerType, \n    DoubleType, TimestampType, BooleanType\n)\n\nfrom kslab_config import( PP_IO_CONFIG, PROCESSING_PARAMS, DB_CONFIG, SELECTED_COLUMNS, \n                        SELECTED_COLUMNS_FINAL, DB_QUERY_KMON_DATA, DB_QUERY_MASTER_DATA, BUS_COLUMNS)\nfrom kslab_utils import (\n    print_timestamp, print_dfcount, create_spark_session,\n    load_data_from_db, load_data_from_csv, save_to_csv, save_to_db\n)\n\nfrom kslab_pp_func import (\n    convert_df_new, bit_process, add_status, combine_bmt_columns, drop_if_exists,add_row_uuid, select_columns,add_bus_columns,\n    remove_outlier1, remove_outlier2, add_columns, add_sox\n)\n\nfrom kslab_anomaly_label_func import AnomalyLabeler\n#import pandas as pd\n\n\n\nprint(DB_CONFIG[\"dbname\"], PP_IO_CONFIG[\"output\"][\"format\"])\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:42:39.585",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "KSLAB csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044462_1751138644",
+      "id": "paragraph_1758601459229_843641936",
+      "dateCreated": "2025-09-23 14:40:44.462",
+      "dateStarted": "2025-09-23 14:42:39.588",
+      "dateFinished": "2025-09-23 14:42:58.635",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\nfrom pyspark.sql.functions import input_file_name\n\n# 단일 CSV 파일 경로\nFILE_PATH \u003d \"/QH/TEST_DATA/small.csv\"\n\nREAD_OPTS \u003d {\n    \"header\": \"true\",\n    \"inferSchema\": \"true\",\n    \"mode\": \"PERMISSIVE\",\n    \"columnNameOfCorruptRecord\": \"_corrupt_record\",\n    \"badRecordsPath\": \"/QH/_bad_records_raw\",\n    \"multiLine\": \"false\",\n    \"escape\": \"\\\\\",\n    \"quote\": \"\\\"\",\n}\n\n# 단일 파일만 읽기\ndf \u003d (spark.read\n      .options(**READ_OPTS)\n      .csv(FILE_PATH)                      # ← 단일 파일 지정\n      .withColumn(\"_src_file\", input_file_name()))\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:43:16.538",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d1"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044463_1990169947",
+      "id": "paragraph_1758603517212_1366902557",
+      "dateCreated": "2025-09-23 14:40:44.463",
+      "dateStarted": "2025-09-23 14:43:16.540",
+      "dateFinished": "2025-09-23 14:43:22.963",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\ndef process_data(spark: SparkSession) -\u003e DataFrame: # DataFrame 대신에 None을 입력하고 return값을 없앤뒤 main() 사용\n\n    # Step 1: Load data (csv or db) \n    print_timestamp(\"Step 1\u003e Loading data\")\n    if PP_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027csv\u0027: \n        df \u003d load_data_from_csv(spark, PP_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027])\n    else:  # \u0027db\u0027\n        df \u003d load_data_from_db(spark,DB_QUERY_KMON_DATA)\n\n\n    #step 2: Load master data and add group_code \n    # df_master \u003d load_data_from_db(spark,DB_QUERY_MASTER_DATA)\n    \n    # df \u003d df.join(\n    #     df_master.select(\"sensor_num\", \"group_cd\", \"car_num\"),\n    #     df.id \u003d\u003d df_master.sensor_num,\n    #     \"left\"\n    # ).drop(\"sensor_num\").fillna({\"group_cd\": 0, \"car_num\": \"\"})\n    \n   \n    # Step 6-1: 이상치 제거 1\n    print_timestamp(\"Step 6-1\u003e remove_short_evr_anomalies\")\n    df\u003dremove_outlier1(df)\n\n    # Step 6-2: Remove outliers 2\n    print_timestamp(\"Step 6-2\u003e Removing outliers\")\n    df \u003d remove_outlier2(df)\n\n    # Step 7: 분석 컬럼(관제용) 추가\n    print_timestamp(\"Step 7\u003e Adding analysis columns\")\n    df \u003d add_columns(df)\n\n    # Step 8:  SOB / SOP 변수 추가\n    #print_timestamp(\"Step 8\u003e Adding SOB and SOP\")\n    #df \u003d add_sox(df)\n\n    # Step 9: Add anomaly labels (PySpark 기반)\n    #print_timestamp(\"Step 9\u003e Adding anomaly labels\")\n    #labeler \u003d AnomalyLabeler()\n    #df \u003d labeler.label_anomalies_spark(df)\n    #df \u003d labeler.preprocess_status_groups(df)\n    #print_timestamp(f\"After adding anomaly labels: {df.count():,} rows\")\n\n    # Step 10: Select final columns \n    print_timestamp(\"Step 10\u003e Selecting final columns\")\n    result_df \u003d df.select(*SELECTED_COLUMNS_FINAL)\n    \n    # Step 11: Save results\n    # print_timestamp(\"Step 11\u003e Saving results (HDFS overwrite)\")\n    # output_path \u003d \"hdfs:///QH/PP_SET/latest\"   # 항상 같은 경로\n\n    # # 단일 CSV 파일만 원하면 True, 여러 part로 빠르게 저장하려면 False\n    # SINGLE_FILE \u003d True\n\n    # writer \u003d (result_df\n    #           .write\n    #           .mode(\"overwrite\")\n    #           .option(\"header\", True))\n\n    # if SINGLE_FILE:\n    #     # 대용량에서는 병목 가능. 필요 시만 사용하세요.\n    #     (result_df\n    #         #.coalesce(1)\n    #         .write\n    #         .mode(\"overwrite\")\n    #         .option(\"header\", True)\n    #         .csv(output_path))\n    # else:\n    #     writer.csv(output_path)\n\n    # print(f\"[OK] Results saved to: {output_path}\")\n    \n    # print_timestamp(\"Processing complete.\")\n    return result_df\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:43:31.515",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044463_55237692",
+      "id": "paragraph_1758604241567_1450837429",
+      "dateCreated": "2025-09-23 14:40:44.463",
+      "dateStarted": "2025-09-23 14:43:31.516",
+      "dateFinished": "2025-09-23 14:43:31.524",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\ndf\u003dprocess_data(spark)",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:43:35.106",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[2025-09-23 14:43:35] Step 1\u003e Loading data\n[2025-09-23 14:43:41] Step 6-1\u003e remove_short_evr_anomalies\n[2025-09-23 14:43:42] Step 6-2\u003e Removing outliers\n[2025-09-23 14:45:08] Step 7\u003e Adding analysis columns\n[2025-09-23 14:45:11] Step 10\u003e Selecting final columns\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044463_942760720",
+      "id": "paragraph_1758604247820_465171430",
+      "dateCreated": "2025-09-23 14:40:44.463",
+      "dateStarted": "2025-09-23 14:43:35.108",
+      "dateFinished": "2025-09-23 14:45:11.669",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\ndf.show(10)  ",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:45:15.778",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+----------+-------------------+-------------------+------+------------+-----+-----------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+-------------------------+--------------------+----------+------+------+-------+-------+\n|  deviceId|          createdAt|         insultedAt|status|totalMileage|speed|mcuMotorRpm|paddleShiftUp|paddleShiftDown| SOC|displaySoc| SOH|batteryPackVoltages|batteryPackCurrents|batteryTotalDischargedCapacity|batteryTotalChargedCapacity|batteryTotalDischargedEnergy|batteryTotalChargedEnergy|totalSlowChargeCount|maxCellVoltages|maxCellVoltageNum|minCellVoltages|minCellVoltageNum|insulationResistance|batteryModuleTemperatures|maxModuleTemperatures|minModuleTemperatures|heater1Temperature|batteryCoolantInletTemperature|batteryPraBusbarTemperature|motorTemperature|inverterTemperature|heatSinkTemperature|igbtTemperature|internalTemperatureFront|externalTemperature|batteryModuleTemperatures|ltrOutletTemperature|   c_date1|cvdiff|ctdiff|mean_ct|socdiff|\n+----------+-------------------+-------------------+------+------------+-----+-----------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+-------------------------+--------------------+----------+------+------+-------+-------+\n|1229848911|2025-01-01 00:21:05|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.0|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               61|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:06|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.0|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               61|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:07|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.0|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               13|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:08|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.0|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               12|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:09|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.0|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               25|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:10|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|         0.30000001|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|                4|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:11|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|         0.40000001|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               66|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:12|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|         0.30000001|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               12|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 227.0|   2.14|    1.0|\n|1229848911|2025-01-01 00:21:13|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|         0.40000001|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               12|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 211.0|   3.29|    1.0|\n|1229848911|2025-01-01 00:21:14|2025-01-01 00:22:17|  STOP|      135145|  0.0|        0.0|            0|              0|42.5|      43.5|93.5|              357.5|                0.5|                        7412.8|                     7716.7|                      2652.4|                   2858.9|                 264|           3.64|               12|           3.64|                1|              3000.0|     10,11,13,11,0,0,0...|                 13.0|                 11.0|               7.0|                           9.0|                        8.0|             8.0|               10.0|                8.0|            8.0|                     8.0|                5.0|     10,11,13,11,0,0,0...|                 7.0|2025-01-01|   0.0| 211.0|   3.29|    1.0|\n+----------+-------------------+-------------------+------+------------+-----+-----------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+-------------------------+--------------------+----------+------+------+-------+-------+\nonly showing top 10 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d25"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d26"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d27"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d28"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d29"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d30"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d31"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d32"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044463_1059121850",
+      "id": "paragraph_1758604252445_1135192742",
+      "dateCreated": "2025-09-23 14:40:44.463",
+      "dateStarted": "2025-09-23 14:45:15.780",
+      "dateFinished": "2025-09-23 15:07:58.568",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-23 14:40:44.463",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758606044463_1278527356",
+      "id": "paragraph_1758604416623_1975888324",
+      "dateCreated": "2025-09-23 14:40:44.463",
+      "status": "READY"
+    }
+  ],
+  "name": "test_single3",
+  "id": "2M5UVSYTM",
+  "defaultInterpreterGroup": "spark_single",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
