@@ -1,0 +1,84 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark\r\n\r\nimport org.joda.time.format.DateTimeFormat\r\nimport org.joda.time.DateTime\r\n\r\nvar target_date_param \u003d z.input(\"reprocessing_date\") + \"\"\r\n\r\n// 계산용 DateTime\r\nvar dt \u003d new DateTime()\r\nif (target_date_param !\u003d \"\") dt \u003d new DateTime(target_date_param)\r\n\r\n// 시(hour)까지만: 분/초/밀리초 0\r\ndt \u003d dt.withMinuteOfHour(0).withSecondOfMinute(0).withMillisOfSecond(0)\r\n\r\n// 최종 결과는 문자열로 target_date에 저장\r\nval formatter \u003d DateTimeFormat.forPattern(\"yyyy-MM-dd HH\")\r\nval target_date: String \u003d formatter.print(dt)\r\n\r\nprintln(\"target_date\u003d\" + target_date)\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-28 13:46:25.087",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "reprocessing_date": ""
+        },
+        "forms": {
+          "reprocessing_date": {
+            "type": "TextBox",
+            "name": "reprocessing_date",
+            "displayName": "reprocessing_date",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[33mwarning: \u001b[0mone deprecation; for details, enable `:setting -deprecation\u0027 or `:replay -deprecation\u0027\ntarget_date\u003d2025-10-28 13\nimport org.joda.time.format.DateTimeFormat\nimport org.joda.time.DateTime\n\u001b[1m\u001b[34mtarget_date_param\u001b[0m: \u001b[1m\u001b[32mString\u001b[0m \u003d \"\"\n\u001b[1m\u001b[34mdt\u001b[0m: \u001b[1m\u001b[32morg.joda.time.DateTime\u001b[0m \u003d 2025-10-28T13:00:00.000+09:00\ndt: org.joda.time.DateTime \u003d 2025-10-28T13:00:00.000+09:00\n\u001b[1m\u001b[34mformatter\u001b[0m: \u001b[1m\u001b[32morg.joda.time.format.DateTimeFormatter\u001b[0m \u003d org.joda.time.format.DateTimeFormatter@57ae13e\n\u001b[1m\u001b[34mtarget_date\u001b[0m: \u001b[1m\u001b[32mString\u001b[0m \u003d 2025-10-28 13\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761626256909_1520457310",
+      "id": "paragraph_1761626256909_1520457310",
+      "dateCreated": "2025-10-28 13:37:36.909",
+      "dateStarted": "2025-10-28 13:46:25.090",
+      "dateFinished": "2025-10-28 13:46:25.306",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-28 13:38:21.631",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761626301631_481576013",
+      "id": "paragraph_1761626301631_481576013",
+      "dateCreated": "2025-10-28 13:38:21.631",
+      "status": "READY"
+    }
+  ],
+  "name": "Untitled Note 2",
+  "id": "2MBFFAVZW",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
