@@ -222,7 +222,7 @@
       "status": "FINISHED"
     }
   ],
-  "name": "SOH_Model",
+  "name": "1.kslab_soh_base",
   "id": "2MAKUG7P7",
   "defaultInterpreterGroup": "spark",
   "version": "0.11.1",
@@ -233,6 +233,6 @@
     "isZeppelinNotebookCronEnable": false
   },
   "info": {
-    "isRunning": true
+    "isRunning": false
   }
 }
