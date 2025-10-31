@@ -1,0 +1,238 @@
+{
+  "paragraphs": [
+    {
+      "title": "1.kslab_soh_base",
+      "text": "%spark_user.pyspark\r\n\r\n\"\"\"\r\nSOH Calulcation - step1) base modeling\r\n1. ID별 데이터 로드: 현재는 postgreSQL kmon_data 테이블 데이터 로드 (향후, PP_SET테이블 로드로 변경 가능), kslab_soh_config.py 파일에서 설정\r\n2. 방전구간 데이터, 정상구간 데이터 발췌 : 원시데이터 사용으로 주차/충전시점으로 방전데이터 구간 필터링\r\n3. SOH 산출 파라미터 정의 : 마일리지, 토크, 속도, bms온도 (풀충(SOC\u003e90)-정격전압까지)\r\n    * 셀전압편차, 셀전압균형도(SOB),모듈온도편차, 모듈온도균형도(SOT) 추가\r\n4. 정격전압 조건 : bpc_v \u003e370에서 셀전압평균(meancv) \u003e3.7 으로 변경 (배터리마다 셀전압갯수 다르므로)\r\n5. 신규데이터 유입에 따라, groupid는 기존 테이블에서 MAX값을 불러온 후 누적값 업데이트 (25.06.18)\r\n6. NEW : id  01229848911(코나 54러6894) -\u003e kmon_data -\u003e kslab_pp_set에서 가져오는 것으로 변경 (25.06.24) \r\n\"\"\"\r\nfrom pyspark.sql import SparkSession,DataFrame, Window\r\nfrom pyspark.sql.types import StructType\r\nimport os\r\nimport sys\r\nsys.path.append(\"/home/kadap/QH/SOH_Model\")\r\n\r\n\r\nfrom pyspark.sql.functions import (\r\n    lag, lead, col, when, expr, round as pyspark_round, sum as pyspark_sum,\r\n    max as pyspark_max, min as pyspark_min, avg as pyspark_avg,\r\n    abs as pyspark_abs, first as pyspark_first, count, lit, coalesce,\r\n    element_at, regexp_replace, split\r\n)\r\nfrom pyspark.sql.window import Window\r\nfrom kslab_soh_config import BASE_IO_CONFIG, DB_QUERY_FROM_RAW_v2, DB_QUERY_FROM_PP\r\nfrom kslab_soh_utils import setup_spark_session, load_data_from_db, load_data_from_csv, save_results_to_csv, save_results_to_db, load_data_from_parquet, save_to_parquet\r\nimport logging\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-30 20:32:59.749",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761816661927_1698668573",
+      "id": "paragraph_1761816661927_1698668573",
+      "dateCreated": "2025-10-30 18:31:01.928",
+      "dateStarted": "2025-10-30 20:32:59.756",
+      "dateFinished": "2025-10-30 20:33:45.751",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\n\r\ndef process_basic_data(spark: SparkSession) -\u003e DataFrame:\r\n    # Step 0: Load data (praquet or csv or db) \r\n    print(\"Step 0\u003e Loading data\")\r\n    if BASE_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027parquet\u0027:\r\n        df \u003d load_data_from_parquet(spark, BASE_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027])\r\n    elif BASE_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027csv\u0027:\r\n        df \u003d load_data_from_csv(spark, BASE_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027])\r\n    else:  # \u0027db\u0027\r\n        df \u003d load_data_from_db(spark, DB_QUERY_FROM_RAW_v2)\r\n\r\n    print(f\"Step 0 - Initial data count: {df.count()}\")\r\n\r\n    # Step 1: LAG 함수를 사용한 이전 값 계산\r\n    window_spec \u003d Window.partitionBy(\u0027deviceId\u0027).orderBy(\u0027createdAt\u0027).rowsBetween(-1, -1)\r\n\r\n    # 마일리지, BAdC 이상데이터 제외\r\n    df \u003d df.filter((col(\u0027batteryTotalDischargedCapacity\u0027) \u003e 0) \u0026 (col(\u0027batteryTotalDischargedCapacity\u0027) \u003c 500000))\r\n    #df \u003d df.filter((col(\u0027badp\u0027) \u003e 0) \u0026 (col(\u0027badp\u0027) \u003c 100000))\r\n    df \u003d df.filter((col(\u0027totalMileage\u0027) \u003e 0) \u0026 (col(\u0027totalMileage\u0027) \u003c 500000))\r\n    \r\n    df_step1 \u003d df.withColumn(\u0027pre_c_date\u0027, lag(\u0027createdAt\u0027, 1).over(window_spec)) \\\r\n        .withColumn(\u0027pre_bacc\u0027, pyspark_round(lag(\u0027batteryTotalChargedCapacity\u0027, 1).over(window_spec), 2)) \\\r\n        .withColumn(\u0027pre_soc\u0027, pyspark_round(lag(\u0027SOC\u0027, 1).over(window_spec), 2)) \\\r\n        .withColumn(\u0027pre_badc\u0027, pyspark_round(lag(\u0027batteryTotalDischargedCapacity\u0027, 1).over(window_spec), 2)) \\\r\n        .withColumn(\u0027pre_badp\u0027, pyspark_round(lag(\u0027batteryTotalDischargedEnergy\u0027, 1).over(window_spec), 2)) \\\r\n        .withColumn(\u0027pre_motor_speed\u0027, pyspark_round(lag(\u0027mcuMotorRpm\u0027, 1).over(window_spec), 2)) \\\r\n        .withColumn(\u0027pre_t_dist\u0027, pyspark_round(lag(\u0027totalMileage\u0027, 1).over(window_spec), 2))\r\n    \r\n    print(f\"Step 1 - After LAG calculations: {df_step1.count()}\")\r\n\r\n    # bmt컬럼이 리스트타입으로 변경되어 공백/대괄호 제거 후 split\r\n    # 우선 xaas 과제용으로 리스트 앞에 4개값만 분리(bmt_1~4), bmt컬럼은 무시\r\n    # 향후 서비스에서는 batteryModuleTemperatures 컬럼의 이상치 처리후 전체 리스트값으로 반영필요\r\n    df_step1_pre \u003d (\r\n        df_step1\r\n        .withColumn(\r\n            \"_bmt_arr_str\",\r\n            split(regexp_replace(col(\"batteryModuleTemperatures\"), r\"[\\[\\]\\s]\", \"\"), \",\")\r\n        )\r\n        .withColumn(\r\n            \"_bmt_arr\",\r\n            expr(\"transform(_bmt_arr_str, x -\u003e cast(x as double))\")  # double로 캐스팅\r\n        )\r\n        .withColumn(\r\n            \"bat_temp\",\r\n            pyspark_round(\r\n                (\r\n                    coalesce(element_at(col(\"_bmt_arr\"), 1), lit(0.0)) +\r\n                    coalesce(element_at(col(\"_bmt_arr\"), 2), lit(0.0)) +\r\n                    coalesce(element_at(col(\"_bmt_arr\"), 3), lit(0.0)) +\r\n                    coalesce(element_at(col(\"_bmt_arr\"), 4), lit(0.0))\r\n                ) / lit(4.0),\r\n                1\r\n            )\r\n        )\r\n        .drop(\"_bmt_arr_str\", \"_bmt_arr\")\r\n    )\r\n\r\n    # Step 2: 차이값 및 주차시점(parking chk) 정의\r\n    df_step2 \u003d df_step1_pre.withColumn(\r\n        \u0027parking_chk\u0027,\r\n        when((col(\u0027createdAt\u0027).cast(\u0027long\u0027) - col(\u0027pre_c_date\u0027).cast(\u0027long\u0027)) \u003e 600, 1).otherwise(0)\r\n    ).withColumn(\r\n        \u0027gap_soc\u0027, pyspark_round(col(\u0027SOC\u0027) - col(\u0027pre_soc\u0027), 2)\r\n    ).withColumn(\r\n        \u0027gap_i\u0027, pyspark_round(col(\u0027batteryTotalDischargedCapacity\u0027) - col(\u0027pre_badc\u0027), 2)\r\n    ).withColumn(\r\n        \u0027gap_watt\u0027, pyspark_round(col(\u0027batteryTotalDischargedEnergy\u0027) - col(\u0027pre_badp\u0027), 2)\r\n    ).withColumn(\r\n        \u0027gap_mi\u0027, pyspark_round(col(\u0027totalMileage\u0027) - col(\u0027pre_t_dist\u0027), 2)\r\n    ).withColumn(\r\n        \u0027gap_bacc\u0027, pyspark_round(col(\u0027batteryTotalChargedCapacity\u0027) - col(\u0027pre_bacc\u0027), 2)\r\n    ).withColumn(\r\n        \u0027sob\u0027, pyspark_round(col(\"cvdiff\") / (pyspark_round((col(\"maxCellVoltages\") + col(\"minCellVoltages\")) / 2, 1)),3) #셀전압균형도 추가(값이 클수록 불균형) \r\n    ).withColumn(\r\n        \u0027sot\u0027, pyspark_round(col(\u0027ctdiff\u0027)/col(\u0027bat_temp\u0027), 3) #모듈온도균형도 추가(값이 클수록 불균형)\r\n    )\r\n\r\n    print(f\"Step 2 - After difference calculations: {df_step2.count()}\")\r\n\r\n    # Step 3: 정상구간 데이터 발췌 \u0026 충전시점(charged_chk) 정의\r\n    df_step3 \u003d df_step2.withColumn(\r\n        \u0027gap_i\u0027,\r\n        when(col(\u0027gap_i\u0027).isNull(), 0)  \r\n        .when(col(\u0027gap_i\u0027) \u003c 0, 0)  #회생제동 제외\r\n        .when((col(\u0027gap_i\u0027) \u003e 10) \u0026  #급가속, 언덕길, 고속, 히터/공조 작동으로 부하 급등 일때\r\n              (col(\u0027gap_mi\u0027) / col(\u0027gap_watt\u0027)).between(3, 9), 0) # 전비(마일리지/watt비율): 5~8사이가 효율적, 4.5이하이거나 9.5이상이면 비효율 \r\n        .otherwise(pyspark_round(col(\u0027gap_i\u0027), 2))\r\n    ).withColumn(\r\n        \u0027gap_watt\u0027,\r\n        when(col(\u0027gap_watt\u0027).isNull(), 0)\r\n        .when(col(\u0027gap_watt\u0027) \u003c 0, 0)\r\n        .when((col(\u0027gap_watt\u0027) \u003e 10) \u0026 \r\n              (col(\u0027gap_mi\u0027) / col(\u0027gap_watt\u0027)).between(3, 9), 0)\r\n        .otherwise(pyspark_round(col(\u0027gap_watt\u0027), 2))\r\n    ).withColumn( # 충전 이벤트 경계 표시 -\u003e \r\n        \u0027charged_chk\u0027,\r\n        when((col(\u0027parking_chk\u0027) \u003d\u003d 1) \u0026 \r\n             ((col(\u0027gap_bacc\u0027) \u003e 10) | (col(\u0027gap_soc\u0027) \u003e 10)) \u0026 \r\n             (col(\u0027SOC\u0027) \u003e 90), 1)\r\n        .otherwise(0)\r\n    ).withColumn(\r\n        \u0027parking_time\u0027,\r\n        when(col(\u0027parking_chk\u0027) \u003d\u003d 1,\r\n             pyspark_round((col(\u0027createdAt\u0027).cast(\u0027long\u0027) - col(\u0027pre_c_date\u0027).cast(\u0027long\u0027)) / 60, 2))\r\n        .otherwise(0)\r\n    )\r\n\r\n    print(f\"Step 3 - After conditional calculations: {df_step3.count()}\")\r\n\r\n\r\n    # Step 4: 충전카운트 생성 (방전구간 넘버링)\r\n    # charged_chk가 1이 될 때마다 charged_count가 1씩 증가\r\n    window_spec \u003d Window.partitionBy(\u0027deviceId\u0027).orderBy(\u0027createdAt\u0027)\r\n    df_step4 \u003d df_step3.withColumn(\r\n        \u0027end_chargechk\u0027,\r\n        lead(\u0027charged_chk\u0027).over(window_spec)\r\n    ).withColumn(\r\n        \u0027charged_count\u0027,\r\n        pyspark_sum(\u0027charged_chk\u0027).over(Window.partitionBy(\u0027deviceId\u0027).orderBy(\u0027createdAt\u0027))\r\n    )\r\n\r\n    print(f\"Step 4 - After charge count calculations: {df_step4.count()}\")\r\n\r\n    # HVPTC bit연산 - 16진수를 10진수로 변환 후 2진수로 변환하여 bit0 확인 -\u003e PP_SET은 이미 bit연산했으므로 제외\r\n    \"\"\"\r\n    df_step4 \u003d df_step4.withColumn(\r\n        \"hvptc\",\r\n        when(expr(\"CAST(CONV(CAST(hvptc AS STRING), 16, 10) AS BIGINT) \u0026 1\") \u003d\u003d 1, 1).otherwise(0).cast(\u0027integer\u0027)\r\n    )\r\n    \"\"\"\r\n\r\n    # Step 5: 충전카운트(방전구간)별 누적 계산 \r\n    # 충전 중에는 전류(batteryTotalDischargedCapacity)가 증가하지 않기 때문에 자연스럽게 충전 데이터는 누적에서 제외\r\n    window_charged \u003d Window.partitionBy(\u0027deviceId\u0027, \u0027charged_count\u0027).orderBy(\u0027createdAt\u0027)\r\n    df_step5 \u003d df_step4.withColumn(\r\n        \u0027accum_watt\u0027,\r\n        pyspark_round(pyspark_sum(\u0027gap_watt\u0027).over(window_charged), 2)\r\n    ).withColumn(\r\n        \u0027accum_cur\u0027,\r\n        pyspark_round(pyspark_sum(\u0027gap_i\u0027).over(window_charged), 2)\r\n    ).withColumn(\r\n        \u0027max_soc_step5\u0027,\r\n        pyspark_round(pyspark_max(\u0027SOC\u0027).over(window_charged), 2)\r\n    ).withColumn(\r\n        \u0027min_soc_step5\u0027,\r\n        pyspark_round(pyspark_min(\u0027SOC\u0027).over(window_charged), 2)\r\n    ).withColumn(\r\n        \u0027idle_condition\u0027,\r\n        col(\u0027airconditionCompressorRpm\u0027).cast(\u0027integer\u0027) + col(\u0027isHvptcDrive\u0027).cast(\u0027integer\u0027)\r\n    )\r\n\r\n    print(f\"Step 5 - After Accumulation by charge count: {df_step5.count()}\")\r\n\r\n    # Step 6: 그룹별 통계 계산  -\u003e mean_cv\u003e3.7이상으로 변경(배터리종류에 따라 팩전압이 다르므로)\r\n    # 필터링 조건을 누적계산 후처리 : CURRNT_X값이 max_ah과 동일하게 가려면 전처리 필요\r\n    #df_filtered \u003d df_step5.filter(col(\u0027speed\u0027) \u003e 0).filter(col(\u0027bpc_v\u0027) \u003e 370)  # idle상태아니면서, bpc_v\u003e370(soc 51,평균 60정도, CELLVOLT 3.7정도)\r\n    df_filtered \u003d df_step5.filter(col(\u0027speed\u0027) \u003e 0).filter(((col(\u0027maxCellVoltages\u0027) + col(\u0027minCellVoltages\u0027)) / 2) \u003e 3.1)  # mean_cv \u003e3.7 이상으로 변경\r\n\r\n    df_step6 \u003d df_filtered.groupBy(\u0027deviceId\u0027, \u0027charged_count\u0027).agg( #id 포함\r\n        pyspark_round(pyspark_max(\u0027max_soc_step5\u0027),2).alias(\u0027max_soc\u0027), \r\n        pyspark_round(pyspark_min(\u0027min_soc_step5\u0027),2).alias(\u0027min_soc\u0027),\r\n        pyspark_round(pyspark_avg(\u0027bat_temp\u0027), 1).alias(\u0027avg_bat_temp\u0027),\r\n        pyspark_round(pyspark_avg(\u0027externalTemperature\u0027), 1).alias(\u0027avg_out_temp\u0027),\r\n        pyspark_round(pyspark_max(\u0027accum_watt\u0027), 1).alias(\u0027max_wh\u0027),\r\n        pyspark_round(pyspark_max(\u0027accum_cur\u0027), 1).alias(\u0027max_ah\u0027),\r\n        pyspark_max(\u0027totalMileage\u0027).alias(\u0027max_mileage\u0027),\r\n        pyspark_min(\u0027totalMileage\u0027).alias(\u0027min_mileage\u0027),\r\n        pyspark_max(\u0027createdAt\u0027).alias(\u0027max_date\u0027),\r\n        pyspark_min(\u0027createdAt\u0027).alias(\u0027min_date\u0027),\r\n        pyspark_round(pyspark_avg(\u0027speed\u0027), 2).alias(\u0027avg_speed\u0027),\r\n        pyspark_round(pyspark_avg(\u0027motorTorqueActual\u0027), 2).alias(\u0027avg_torque\u0027)\r\n    )\r\n\r\n    print(f\"Step 6 - statistic by charge_count:: {df_step6.count()}\")\r\n    \r\n\r\n    # Step 7: 최종 데이터 조인 및 계산\r\n    df_step7 \u003d df_step5.join(\r\n        df_step6,\r\n        [\u0027deviceId\u0027, \u0027charged_count\u0027],  # id 포함\r\n        \u0027inner\u0027\r\n    ).withColumnRenamed(\u0027charged_count\u0027, \u0027groupid\u0027) \\\r\n     .withColumn(\u0027dod\u0027, pyspark_round((col(\u0027max_soc\u0027) - col(\u0027min_soc\u0027)) / 100, 2)) \\\r\n     .withColumn(\u0027d_mileage\u0027, pyspark_round(col(\u0027max_mileage\u0027) - col(\u0027min_mileage\u0027), 2)) \\\r\n     .filter(\r\n        (col(\u0027mcuMotorRpm\u0027) \u003d\u003d 0) \u0026 \r\n        (\r\n            (col(\u0027parking_time\u0027) \u003d\u003d 0) \u0026 (col(\u0027idle_condition\u0027) \u003d\u003d 0) |\r\n            (col(\u0027parking_time\u0027) \u003e 0) \u0026 (col(\u0027idle_condition\u0027) \u003e -1) |\r\n            (col(\u0027end_chargechk\u0027) \u003e 0) \u0026 (col(\u0027idle_condition\u0027) \u003e -1)\r\n        ) \u0026\r\n        col(\u0027accum_cur\u0027).isNotNull()\r\n    )\r\n\r\n    # step 8: kslab_soh_base의 max groupid값을 가져와서 누적데이터 업데이트 (없다면 0부터 시작) \r\n    # 수정사항 : 기존 parquet 결과파일에서 last_groupid 조회\r\n    unique_ids \u003d df_step7.select(\"deviceId\").distinct()\r\n\r\n    history_path \u003d BASE_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]  # 기존 soh_result 경로\r\n\r\n    try:\r\n        # 1) parquet 파일 전체 로드 (하위폴더 포함)\r\n        hist0 \u003d (\r\n            spark.read.format(\"parquet\")\r\n            .option(\"recursiveFileLookup\", \"true\")\r\n            .option(\"pathGlobFilter\", \"*.parquet\")\r\n            .load(history_path)\r\n        )\r\n\r\n        # 2) 필요한 컬럼만 (존재하는 경우만 선택)\r\n        need_cols \u003d [\"deviceId\", \"groupid\"]\r\n        sel_cols \u003d [c for c in need_cols if c in hist0.columns]\r\n        if \"deviceId\" not in sel_cols:\r\n            raise RuntimeError(\"deviceId column not found in existing soh_result parquet\")\r\n\r\n        hist \u003d hist0.select([col(\"deviceId\").cast(\"string\").alias(\"deviceId\")] + [col(c) for c in sel_cols if c !\u003d \"deviceId\"])\r\n\r\n        # 3) 현재 데이터에 포함된 deviceId만 필터 (성능 최적화)\r\n        id_list \u003d [r.deviceId for r in unique_ids.collect()]\r\n        hist_f \u003d hist.filter(col(\"deviceId\").isin(id_list))\r\n\r\n        # 4) deviceId별 마지막 groupid 계산 (+1부터 시작)\r\n        last_accumulated \u003d (\r\n            hist_f.groupBy(\"deviceId\")\r\n            .agg(pyspark_max(\"groupid\").alias(\"last_groupid\"))\r\n            .withColumn(\"last_groupid\", col(\"last_groupid\") + lit(1))\r\n        )\r\n\r\n    except Exception as e:\r\n        print(f\"[WARN] Failed to load history parquet or column missing: {str(e)}\")\r\n        # parquet이 없거나 컬럼 없을 시 0부터 시작\r\n        last_accumulated \u003d unique_ids.withColumn(\"last_groupid\", lit(0))\r\n\r\n    # 5) 기존 데이터와 병합\r\n    df_step7 \u003d (\r\n        df_step7.join(last_accumulated, \"deviceId\", \"left\")\r\n        .withColumn(\"groupid\", pyspark_round(coalesce(col(\"last_groupid\"), lit(0)) + col(\"groupid\"), 0))\r\n        .drop(\"last_groupid\")\r\n    )\r\n\r\n\r\n    # step9: 최종 결과 계산 - 충방전 사이클 그룹별 base data set 생성\r\n    # 주행(trip) 단위로 구분 x, 충전 이벤트로 구분한 ‘방전 사이클’(\u003d charged_count → groupid) 단위\r\n    # 한 번 충전하고 다음 충전 전까지의 여러 주행/정차 구간이 한 사이클 안에 함께 들어갈 수 있다\r\n    # 경계 생성이 charged_chk(\u003d충전 시점) 누적합인 charged_count로만 이루어져서, 충전이 없으면 같은 groupid로 이어진다\r\n    df_step7\u003ddf_step7.withColumn(\u0027current_x\u0027, pyspark_round(col(\u0027accum_cur\u0027), 0))\r\n    df_step7 \u003d df_step7.drop(\u0027accum_cur\u0027)\r\n\r\n    result \u003d df_step7.filter(col(\u0027current_x\u0027).isNotNull()) \\\r\n        .groupBy(\u0027deviceId\u0027, \u0027groupid\u0027,\u0027current_x\u0027).agg(  # current_x를 그룹화 기준에 포함\r\n            #col(\u0027current_x\u0027),\r\n            pyspark_round(pyspark_avg(\u0027batteryPackVoltages\u0027), 1).alias(\u0027volt_y\u0027),\r\n            pyspark_round(pyspark_avg(\u0027max_wh\u0027), 2).alias(\u0027max_wh\u0027),\r\n            pyspark_round(pyspark_avg(\u0027max_ah\u0027), 2).alias(\u0027max_ah\u0027),\r\n            pyspark_max(\u0027min_date\u0027).alias(\u0027min_date\u0027),\r\n            pyspark_max(\u0027max_date\u0027).alias(\u0027max_date\u0027),\r\n            pyspark_round(pyspark_avg((col(\u0027maxCellVoltages\u0027) + col(\u0027minCellVoltages\u0027))/2.0), 2).alias(\u0027meancv\u0027), # 셀평균전압 추가\r\n            pyspark_round(pyspark_avg(\u0027cvdiff\u0027), 3).alias(\u0027cvdiff\u0027), # 셀평균전압 추가\r\n            pyspark_round(pyspark_avg(\u0027sob\u0027), 3).alias(\u0027sob\u0027), #셀전압균형도 추가\r\n            pyspark_round(pyspark_avg(\u0027sot\u0027), 3).alias(\u0027sot\u0027), #모듈온도균형도 추가\r\n            pyspark_round(pyspark_avg(\u0027ctdiff\u0027), 1).alias(\u0027ctdiff\u0027), #모듈온도편차 추가\r\n            pyspark_round(pyspark_avg(\u0027avg_bat_temp\u0027), 2).alias(\u0027avg_bms_temp\u0027),\r\n            pyspark_round(pyspark_avg(\u0027avg_out_temp\u0027), 2).alias(\u0027avg_out_temp\u0027),\r\n            pyspark_round(pyspark_avg(\u0027max_mileage\u0027), 2).alias(\u0027max_mileage\u0027),\r\n            pyspark_round(pyspark_avg(\u0027d_mileage\u0027), 2).alias(\u0027d_mileage\u0027),\r\n            pyspark_round(pyspark_avg(\u0027max_soc\u0027), 2).alias(\u0027max_soc\u0027),\r\n            pyspark_round(pyspark_avg(\u0027dod\u0027), 2).alias(\u0027dod\u0027),\r\n            pyspark_round(pyspark_avg(\u0027parking_time\u0027), 2).alias(\u0027parking_time\u0027),\r\n            pyspark_round(pyspark_avg(\u0027avg_speed\u0027), 2).alias(\u0027avg_speed\u0027),\r\n            pyspark_round(pyspark_avg(\u0027avg_torque\u0027), 2).alias(\u0027avg_torque\u0027),\r\n            pyspark_sum(when(col(\u0027parking_time\u0027) \u003d\u003d 0, 0).otherwise(1)).alias(\u0027parking_cnt\u0027)\r\n    ).orderBy(\u0027deviceId\u0027, \u0027groupid\u0027, \u0027current_x\u0027)  # 정렬 기준도 동일하게 유지\r\n    \r\n       \r\n    print(f\"Final result count: {result.count()}\")\r\n    \r\n   # --- Step 10: 결과 저장 ---\r\n    print(\"Step 10\u003e Saving results\")\r\n    \r\n    # BASE_IO_CONFIG 기반으로 설정 가져오기\r\n    out_cfg \u003d BASE_IO_CONFIG.get(\u0027output\u0027, {})\r\n    fmt \u003d out_cfg.get(\u0027format\u0027, \u0027parquet\u0027).lower()\r\n    \r\n    try:\r\n        if fmt \u003d\u003d \u0027parquet\u0027:\r\n            out_path \u003d out_cfg[\u0027parquet_path\u0027]\r\n            # 디렉토리가 없을 경우 자동 생성\r\n            import os\r\n            os.makedirs(os.path.dirname(out_path), exist_ok\u003dTrue)\r\n    \r\n            save_to_parquet(result, output_path\u003dout_path, mode\u003d\"append\")  # history 유지\r\n            print(f\"[OK] Saved to Parquet (append): {out_path}\")\r\n    \r\n        elif fmt \u003d\u003d \u0027csv\u0027:\r\n            out_path \u003d out_cfg[\u0027csv_path\u0027]\r\n            os.makedirs(os.path.dirname(out_path), exist_ok\u003dTrue)\r\n            save_to_csv(result, out_path)\r\n            print(f\"[OK] Saved to CSV: {out_path}\")\r\n    \r\n        else:  # \u0027db\u0027\r\n            save_to_db(result, out_cfg[\u0027db_table\u0027], spark)\r\n            print(f\"[OK] Saved to Database Table: {out_cfg[\u0027db_table\u0027]}\")\r\n    \r\n    except Exception as e:\r\n        print(f\"[ERROR] Failed to save results: {str(e)}\")\r\n    # ---------------------------------------------------------------\r\n\r\n\r\n\r\n\r\n    return result",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-30 20:33:45.826",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761816841494_1249864236",
+      "id": "paragraph_1761816841494_1249864236",
+      "dateCreated": "2025-10-30 18:34:01.494",
+      "dateStarted": "2025-10-30 20:33:45.833",
+      "dateFinished": "2025-10-30 20:33:45.923",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\ndf \u003d process_basic_data(spark)",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-30 20:33:45.932",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Step 0\u003e Loading data\n[OK] Parquet load planned from: hdfs:///QH/Pre_Processed/PP_Set/\nStep 0 - Initial data count: 11405\nStep 1 - After LAG calculations: 11405\nStep 2 - After difference calculations: 11405\nStep 3 - After conditional calculations: 11405\nStep 4 - After charge count calculations: 11405\nStep 5 - After Accumulation by charge count: 11405\nStep 6 - statistic by charge_count:: 1\n[WARN] Failed to load history parquet or column missing: [UNABLE_TO_INFER_SCHEMA] Unable to infer schema for Parquet. It must be specified manually.\nFinal result count: 18\nStep 10\u003e Saving results\n[OK] Saved to Parquet (append): hdfs:///QH/SOH_Model/discharge/soh_base/\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d25"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d26"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d27"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d28"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d29"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:36263/jobs/job?id\u003d30"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761820139084_1033815167",
+      "id": "paragraph_1761820139084_1033815167",
+      "dateCreated": "2025-10-30 19:28:59.084",
+      "dateStarted": "2025-10-30 20:33:45.934",
+      "dateFinished": "2025-10-30 20:34:27.956",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "SOH_Model",
+  "id": "2MAKUG7P7",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": true
+  }
+}
