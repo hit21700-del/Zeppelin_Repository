@@ -1,0 +1,329 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_single.pyspark\r\n\"\"\"\r\nSOH Forecast Preprocess: soh 예측을 위한 3단계 전처리 (Config/Utils 통합 및 HDFS 버전)\r\n\r\n- 2단계 Summary 결과(soh_summary_result.csv)를 HDFS에서 입력\r\n- XGBoost 모델 입력을 위해 \u0027일(day)\u0027 단위로 데이터 재집계 (summary_by_day)\r\n- 학습/테스트 분리 플래그(train_flag) 추가\r\n- 결과 데이터셋(forecast_preprocessed): HDFS에 Parquet 파일로 저장\r\n\"\"\"\r\n\r\nimport os\r\nimport sys\r\nfrom typing import Optional\r\nimport logging\r\nfrom datetime import datetime\r\n\r\n# Spark 관련 모듈\r\nfrom pyspark.sql import SparkSession, DataFrame\r\nfrom pyspark.sql.functions import (\r\n    col, expr, round as pyspark_round, max as pyspark_max, avg as pyspark_avg,\r\n    count, lit, date_format, split, transform, row_number, concat_ws\r\n)\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\nfrom pyspark.sql.types import StructType\r\n\r\n\r\n# 로깅 설정\r\nlogging.basicConfig(\r\n    level\u003dlogging.INFO,\r\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\r\n)\r\nlogger \u003d logging.getLogger(__name__)\r\n\r\n# ####################################################################\r\n# ## --- 1. Configuration ---\r\n# ####################################################################\r\n\r\nVEHICLE_ID \u003d \"95\"\r\n\r\n# 3단계(Forecast Preprocess) I/O 설정 (HDFS)\r\nSOH_FORECAST_PREPROCESS_IO_CONFIG \u003d {\r\n    \u0027input\u0027: {\r\n        \u0027source\u0027: \u0027csv\u0027,  # \u0027csv\u0027 or \u0027db\u0027 선택 (csv로 고정)\r\n        \u0027csv_path\u0027: z.input(\"parquet_glob\")+\"/soh_summary_result.csv\"\r\n            \r\n    },\r\n    \u0027output\u0027: {\r\n        \u0027format\u0027: \u0027csv\u0027,  # \u0027csv\u0027 or \u0027db\u0027 (csv로 고정)\r\n        \u0027csv_path\u0027: z.input(\"auto_base_path\")+\"/intermediate/forecast_preprocessed_{vehicle_id}.parquet\"\r\n            \r\n        \r\n    }\r\n}\r\n\r\n\r\n\r\n# ####################################################################\r\n# ## --- 2. Utility Functions ---\r\n# ####################################################################\r\n\r\ndef print_timestamp(message: str) -\u003e None:\r\n    \"\"\"Print message with current timestamp\"\"\"\r\n    print(f\"[{datetime.now().strftime(\u0027%Y-%m-%d %H:%M:%S\u0027)}] {message}\")\r\n\r\ndef print_dfcount(df: DataFrame, message: str) -\u003e None:\r\n    \"\"\"Print DataFrame count with message\"\"\"\r\n    count \u003d df.count()\r\n    print_timestamp(f\"{message}: {count:,} rows\")\r\n\r\ndef load_data_from_csv(spark: SparkSession, file_path: str) -\u003e DataFrame:\r\n    \"\"\"Load data from a HDFS CSV file.\"\"\"\r\n    print_timestamp(f\"Loading data from HDFS CSV: {file_path}\")\r\n    try:\r\n        df \u003d spark.read.csv(file_path, header\u003dTrue, inferSchema\u003dTrue)\r\n        return df\r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to read HDFS CSV file: {file_path}\")\r\n        print(e)\r\n        return spark.createDataFrame([], schema\u003dStructType([]))\r\n\r\ndef save_to_parquet(df: DataFrame, output_path: str) -\u003e str:\r\n    \"\"\"\r\n    Spark DataFrame을 HDFS에 *단일* Parquet 파일로 저장합니다.\r\n    (덮어쓰기 및 이름 변경 포함)\r\n    \"\"\"\r\n    print_timestamp(f\"Saving data to HDFS *single file*: {output_path}\")\r\n\r\n    import os\r\n    base_dir \u003d os.path.dirname(output_path)\r\n    # Parquet 저장을 위한 임시 디렉터리 (이름 충돌 방지)\r\n    temp_dir \u003d os.path.join(base_dir, \".temp_parquet_save_dir\") \r\n    \r\n    print_timestamp(f\"Using temporary save directory: {temp_dir}\")\r\n\r\n    try:\r\n        # 1. 데이터를 임시 디렉터리에 Parquet으로 저장 (덮어쓰기)\r\n        (df.coalesce(1) # 단일 파일로 합치기\r\n           .write\r\n           .option(\"compression\", \"snappy\") # Snappy 압축 사용\r\n           .mode(\"overwrite\")\r\n           .parquet(temp_dir))\r\n\r\n        # 2. HDFS 파일시스템(Java API)에 접근\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        # 3. 임시 디렉터리에서 스파크가 생성한 \u0027part-\u0027 파일을 찾습니다.\r\n        #    (Parquet 파일은 .snappy.parquet 확장자를 가짐)\r\n        part_file_pattern \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.snappy.parquet\")\r\n        file_list_status \u003d fs.globStatus(part_file_pattern)\r\n\r\n        if not file_list_status:\r\n            # Snappy가 아닐 경우 대비\r\n            part_file_pattern_generic \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.parquet\")\r\n            file_list_status \u003d fs.globStatus(part_file_pattern_generic)\r\n            if not file_list_status:\r\n                 raise Exception(f\"No \u0027part-\u0027 file found in temp directory: {temp_dir}\")\r\n        \r\n        source_file_path \u003d file_list_status[0].getPath()\r\n        print_timestamp(f\"Found temporary data file: {source_file_path}\")\r\n\r\n        # 4. 최종 목적지 파일 경로를 Hadoop Path 객체로 정의\r\n        dest_file_path \u003d spark._jvm.org.apache.hadoop.fs.Path(output_path)\r\n\r\n        # 5. 덮어쓰기를 위해 기존 파일 먼저 삭제\r\n        print_timestamp(f\"Checking for existing file and deleting if present: {output_path}\")\r\n        if fs.exists(dest_file_path):\r\n            fs.delete(dest_file_path, False) # False \u003d 파일 1개만 삭제\r\n            print_timestamp(\"Existing file deleted.\")\r\n\r\n        # 6. \u0027part-\u0027 파일의 이름을 원하는 파일 이름(output_path)으로 변경(이동)\r\n        print_timestamp(f\"Moving file to final destination: {output_path}\")\r\n        fs.rename(source_file_path, dest_file_path)\r\n        \r\n        # 7. 임시 디렉터리(_SUCCESS 파일 포함) 삭제\r\n        print_timestamp(f\"Cleaning up temporary directory: {temp_dir}\")\r\n        fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True) # True \u003d 재귀적으로 삭제\r\n\r\n        print_timestamp(f\"Successfully saved to single HDFS Parquet file: {output_path}\")\r\n        \r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to save to single HDFS Parquet file: {output_path}\")\r\n        print(e)\r\n        # 에러 시 임시 디렉터리 정리 시도\r\n        try:\r\n            fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n            fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n            print_timestamp(\"Cleaned up temporary directory after error.\")\r\n        except:\r\n            pass\r\n        raise\r\n        \r\n    return output_path\r\n\r\n\r\n# ####################################################################\r\n# ## --- 3. Core SOH Forecast Preprocess Logic ---\r\n# ####################################################################\r\n\r\ndef summary_by_day(df):\r\n    \"\"\"\r\n    2단계의 \u0027시퀀스(ch_seq)별\u0027 요약 데이터를 \u0027일(day)별\u0027 요약 데이터로 변환합니다.\r\n    (kslab_bus_soh_forecast_v2.py의 로직)\r\n    \"\"\"\r\n\r\n    # [수정] 이 함수가 호출될 때는 이미 모든 컬럼이 DoubleType임\r\n    df \u003d df.filter((col(\"delta_soc\")\u003e\u003d5) \u0026 (col(\"c_rate\")\u003e0) \u0026 (col(\"c_rate\")\u003c2.0))\r\n    \r\n    # 2단계에서 이미 \u0027day_of_soh\u0027가 생성되었으므로 사용\r\n    # df \u003d df.withColumn(\"day_of_soh\", date_format(col(\"start_time\"), \"yyyy-MM-dd\"))\r\n\r\n    df_agg \u003d df.groupBy(\"vehicle_id\", \"day_of_soh\").agg(\r\n        pyspark_round(pyspark_avg(\"mileage\"), 2).alias(\"mileage\"),\r\n        pyspark_round(pyspark_max(\"acc_cycle_cnt\"), 0).alias(\"acc_cycle_cnt\"),\r\n        pyspark_round(pyspark_avg(\"avg_bat_temp\"), 1).alias(\"avg_bat_temp\"),\r\n        pyspark_round(pyspark_max(\"cvdiff\"), 3).alias(\"cvdiff\"), # 2단계에서 이미 cvdiff로 이름 변경됨\r\n        pyspark_round(pyspark_max(\"ctdiff\"), 3).alias(\"ctdiff\"), # 2단계에서 이미 ctdiff로 이름 변경됨\r\n        pyspark_round(pyspark_avg(\"c_rate\"), 2).alias(\"c_rate\"),\r\n        pyspark_round(pyspark_avg(\"soh_avg\"), 2).alias(\"soh_avg\"), # Target Column\r\n    )\r\n\r\n    # 일(day) 기준 마지막 soh_list 가져오기\r\n    w_last_time_of_day \u003d Window.partitionBy(\"vehicle_id\", \"day_of_soh\").orderBy(col(\"start_time\").desc())\r\n    \r\n    df_last_soh_of_day \u003d (\r\n        df.withColumn(\"rn\", row_number().over(w_last_time_of_day))\r\n          .filter(col(\"rn\") \u003d\u003d 1)\r\n          .select(\"vehicle_id\", \"day_of_soh\", col(\"soh\").alias(\"soh_list\")) # 2단계의 \u0027soh\u0027 컬럼 사용\r\n    )\r\n    \r\n    df_agg \u003d df_agg.join(df_last_soh_of_day, [\"vehicle_id\", \"day_of_soh\"], \"left\")\r\n\r\n    return df_agg\r\n\r\ndef process_forecast_preprocess(spark: SparkSession, vehicle_id: Optional[str] \u003d None):\r\n    \"\"\"\r\n    SOH Forecast용 전처리 데이터 생성 함수 (HDFS CSV -\u003e HDFS Parquet)\r\n    \"\"\"\r\n    # Step 0: Load data (2단계 결과물)\r\n    print_timestamp(\"Step 0\u003e Loading data from HDFS (output of Step 2)\")\r\n    \r\n    csv_path_tmpl \u003d SOH_FORECAST_PREPROCESS_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n    if vehicle_id and \u0027{vehicle_id}\u0027 in csv_path_tmpl:\r\n        csv_path \u003d csv_path_tmpl.format(vehicle_id\u003dvehicle_id)\r\n        logger.info(f\"HDFS CSV 입력 경로(치환됨): {csv_path}\")\r\n        \r\n    # 2. 템플릿이 없지만 경로 문자열은 있는 경우 -\u003e 그대로 사용\r\n    elif csv_path_tmpl:\r\n        csv_path \u003d csv_path_tmpl\r\n        logger.info(f\"HDFS CSV 입력 경로(고정값): {csv_path}\")\r\n        \r\n    # 3. 경로 자체가 없는 경우 -\u003e 에러\r\n    else:\r\n        logger.error(\"CSV 경로 설정이 잘못되었습니다.\")\r\n        sys.exit(0)\r\n        \r\n    csv_path \u003d csv_path_tmpl.format(vehicle_id\u003dvehicle_id)\r\n    df \u003d load_data_from_csv(spark, csv_path)\r\n    \r\n    if df.count() \u003d\u003d 0:\r\n        print(\"No Data Loaded from Step 2. Exiting.\")\r\n        sys.exit(\"Program terminated due to empty input data.\")\r\n        \r\n    print_timestamp(f\"Step 0 - Loaded {df.count()} rows from {csv_path}\")\r\n\r\n    # \u0027soh\u0027 컬럼을 배열로 변환\r\n    print_timestamp(\"Converting \u0027soh\u0027 string column back to ArrayType...\")\r\n    df \u003d df.withColumn(\"soh\",  \r\n        transform(\r\n            split(col(\"soh\"), \",\"),\r\n            lambda x: x.cast(\"double\")\r\n        ).alias(\"soh\")\r\n    )\r\n    \r\n    \r\n    # Step 0.5: 피처/타겟 컬럼 타입을 Double로 강제 변환 (집계 전)\r\n    print_timestamp(\"Step 0.5\u003e Casting feature/target columns to Double before aggregation...\")\r\n    from pyspark.sql.types import DoubleType\r\n    from pyspark.sql.functions import regexp_replace\r\n\r\n    # 모델링에 사용될 모든 숫자 컬럼\r\n    feature_cols \u003d [\"acc_cycle_cnt\", \"avg_bat_temp\", \"c_rate\", \"cvdiff\", \"ctdiff\"]\r\n    target_col \u003d \"soh_avg\"\r\n    # 2단계 CSV에 포함된 다른 숫자 컬럼들\r\n    other_numeric_cols \u003d [\"delta_soc\", \"mileage\"]\r\n    \r\n    numeric_cols \u003d feature_cols + [target_col] + other_numeric_cols\r\n    \r\n    for col_name in numeric_cols:\r\n        if col_name in df.columns:\r\n            print_timestamp(f\"Cleaning and casting \u0027{col_name}\u0027...\")\r\n            # 1. 대괄호 [ 와 ] 를 제거 (예: \u0027[9.77...]\u0027 -\u003e \u00279.77...\u0027)\r\n            df \u003d df.withColumn(col_name, regexp_replace(col(col_name), r\"[\\[\\]]\", \"\"))\r\n            # 2. Double 타입으로 변환 (변환 실패 시 null이 됨)\r\n            df \u003d df.withColumn(col_name, col(col_name).cast(DoubleType()))\r\n        else:\r\n            logger.warning(f\"Cast skipped: Column \u0027{col_name}\u0027 not found in input CSV.\")\r\n    \r\n\r\n    # Step 1: \u0027일(Day)\u0027 단위로 데이터 요약\r\n    print_timestamp(\"Step 1\u003e Summarizing data by day (for XGBoost model)\")\r\n    df_summary_day \u003d summary_by_day(df) \r\n\r\n    # Step 2: 모델링을 위한 학습/테스트 플래그 생성\r\n    print_timestamp(\"Step 2\u003e Creating train/test split flag\")\r\n    df_summary_day \u003d df_summary_day.orderBy(\"vehicle_id\", \"day_of_soh\")\r\n    w_order \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"day_of_soh\")\r\n    w_count \u003d Window.partitionBy(\"vehicle_id\")\r\n\r\n    df_preprocessed \u003d (\r\n        df_summary_day\r\n        .withColumn(\"rownum\", row_number().over(w_order))\r\n        .withColumn(\"cnt\", count(lit(1)).over(w_count))\r\n        .withColumn(\r\n            \"train_flag\",\r\n            (col(\"rownum\") \u003c\u003d col(\"cnt\") * lit(0.8)).cast(\"boolean\")\r\n        )\r\n    )\r\n\r\n    # Step 3: 4단계(모델링)에 필요한 컬럼만 선택\r\n    print_timestamp(\"Step 3\u003e Selecting columns for modeling handoff\")\r\n    \r\n    output_df \u003d df_preprocessed.select(\r\n        \"vehicle_id\",\r\n        \"day_of_soh\",\r\n        *feature_cols,\r\n        target_col,   # 모델 학습용 타겟\r\n        \"train_flag\", # 학습/테스트 분리용 플래그\r\n        \"soh_list\"    # 최종 결과물에 필요한 컬럼\r\n    )\r\n\r\n    return output_df\r\n\r\n# ####################################################################\r\n# ## --- 4. Main Execution (Zeppelin 용) ---\r\n# ####################################################################\r\n\r\ndef main():\r\n    try:\r\n        vehicle_id \u003d VEHICLE_ID\r\n        \r\n        if not vehicle_id:\r\n            raise ValueError(\"Vehicle_id가 필수 인자로 제공되어야 합니다.\")\r\n\r\n        # HDFS 파일시스템 객체 가져오기 (Spark JVM을 통해 접근)\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        # 🔽🔽🔽 [추가] 모델 파일 존재 확인 및 스킵 로직 🔽🔽🔽\r\n        # 4단계 모델링 스크립트가 HDFS에서 로드할 모델 파일의 경로를 구성합니다.\r\n        # 사용자가 제시한 구조 z.input(\"parquet_glob\") + models/xgb_model/xgb_model.pkl을 가정\r\n        model_check_path \u003d f\"{z.input(\u0027parquet_glob\u0027)}/models/xgb_model/xgb_model.pkl\"\r\n        \r\n        model_hdfs_path \u003d spark._jvm.org.apache.hadoop.fs.Path(model_check_path)\r\n        \r\n        if fs.exists(model_hdfs_path):\r\n            logger.info(f\"Existing Model found at: {model_check_path}\")\r\n            logger.info(\"모델이 이미 존재하므로, 3단계 전처리(forecast_preprocess)를 건너뛰고 4단계 스코어링을 준비합니다.\")\r\n            return # 이 함수(main)를 즉시 종료하여 스크립트 실행을 종료합니다.\r\n        else:\r\n            logger.info(f\"Model NOT found at: {model_check_path}\")\r\n            logger.info(\"모델이 없으므로, 3단계 전처리를 정상 진행합니다. (4단계에서 모델 학습이 진행될 예정)\")\r\n        \r\n        # 모델이 없는 경우에만 전처리 실행\r\n        print_timestamp(\"Step 0~3\u003e Starting Forecast Preprocess...\")\r\n        result_df \u003d process_forecast_preprocess(spark, vehicle_id\u003dvehicle_id)\r\n        \r\n        # Save results - HDFS Parquet로 저장\r\n        print_timestamp(\"Step 4\u003e Saving preprocessed results to HDFS Parquet\")\r\n        \r\n        # NOTE: Config의 \u0027csv_path\u0027를 \u0027parquet_path\u0027로 수정해야 합니다.\r\n        # 현재 코드의 \u0027csv_path\u0027는 입력 경로이고, \u0027output\u0027의 키는 \u0027csv_path\u0027로 잘못 정의되어 있습니다.\r\n        # 올바른 키인 \u0027csv_path\u0027를 사용하여 진행하겠습니다.\r\n        output_path_tmpl \u003d SOH_FORECAST_PREPROCESS_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027] \r\n        output_path \u003d output_path_tmpl.format(vehicle_id\u003dvehicle_id)\r\n        \r\n        # Parquet 저장 함수 호출\r\n        save_to_parquet(result_df, output_path)\r\n        print(f\"Preprocessed data for modeling saved to HDFS: {output_path}\")\r\n\r\n    except Exception as e:\r\n        import traceback\r\n        traceback.print_exc()\r\n        raise\r\n    finally:\r\n        print_timestamp(\"Main function (Forecast Preprocess) finished.\")\r\n\r\n# [필수] 제플린에서 실행하기 위해 main()을 직접 호출\r\nmain()",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 20:30:30.212",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "parquet_glob": "/Data/soh/result/95/202511",
+          "auto_base_path": "/Data/soh/result/95/202511"
+        },
+        "forms": {
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-19 20:30:47,417 - INFO - Model NOT found at: /Data/soh/result/95/202511/models/xgb_model/xgb_model.pkl\n2025-11-19 20:30:47,434 - INFO - 모델이 없으므로, 3단계 전처리를 정상 진행합니다. (4단계에서 모델 학습이 진행될 예정)\n[2025-11-19 20:30:47] Step 0~3\u003e Starting Forecast Preprocess...\n[2025-11-19 20:30:47] Step 0\u003e Loading data from HDFS (output of Step 2)\n2025-11-19 20:30:47,437 - INFO - HDFS CSV 입력 경로(고정값): /Data/soh/result/95/202511/soh_summary_result.csv\n[2025-11-19 20:30:47] Loading data from HDFS CSV: /Data/soh/result/95/202511/soh_summary_result.csv\n[2025-11-19 20:30:54] Step 0 - Loaded 109 rows from /Data/soh/result/95/202511/soh_summary_result.csv\n[2025-11-19 20:30:54] Converting \u0027soh\u0027 string column back to ArrayType...\n[2025-11-19 20:30:54] Step 0.5\u003e Casting feature/target columns to Double before aggregation...\n[2025-11-19 20:30:54] Cleaning and casting \u0027acc_cycle_cnt\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027avg_bat_temp\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027c_rate\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027cvdiff\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027ctdiff\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027soh_avg\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027delta_soc\u0027...\n[2025-11-19 20:30:54] Cleaning and casting \u0027mileage\u0027...\n[2025-11-19 20:30:54] Step 1\u003e Summarizing data by day (for XGBoost model)\n[2025-11-19 20:30:55] Step 2\u003e Creating train/test split flag\n[2025-11-19 20:30:55] Step 3\u003e Selecting columns for modeling handoff\n[2025-11-19 20:30:55] Step 4\u003e Saving preprocessed results to HDFS Parquet\n[2025-11-19 20:30:55] Saving data to HDFS *single file*: /Data/soh/result/95/202511/intermediate/forecast_preprocessed_95.parquet\n[2025-11-19 20:30:55] Using temporary save directory: /Data/soh/result/95/202511/intermediate/.temp_parquet_save_dir\n[2025-11-19 20:30:59] Found temporary data file: hdfs://mycluster/Data/soh/result/95/202511/intermediate/.temp_parquet_save_dir/part-00000-0f59e9cc-815c-4efb-8173-020c77fca78a-c000.snappy.parquet\n[2025-11-19 20:30:59] Checking for existing file and deleting if present: /Data/soh/result/95/202511/intermediate/forecast_preprocessed_95.parquet\n[2025-11-19 20:30:59] Existing file deleted.\n[2025-11-19 20:30:59] Moving file to final destination: /Data/soh/result/95/202511/intermediate/forecast_preprocessed_95.parquet\n[2025-11-19 20:30:59] Cleaning up temporary directory: /Data/soh/result/95/202511/intermediate/.temp_parquet_save_dir\n[2025-11-19 20:30:59] Successfully saved to single HDFS Parquet file: /Data/soh/result/95/202511/intermediate/forecast_preprocessed_95.parquet\nPreprocessed data for modeling saved to HDFS: /Data/soh/result/95/202511/intermediate/forecast_preprocessed_95.parquet\n[2025-11-19 20:30:59] Main function (Forecast Preprocess) finished.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763423460106_2090738259",
+      "id": "paragraph_1763423460106_2090738259",
+      "dateCreated": "2025-11-18 08:51:00.106",
+      "dateStarted": "2025-11-19 20:30:30.216",
+      "dateFinished": "2025-11-19 20:30:59.417",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n\nimport org.apache.spark.sql.types.DoubleType\n\n# ◀◀◀ 확인할 Parquet 파일 경로\nparquet_path \u003d \"/Data/soh/result/104/intermediate/forecast_preprocessed_104.parquet\"\nvehicle_id \u003d \"104\"\n\nprint(f\"--- {vehicle_id}번 차량의 Parquet 파일 확인 ---\")\nprint(f\"경로: {parquet_path}\\n\")\n\ntry:\n    # 1. Parquet 파일 읽기\n    df \u003d spark.read.parquet(parquet_path)\n\n    # 2. 스키마(컬럼별 타입) 출력\n    print(\"--- 1. 컬럼별 데이터 타입 (스키마) ---\")\n    df.printSchema()\n\n    # 3. 데이터 샘플 10개 출력 (전체 확인)\n    print(\"\\n--- 2. 데이터 샘플 (상위 10개) ---\")\n    df.show(10, truncate\u003dFalse)\n\n    # 4. SHAP이 문제 삼는 피처 컬럼들만 따로 확인\n    print(\"\\n--- 3. 주요 피처(Feature) 컬럼 상세 확인 ---\")\n    feature_cols \u003d [\"acc_cycle_cnt\", \"avg_bat_temp\", \"c_rate\", \"cvdiff\", \"ctdiff\", \"soh_avg\"]\n    df.select(feature_cols).show(20)\n    \n    # 5. (추가) 강제로 Double로 변환 시도해보기 (에러 나는 데이터 찾기)\n    print(\"\\n--- 4. 피처 컬럼 Double 타입 변환 테스트 ---\")\n    try:\n        df_cast_test \u003d df.select(\n            col(\"acc_cycle_cnt\").cast(DoubleType()).alias(\"acc_cycle_cnt_cast\"),\n            col(\"c_rate\").cast(DoubleType()).alias(\"c_rate_cast\"),\n            col(\"cvdiff\").cast(DoubleType()).alias(\"cvdiff_cast\")\n        )\n        df_cast_test.show(10)\n        print(\"\u003e\u003e\u003e Double 타입 변환 테스트 성공 (데이터에 문자열 없음)\")\n    except Exception as e:\n        print(f\"!!! Double 타입 변환 테스트 실패 !!!\")\n        print(e)\n\n\nexcept Exception as e:\n    print(f\"파일을 읽는 중 에러 발생: {parquet_path}\")\n    print(e)",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-18 15:02:06.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 3: import org.apache.spark.sql.types.DoubleType\nTraceback (most recent call last):\n  File \"/tmp/python4693854923025438962/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 3, in \u003cmodule\u003e\nModuleNotFoundError: No module named \u0027org.apache.spark\u0027\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763444449167_2139253124",
+      "id": "paragraph_1763444449167_2139253124",
+      "dateCreated": "2025-11-18 14:40:49.167",
+      "dateStarted": "2025-11-18 14:40:52.634",
+      "dateFinished": "2025-11-18 14:40:53.905",
+      "status": "ERROR"
+    },
+    {
+      "text": "%spark_single\n\n\n\nvar df1 \u003d spark.read.parquet(\"/Data/soh/result/104/intermediate/*\").createOrReplaceTempView(\"sqsdq\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-18 15:02:41.349",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[1m\u001b[34mdf1\u001b[0m: \u001b[1m\u001b[32mUnit\u001b[0m \u003d ()\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d13"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763439773177_1332203788",
+      "id": "paragraph_1763439773177_1332203788",
+      "dateCreated": "2025-11-18 13:22:53.177",
+      "dateStarted": "2025-11-18 15:02:41.353",
+      "dateFinished": "2025-11-18 15:02:42.086",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.sql\n\n\nselect * from sqsdq\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-18 15:02:42.809",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "vehicle_id": "string",
+                      "day_of_soh": "string",
+                      "acc_cycle_cnt": "string",
+                      "avg_bat_temp": "string",
+                      "c_rate": "string",
+                      "cvdiff": "string",
+                      "ctdiff": "string",
+                      "soh_avg": "string",
+                      "train_flag": "string",
+                      "soh_list": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "vehicle_id\tday_of_soh\tacc_cycle_cnt\tavg_bat_temp\tc_rate\tcvdiff\tctdiff\tsoh_avg\ttrain_flag\tsoh_list\n104\t2025-08-01\t72.0\t26.5\t0.44\t20.0\t1.67\t98.4\ttrue\tWrappedArray(98.4, 98.4, 98.4, 98.4, 98.4, 0.0)\n104\t2025-08-02\t73.0\t26.6\t0.3\t21.67\t2.5\t98.4\ttrue\tWrappedArray(98.4, 98.4, 98.4, 98.4, 98.4, 0.0)\n104\t2025-08-03\t74.0\t24.0\t0.47\t25.0\t1.83\t98.32\ttrue\tWrappedArray(98.0, 98.4, 98.4, 98.4, 98.0, 0.0)\n104\t2025-08-04\t75.0\t29.0\t0.42\t21.67\t2.5\t98.2\ttrue\tWrappedArray(98.0, 98.4, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-05\t76.0\t28.4\t0.31\t21.67\t2.0\t98.13\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-20\t77.0\t28.2\t0.39\t21.67\t2.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-21\t78.0\t26.7\t0.47\t25.0\t2.17\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-22\t79.0\t28.4\t0.42\t21.67\t2.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-23\t79.0\t24.0\t0.48\t20.0\t1.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-30\t80.0\t29.2\t0.51\t23.33\t2.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-08-31\t81.0\t25.2\t0.37\t20.0\t1.67\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-09-01\t82.0\t27.1\t0.37\t21.67\t2.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-09-03\t82.0\t24.2\t0.46\t23.33\t2.0\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-09-04\t83.0\t26.0\t0.38\t21.67\t1.67\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-09-05\t83.0\t25.2\t0.35\t18.33\t1.5\t98.0\ttrue\tWrappedArray(98.0, 98.0, 98.0, 98.0, 98.0, 0.0)\n104\t2025-09-06\t85.0\t25.7\t0.5\t26.67\t1.83\t97.91\ttrue\tWrappedArray(97.6, 98.0, 98.0, 98.0, 97.6, 0.0)\n104\t2025-09-07\t85.0\t25.7\t0.36\t21.67\t2.0\t97.87\ttrue\tWrappedArray(97.6, 98.0, 98.0, 98.0, 97.6, 0.0)\n104\t2025-09-09\t86.0\t23.7\t0.46\t21.67\t1.83\t97.77\ttrue\tWrappedArray(97.6, 98.0, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-10\t87.0\t23.0\t0.49\t26.67\t1.83\t97.73\ttrue\tWrappedArray(97.6, 98.0, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-11\t87.0\t24.1\t0.3\t21.67\t2.0\t97.7\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-12\t88.0\t24.6\t0.52\t28.33\t2.17\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-13\t89.0\t25.2\t0.44\t23.33\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-14\t90.0\t22.6\t0.42\t23.33\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-15\t91.0\t25.5\t0.37\t21.67\t2.17\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-16\t91.0\t26.1\t0.37\t23.33\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-17\t92.0\t25.5\t0.39\t21.67\t2.17\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-18\t92.0\t23.1\t0.4\t20.0\t1.67\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-19\t93.0\t25.8\t0.39\t21.67\t2.33\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-20\t94.0\t21.7\t0.46\t20.0\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-21\t95.0\t23.0\t0.37\t23.33\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-22\t95.0\t22.0\t0.47\t21.67\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-23\t95.0\t22.7\t0.35\t21.67\t1.4\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-24\t96.0\t23.4\t0.41\t21.67\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-25\t97.0\t24.0\t0.48\t21.67\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-26\t97.0\t21.8\t0.36\t20.0\t1.5\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-27\t98.0\t25.3\t0.36\t21.67\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-28\t99.0\t22.6\t0.42\t20.0\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-29\t99.0\t23.2\t0.3\t25.0\t2.67\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-09-30\t100.0\t22.1\t0.19\t21.67\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-01\t101.0\t22.2\t0.23\t21.67\t2.17\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-02\t101.0\t21.5\t0.02\t20.0\t2.17\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-03\t101.0\t23.2\t0.38\t21.67\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-04\t102.0\t22.4\t0.37\t20.0\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-05\t102.0\t23.8\t0.33\t23.33\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-06\t103.0\t24.2\t0.53\t21.67\t1.83\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-07\t104.0\t22.5\t0.34\t21.67\t2.0\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-08\t104.0\t20.7\t0.59\t21.67\t1.67\t97.6\ttrue\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-09\t105.0\t22.5\t0.31\t23.33\t2.0\t97.6\tfalse\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-10\t105.0\t22.1\t0.02\t18.33\t1.83\t97.6\tfalse\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-11\t106.0\t23.2\t0.33\t25.0\t2.33\t97.6\tfalse\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-12\t106.0\t23.6\t0.44\t21.67\t1.83\t97.6\tfalse\tWrappedArray(97.6, 97.6, 97.6, 97.6, 97.6, 0.0)\n104\t2025-10-14\t106.0\t21.7\t0.36\t20.0\t1.67\t97.47\tfalse\tWrappedArray(97.200005, 97.6, 97.6, 97.6, 97.200005, 0.0)\n104\t2025-10-16\t107.0\t20.9\t0.47\t20.0\t2.0\t97.4\tfalse\tWrappedArray(97.200005, 97.6, 97.200005, 97.6, 97.200005, 0.0)\n104\t2025-10-17\t107.0\t22.9\t0.43\t23.33\t1.83\t97.33\tfalse\tWrappedArray(97.200005, 97.6, 97.200005, 97.200005, 97.200005, 0.0)\n104\t2025-10-18\t107.0\t20.2\t0.44\t21.67\t1.83\t97.33\tfalse\tWrappedArray(97.200005, 97.6, 97.200005, 97.200005, 97.200005, 0.0)\n104\t2025-10-19\t108.0\t21.0\t0.39\t23.33\t2.0\t97.33\tfalse\tWrappedArray(97.200005, 97.6, 97.200005, 97.200005, 97.200005, 0.0)\n104\t2025-10-20\t109.0\t19.3\t0.39\t23.33\t2.17\t97.25\tfalse\tWrappedArray(97.200005, 97.200005, 97.200005, 97.200005, 97.200005, 0.0)\n104\t2025-10-22\t109.0\t16.4\t0.37\t21.67\t1.0\t97.2\tfalse\tWrappedArray(97.200005, 97.200005, 97.200005, 97.200005, 97.200005, 0.0)\n104\t2025-10-25\t109.0\t20.3\t0.06\t20.0\t2.0\t97.2\tfalse\tWrappedArray(97.200005, 97.200005, 97.200005, 97.200005, 97.200005, 0.0)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d14"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763443282791_969316360",
+      "id": "paragraph_1763443282791_969316360",
+      "dateCreated": "2025-11-18 14:21:22.791",
+      "dateStarted": "2025-11-18 15:02:42.813",
+      "dateFinished": "2025-11-18 15:02:43.234",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.sql\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-18 14:39:26.542",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763444366542_1440021718",
+      "id": "paragraph_1763444366542_1440021718",
+      "dateCreated": "2025-11-18 14:39:26.542",
+      "status": "READY"
+    }
+  ],
+  "name": "pre_forecast",
+  "id": "2MBXS4BWZ",
+  "defaultInterpreterGroup": "spark_single",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
