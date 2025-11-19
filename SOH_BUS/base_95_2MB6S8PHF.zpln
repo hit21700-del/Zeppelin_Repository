@@ -1,0 +1,130 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_single.pyspark\r\n\"\"\"\r\nsoh base : soh예측을 위한 base코드 (Config/Utils 통합 및 HDFS 버전)\r\n\r\n- raw data 입력 : HDFS의 CSV 파일 입력\r\n- 데이터변환, 필요 데이터 컬럼 추가, 필터링 처리\r\n- 결과 데이터셋(bus_soh_base) : vehicle_id, time, status, mileage, voltage_avg, current_avg, soc_avg, soh_avg, bat_temp, pvdiff_avg, ptdiff_avg, soh(리스트)\r\n- 결과데이터 저장 : HDFS에 CSV 파일로 저장\r\n- 파일 구동 코드 : python kslab_bus_soh_base_v2_merged.py \u003cvehicle_id\u003e \u003cday_of_soh\u003e\r\n    * vehicle_id, day_of_soh 파라미터 입력(vehicle_id: 필수, day_of_soh: 해당일자 데이터만 조회 및 처리(미지정 시 전체 데이터 적용)\r\n\"\"\"\r\n\r\nimport os\r\nimport sys\r\nfrom typing import Optional, List, Dict, Any\r\nimport logging\r\nfrom datetime import datetime\r\n\r\n# Spark 관련 모듈\r\nfrom pyspark.sql import SparkSession, DataFrame\r\nfrom pyspark.sql.functions import (\r\n    col, lit, when, count, sum, min, max, avg,\r\n    to_timestamp, unix_timestamp, from_unixtime,\r\n    date_format, hour, minute, second, \r\n    lag, lead, window, expr, round, regexp_extract,\r\n    concat, concat_ws\r\n)\r\nfrom pyspark.sql.window import Window\r\nfrom pyspark.sql.types import (\r\n    StructType, StructField, StringType, IntegerType,\r\n    DoubleType, TimestampType, BooleanType\r\n)\r\n\r\nVEHICLE_ID \u003d \"95\"\r\n\r\n# 로깅 설정\r\nlogging.basicConfig(\r\n    level\u003dlogging.INFO,\r\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\r\n)\r\nlogger \u003d logging.getLogger(__name__)\r\n\r\n# ####################################################################\r\n# ## --- 1. Configuration (kslab_bus_config.py) ---\r\n# ####################################################################\r\n\r\n\r\n\r\n# Preprocessing Input/Output configuration (HDFS 경로로 수정)\r\nSOH_BASE_IO_CONFIG \u003d {\r\n    \u0027input\u0027: {\r\n        \u0027source\u0027: \u0027csv\u0027,  # \u0027csv\u0027 or \u0027db\u0027 선택 (csv로 고정)\r\n        \u0027csv_path\u0027: z.input(\"parquet_glob\") #\"/Data/soh/csv/woojin_93.csv\" \r\n            \r\n    },\r\n    \u0027output\u0027: {\r\n        \u0027format\u0027: \u0027csv\u0027,  # \u0027csv\u0027 or \u0027db\u0027 (csv로 고정)\r\n        \u0027csv_path\u0027: z.input(\"auto_base_path\")+\"/soh_base_result.csv\" #\"/Data/soh/result/93/20251119\"+\"/soh_base_result.csv\"\r\n            \r\n        \r\n    }\r\n}\r\n\r\n\r\n# ####################################################################\r\n# ## --- 2. Utility Functions (kslab_bus_utils.py) ---\r\n# ####################################################################\r\n\r\ndef print_timestamp(message: str) -\u003e None:\r\n    \"\"\"Print message with current timestamp\"\"\"\r\n    print(f\"[{datetime.now().strftime(\u0027%Y-%m-%d %H:%M:%S\u0027)}] {message}\")\r\n\r\ndef print_dfcount(df: DataFrame, message: str) -\u003e None:\r\n    \"\"\"Print DataFrame count with message\"\"\"\r\n    count \u003d df.count()\r\n    print_timestamp(f\"{message}: {count:,} rows\")\r\n\r\n\r\ndef load_data_from_csv(spark: SparkSession, file_path: str) -\u003e DataFrame:\r\n    \"\"\"Load data from a CSV file (HDFS or local).\"\"\"\r\n    print_timestamp(f\"Loading data from HDFS CSV: {file_path}\")\r\n    try:\r\n        df \u003d spark.read.csv(file_path, header\u003dTrue, inferSchema\u003dTrue)\r\n        return df\r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to read HDFS CSV file: {file_path}\")\r\n        print(e)\r\n        # 빈 DataFrame 반환\r\n        return spark.createDataFrame([], schema\u003dStructType([]))\r\n\r\ndef save_to_csv(df: DataFrame, output_path: str) -\u003e str:\r\n    \"\"\"\r\n    Spark DataFrame을 HDFS에 *단일* CSV 파일로 저장합니다.\r\n    Spark의 \u0027part-\u0027 파일 문제를 처리하고 원하는 파일 이름으로 변경합니다.\r\n    \"\"\"\r\n    print_timestamp(f\"Saving data to HDFS *single file*: {output_path}\")\r\n    \r\n    # 1. 최종 파일이 저장될 디렉터리와 임시 저장 디렉터리 경로를 정의합니다.\r\n    # 예: output_path가 /Data/soh/result/93/soh_base_result.csv 라면\r\n    #    base_dir은 /Data/soh/result/93\r\n    #    temp_dir은 /Data/soh/result/93/.temp_save_dir\r\n    import os\r\n    base_dir \u003d os.path.dirname(output_path)\r\n    temp_dir \u003d os.path.join(base_dir, \".temp_save_dir\") # 임시 디렉터리 이름\r\n    \r\n    print_timestamp(f\"Using temporary save directory: {temp_dir}\")\r\n\r\n    try:\r\n        (df.coalesce(1)\r\n           .write\r\n           .option(\"header\", \"true\")\r\n           .mode(\"overwrite\")\r\n           .csv(temp_dir))\r\n\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        \r\n        part_file_pattern \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.csv\")\r\n        file_list_status \u003d fs.globStatus(part_file_pattern)\r\n\r\n        if not file_list_status:\r\n            raise Exception(f\"No \u0027part-\u0027 file found in temp directory: {temp_dir}\")\r\n            \r\n        source_file_path \u003d file_list_status[0].getPath() \r\n        print_timestamp(f\"Found temporary data file: {source_file_path}\")\r\n\r\n        dest_file_path \u003d spark._jvm.org.apache.hadoop.fs.Path(output_path)\r\n        \r\n        print_timestamp(f\"Checking for existing file and deleting if present: {output_path}\")\r\n        if fs.exists(dest_file_path):\r\n            fs.delete(dest_file_path, False) # False \u003d 재귀삭제 안함 (파일이므로)\r\n            print_timestamp(\"Existing file deleted.\")\r\n\r\n        print_timestamp(f\"Moving file to final destination: {output_path}\")\r\n        fs.rename(source_file_path, dest_file_path)\r\n        \r\n        print_timestamp(f\"Cleaning up temporary directory: {temp_dir}\")\r\n        fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True) # True \u003d 재귀적으로 삭제\r\n\r\n        print_timestamp(f\"Successfully saved to single HDFS file: {output_path}\")\r\n        \r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to save to single HDFS file: {output_path}\")\r\n        print(e)\r\n        try:\r\n            fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n            fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n            print_timestamp(\"Cleaned up temporary directory after error.\")\r\n        except:\r\n            pass \r\n        raise \r\n        \r\n    return output_path\r\n\r\n\r\n# ####################################################################\r\n# ## --- 3. Core SOH Base Logic (kslab_bus_soh_base_v2.py) ---\r\n# ####################################################################\r\n\r\n# bus단말 데이터 변환\r\ndef convert_df(df: DataFrame) -\u003e DataFrame:\r\n\r\n    # 리스트 타입 변환 함수 - Spark 내장 함수 사용 (Python UDF 대신)\r\n    # 문자열 \"{0,0,0,0,0,0,0,0}\" 형태를 배열로 변환\r\n    def parse_list_column(col_name):\r\n        \"\"\"\"{0,0,0,0}\" 형태의 문자열을 double 배열로 변환\"\"\"\r\n        # 중괄호 제거 -\u003e split -\u003e transform으로 각 요소를 double로 변환\r\n        return expr(f\"transform(split(regexp_replace(CAST({col_name} AS STRING), \u0027[{{}}]\u0027, \u0027\u0027), \u0027,\u0027), x -\u003e CAST(trim(x) AS DOUBLE))\")\r\n\r\n    # 시간 파싱 - Spark 내장 함수 사용 (Python UDF 대신)\r\n    # 원본 포맷: \"2025-08-01 10:52:20.000 +0900\" -\u003e \"2025-08-01 10:52:20\"\r\n    \r\n    # time 컬럼을 문자열로 변환 후 regexp로 \"yyyy-MM-dd HH:mm:ss\" 형식만 추출\r\n    df \u003d df.withColumn(\r\n        \"time_str\",\r\n        when(col(\"time\").isNull(), lit(None))\r\n        .otherwise(\r\n            # regexp로 \"yyyy-MM-dd HH:mm:ss\" 패턴만 추출\r\n            regexp_extract(\r\n                col(\"time\").cast(\"string\"),\r\n                r\"(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\",\r\n                1\r\n            )\r\n        )\r\n    ).withColumn(\r\n        \"time\",\r\n        to_timestamp(col(\"time_str\"), \"yyyy-MM-dd HH:mm:ss\")\r\n    ).drop(\"time_str\") \\\r\n        .withColumn(\"vehicle_id\", col(\"vehicle_id\").cast(\"string\")) \\\r\n        .withColumn(\"voltage\", parse_list_column(\"voltage\")) \\\r\n        .withColumn(\"current\", parse_list_column(\"current\")) \\\r\n        .withColumn(\"soc\", parse_list_column(\"soc\")) \\\r\n        .withColumn(\"soh\", parse_list_column(\"soh\")) \\\r\n        .withColumn(\"cell_min_v\", parse_list_column(\"cell_min_v\")) \\\r\n        .withColumn(\"cell_max_v\", parse_list_column(\"cell_max_v\")) \\\r\n        .withColumn(\"cell_min_t\", parse_list_column(\"cell_min_t\")) \\\r\n        .withColumn(\"cell_max_t\", parse_list_column(\"cell_max_t\")) \\\r\n        .withColumn(\"bus_speed\", col(\"bus_speed\").cast(\"int\")) \\\r\n        .withColumn(\"mileage\", col(\"mileage\").cast(\"double\")) \\\r\n        .withColumn(\"is_key_on\", col(\"is_key_on\").cast(\"boolean\")) \\\r\n        .withColumn(\"is_parking_brake_on\", col(\"is_parking_brake_on\").cast(\"boolean\")) \\\r\n        .withColumn(\"is_charger_connected\", col(\"is_charger_connected\").cast(\"boolean\")) \\\r\n        .withColumn(\"dnr\", col(\"dnr\").cast(\"string\")) \\\r\n        .withColumn(\"retarder\", col(\"retarder\").cast(\"int\")) \\\r\n        .withColumn(\"warn_temp_trac\", col(\"warn_temp_trac\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_bms_idiot_light\", col(\"warn_bms_idiot_light\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_trac_limit\", col(\"warn_trac_limit\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_isolation_low\", col(\"warn_isolation_low\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_front_air\", col(\"warn_front_air\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_rear_air\", col(\"warn_rear_air\").cast(\"boolean\"))\r\n\r\n    return df\r\n\r\n# Add status column based on vehicle state\r\ndef add_status(df: DataFrame) -\u003e DataFrame:\r\n\r\n    df \u003d df.withColumn(\"status\",\r\n    when(col(\"is_charger_connected\") \u003d\u003d True, \"CHARGE\")\r\n    .when((col(\"is_key_on\") \u003d\u003d True) \u0026 (col(\"is_parking_brake_on\") \u003d\u003d False), \"DRIVING\")\r\n    .otherwise(\"STOP\")\r\n    )    \r\n\r\n    return df\r\n\r\n# PVDIFF, PTDIFF 리스트 형태 추가\r\ndef add_list_columns(df: DataFrame) -\u003e DataFrame:\r\n    # 각 팩별 전압/온도 차이 배열 추가\r\n    df \u003d df.withColumn(\r\n        \u0027pvdiff\u0027,\r\n        expr(\u0027zip_with(cell_max_v, cell_min_v, (x, y) -\u003e CAST(x AS DOUBLE) - CAST(y AS DOUBLE))\u0027)\r\n    )\r\n    df \u003d df.withColumn(\r\n        \u0027ptdiff\u0027,\r\n        expr(\u0027zip_with(cell_max_t, cell_min_t, (x, y) -\u003e CAST(x AS DOUBLE) - CAST(y AS DOUBLE))\u0027)\r\n    )\r\n    \r\n    return df\r\n\r\ndef add_columns_avg(df: DataFrame) -\u003e DataFrame:\r\n    # 분할할 변수 목록 (voltage, current 등 모든 배열 변수 포함)\r\n    array_cols \u003d [\u0027voltage\u0027, \u0027current\u0027, \u0027soc\u0027, \u0027soh\u0027, \u0027pvdiff\u0027,\u0027ptdiff\u0027] #\u0027cell_min_t\u0027, \u0027cell_max_t\u0027, cell_min_v, cell_max_v 제외\r\n\r\n    # 각 변수에 대해 1~6 컬럼 생성 (df에 실제로 추가)\r\n    for arr_col in array_cols:\r\n        for i in range(1, 7):\r\n            df \u003d df.withColumn(f\"{arr_col}_{i}\", col(arr_col)[i-1])\r\n\r\n    # 각 변수에 대해 평균/표준편차 계산\r\n    from functools import reduce\r\n    from operator import add\r\n    from pyspark.sql.functions import sqrt\r\n\r\n    for arr_col in array_cols:\r\n        # 합계(0 제외)와 개수(0 제외)\r\n        sum_col \u003d reduce(add, [when(col(f\"{arr_col}_{i}\") !\u003d 0, col(f\"{arr_col}_{i}\")).otherwise(0) for i in range(1, 7)])\r\n        count_col \u003d reduce(add, [when(col(f\"{arr_col}_{i}\") !\u003d 0, 1).otherwise(0) for i in range(1, 7)])\r\n\r\n        # 평균\r\n        df \u003d df.withColumn(f\"{arr_col}_avg\", when(count_col \u003e 0, sum_col / count_col).otherwise(0.0))\r\n\r\n    # 중간 분할 컬럼 제거\r\n    drop_cols \u003d [f\"{c}_{i}\" for c in array_cols for i in range(1, 7)]\r\n    df \u003d df.drop(*drop_cols)\r\n\r\n    # 결과 반올림\r\n    df \u003d df.withColumn(\"voltage_avg\", round(col(\"voltage_avg\"), 2))\r\n    df \u003d df.withColumn(\"current_avg\", round(col(\"current_avg\"), 2))\r\n    df \u003d df.withColumn(\"soc_avg\", round(col(\"soc_avg\"), 2))\r\n    df \u003d df.withColumn(\"soh_avg\", round(col(\"soh_avg\"), 2))\r\n    df \u003d df.withColumn(\"mileage\", round(col(\"mileage\"), 2))\r\n    df \u003d df.withColumn(\"pvdiff_avg\", round(col(\"pvdiff_avg\"), 2))\r\n    df \u003d df.withColumn(\"ptdiff_avg\", round(col(\"ptdiff_avg\"), 2))\r\n\r\n    return df\r\n\r\ndef add_columns(df: DataFrame) -\u003e DataFrame:\r\n\r\n    df \u003d add_list_columns(df)\r\n\r\n    # 평균, 표준편차 컬럼 추가\r\n    df \u003d add_columns_avg(df)    \r\n\r\n    # 셀 온도 평균(list) 추가: (cell_min_t + cell_max_t) / 2\r\n    df \u003d df.withColumn(\r\n        \"cell_avg_temp\",\r\n        expr(\r\n            \"transform(\"\r\n            \"zip_with(cell_min_t, cell_max_t, (a, b) -\u003e (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) / 2.0),\"\r\n            \" x -\u003e round(x, 2)\"\r\n            \")\"\r\n        )\r\n    )\r\n\r\n    # 팩 전체 온도 평균(스칼라) 추가: cell_avg_temp 리스트의 평균값\r\n    df \u003d df.withColumn(\r\n        \"bat_temp\",\r\n        round(expr(\r\n            \"CASE WHEN size(cell_avg_temp) \u003e 0 THEN \"\r\n            \"aggregate(cell_avg_temp, 0D, (acc, x) -\u003e acc + x) / size(cell_avg_temp) \"\r\n            \"ELSE NULL END\"\r\n        ), 2)\r\n    )\r\n\r\n    return df\r\n\r\n# ####################################################################\r\n# ## --- 4. Main Process Function (수정됨) ---\r\n# ####################################################################\r\n\r\ndef process_soh_base_data(spark: SparkSession, vehicle_id: Optional[str] \u003d None, day_of_soh: Optional[str] \u003d None) -\u003e None:\r\n    \"\"\"\r\n    SOH Base 데이터 처리 함수 (HDFS CSV 전용)\r\n    \r\n    Args:\r\n        spark: SparkSession\r\n        vehicle_id: 차량 ID (optional)\r\n        day_of_soh: SOH 날짜 (optional, YYYY-MM-DD 형식)\r\n    \"\"\"\r\n\r\n    # Step 1: Load data (csv only) \r\n    print_timestamp(\"Step 1\u003e Loading data from HDFS\")\r\n\r\n    # SOH_BASE_IO_CONFIG[\u0027input\u0027][\u0027source\u0027]가 \u0027csv\u0027라고 가정\r\n    \r\n    # CSV 경로의 {vehicle_id} 플레이스홀더를 vehicle_id로 치환\r\n    csv_path \u003d SOH_BASE_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n    if vehicle_id and \u0027{vehicle_id}\u0027 in csv_path:\r\n        csv_path \u003d csv_path.format(vehicle_id\u003dvehicle_id)\r\n        logger.info(f\"HDFS CSV 경로: {csv_path}\")\r\n    elif not vehicle_id and \u0027{vehicle_id}\u0027 in csv_path:\r\n        logger.error(\"CSV 경로에 vehicle_id가 필요하지만 제공되지 않았습니다.\")\r\n        logger.error(\"프로그램을 종료합니다.\")\r\n        sys.exit(0)\r\n    \r\n    df \u003d load_data_from_csv(spark, csv_path)\r\n    \r\n    # CSV 소스일 때도 vehicle_id와 day_of_soh로 필터링\r\n    if vehicle_id:\r\n        df \u003d df.filter(col(\"vehicle_id\") \u003d\u003d vehicle_id)\r\n        logger.info(f\"CSV 데이터에서 ID: {vehicle_id} 필터링\")\r\n    \r\n    if day_of_soh:\r\n        # day_of_soh가 있으면 time 컬럼 기준으로 필터링\r\n        # HDFS에서 읽을 때 이미 파일명에 날짜가 포함되지 않는 전체 데이터를 읽는다고 가정\r\n        df \u003d df.filter(date_format(col(\"time\"), \"yyyy-MM-dd\") \u003d\u003d day_of_soh)\r\n        logger.info(f\"CSV 데이터에서 Day of SOH: {day_of_soh} 필터링\")\r\n            \r\n    if df.count() \u003e 0:\r\n        print(f\"Loaded Data Count: {df.count()} rows\")\r\n    else:\r\n        print(\"No Data Loaded\")\r\n        sys.exit(\"Program terminated due to empty input data.\")\r\n\r\n    # Step 2: Convert column names and data types -\u003e kmon_new 단말 적용\r\n    print_timestamp(\"Step 2\u003e Converting column names and data types\")\r\n    df \u003d convert_df(df)\r\n    \r\n    # Step 3: Add status column\r\n    print_timestamp(\"Step 3\u003e Adding status column\")\r\n    df \u003d add_status(df)\r\n\r\n    # step4 :filtering data(충전데이터만 사용, 에러데이터 제외)\r\n    print_timestamp(\"Step 4\u003e filtering data\")\r\n    df \u003d df.filter(col(\"status\") \u003d\u003d \"CHARGE\")\r\n    df \u003d df.filter(~(col(\u0027warn_temp_trac\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_bms_idiot_light\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_trac_limit\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_isolation_low\u0027) \u003d\u003d True))\r\n    df \u003d df.filter((col(\"mileage\") \u003e 0) \u0026 (col(\"bus_speed\") \u003d\u003d 0))\r\n    \r\n    # Step 4: Add columns\r\n    print_timestamp(\"Step 4\u003e Adding columns\")\r\n    df \u003d add_columns(df)\r\n\r\n    print_timestamp(\"Step 5\u003e Selecting final columns\")\r\n    #\u0027soh\u0027,\u0027pvdiff\u0027,\u0027ptdiff\u0027,\u0027cell_avg_temp\u0027,\r\n    SELECTED_COLUMNS_BASE \u003d [\r\n        \u0027vehicle_id\u0027, \u0027time\u0027, \u0027status\u0027,\u0027mileage\u0027,\u0027voltage_avg\u0027,\u0027current_avg\u0027,\u0027soc_avg\u0027,\u0027soh_avg\u0027,\u0027bat_temp\u0027,\u0027pvdiff_avg\u0027,\u0027ptdiff_avg\u0027,\u0027soh\u0027]\r\n    result_df \u003d df.select(*SELECTED_COLUMNS_BASE)\r\n    \r\n    result_df \u003d result_df.withColumn(\r\n        \"soh_str\",\r\n        concat(\r\n            lit(\"[\"),\r\n            concat_ws(\", \", col(\"soh\")),  # 요소들 \"98.4, 98.4, ...\"\r\n            lit(\"]\")\r\n        )\r\n    ).drop(\"soh\").withColumnRenamed(\"soh_str\", \"soh\")\r\n\r\n    print(f\"Final DataFrame shape: {result_df.count()} rows\")\r\n\r\n    try:\r\n        # Step 6: Save results - HDFS CSV로 저장\r\n        print_timestamp(\"Step 6\u003e Saving results to HDFS\")\r\n        \r\n        # SOH_BASE_IO_CONFIG[\u0027output\u0027][\u0027format\u0027]이 \u0027csv\u0027라고 가정\r\n        \r\n        # vehicle_id는 필수, day_of_soh는 입력변수로 받았으면 표기\r\n        output_path_tmpl \u003d SOH_BASE_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027]\r\n        \r\n        if day_of_soh:\r\n            logger.warning(f\"day_of_soh \u0027{day_of_soh}\u0027가 입력되었으나, 현재 출력 경로 템플릿은 사용하지 않습니다.\")\r\n\r\n        output_path \u003d output_path_tmpl.format(vehicle_id\u003dvehicle_id)\r\n     \r\n        \r\n        # os.makedirs(os.path.dirname(output_path), exist_ok\u003dTrue) # HDFS는 필요 없음\r\n        \r\n        # Spark HDFS CSV 저장 함수 호출\r\n        save_to_csv(result_df, output_path) \r\n        print(f\"Results saved to HDFS directory: {output_path}\")\r\n\r\n    except Exception as e:\r\n        print(f\"Error during processing: {str(e)}\")\r\n        raise\r\n            \r\n    print_timestamp(\"Processing complete.\")\r\n    \r\n\r\n# ####################################################################\r\n# ## --- 5. Main Execution ---\r\n# ####################################################################\r\n\r\ndef main():\r\n\r\n    try:\r\n        # 명령줄 인자 처리\r\n        vehicle_id \u003d VEHICLE_ID\r\n        day_of_soh \u003d None\r\n            \r\n        if not vehicle_id:\r\n            logger.error(\"Vehicle_id가 필수 인자로 제공되어야 합니다.\")\r\n            logger.error(\"사용법: python kslab_bus_soh_base_v2_merged.py \u003cvehicle_id\u003e [day_of_soh]\")\r\n            sys.exit(1)\r\n\r\n\r\n        process_soh_base_data(spark, vehicle_id\u003dvehicle_id, day_of_soh\u003dday_of_soh)\r\n        \r\n    except Exception as e:\r\n        import traceback\r\n        traceback.print_exc()\r\n        raise\r\n    finally:\r\n        # 스크립트 실행 시 SparkSession을 직접 중지할 수 있으나,\r\n        # Zeppelin 같은 환경에서는 세션을 유지하는 것이 일반적입니다.\r\n        # spark.stop() # Zeppelin에서는 이 줄을 주석 처리하거나 제거하세요.\r\n        print_timestamp(\"Main function finished.\")\r\n        pass\r\n\r\n\r\nmain()",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 20:27:40.249",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "parquet_glob": "/Data/soh/csv/woojin_95.csv",
+          "auto_base_path": "/Data/soh/result/95/202511"
+        },
+        "forms": {
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[2025-11-19 20:27:58] Step 1\u003e Loading data from HDFS\n[2025-11-19 20:27:58] Loading data from HDFS CSV: /Data/soh/csv/woojin_95.csv\n2025-11-19 20:28:08,895 - INFO - CSV 데이터에서 ID: 95 필터링\nLoaded Data Count: 2217164 rows\n[2025-11-19 20:28:13] Step 2\u003e Converting column names and data types\n[2025-11-19 20:28:14] Step 3\u003e Adding status column\n[2025-11-19 20:28:14] Step 4\u003e filtering data\n[2025-11-19 20:28:14] Step 4\u003e Adding columns\n[2025-11-19 20:28:16] Step 5\u003e Selecting final columns\nFinal DataFrame shape: 335567 rows\n[2025-11-19 20:28:18] Step 6\u003e Saving results to HDFS\n[2025-11-19 20:28:18] Saving data to HDFS *single file*: /Data/soh/result/95/202511/soh_base_result.csv\n[2025-11-19 20:28:18] Using temporary save directory: /Data/soh/result/95/202511/.temp_save_dir\n[2025-11-19 20:28:47] Found temporary data file: hdfs://mycluster/Data/soh/result/95/202511/.temp_save_dir/part-00000-b7ea33df-91f4-45b5-be4f-79de19ff14cc-c000.csv\n[2025-11-19 20:28:47] Checking for existing file and deleting if present: /Data/soh/result/95/202511/soh_base_result.csv\n[2025-11-19 20:28:47] Existing file deleted.\n[2025-11-19 20:28:47] Moving file to final destination: /Data/soh/result/95/202511/soh_base_result.csv\n[2025-11-19 20:28:47] Cleaning up temporary directory: /Data/soh/result/95/202511/.temp_save_dir\n[2025-11-19 20:28:47] Successfully saved to single HDFS file: /Data/soh/result/95/202511/soh_base_result.csv\nResults saved to HDFS directory: /Data/soh/result/95/202511/soh_base_result.csv\n[2025-11-19 20:28:47] Processing complete.\n[2025-11-19 20:28:47] Main function finished.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763354570862_50455569",
+      "id": "paragraph_1763354570862_50455569",
+      "dateCreated": "2025-11-17 13:42:50.862",
+      "dateStarted": "2025-11-19 20:27:40.253",
+      "dateFinished": "2025-11-19 20:28:47.760",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-17 14:42:14.210",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763358134210_1535055315",
+      "id": "paragraph_1763358134210_1535055315",
+      "dateCreated": "2025-11-17 14:42:14.210",
+      "status": "READY"
+    }
+  ],
+  "name": "base",
+  "id": "2MB6S8PHF",
+  "defaultInterpreterGroup": "spark_single",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
