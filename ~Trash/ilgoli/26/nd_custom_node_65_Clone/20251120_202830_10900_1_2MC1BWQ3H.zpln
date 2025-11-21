@@ -1,0 +1,310 @@
+{
+  "paragraphs": [
+    {
+      "title": "python_stock Execution",
+      "text": "%python_stock\n\nimport json\nimport pandas as pd\nimport os\n\ninput \u003d z.input(\u0027node_nm\u0027)\nconfigValue \u003d z.input(\u0027data_info\u0027)\ninput3 \u003d z.input(\u0027table_info\u0027)\n\nbeforeHdfsPath \u003d z.input(\u0027before_hdfs_path\u0027)\nschemaPath \u003d z.input(\u0027schema_path\u0027)\nhdfsPath \u003d z.input(\u0027hdfs_path\u0027)\n\nconfigValue \u003d configValue.replace(\"\u0027\", \u0027\"\u0027)\nconfigData \u003d json.loads(configValue)\n\n# 테스트 코드(임시)\nbeforeSchemaPath \u003d z.input(\u0027beforeSchemaPath\u0027)\nbeforeHdfsPath \u003d z.input(\u0027beforeHdfsPath\u0027)\n\ndockerBasePath \u003d \u0027/opt/zeppelin/result/\u0027\nif beforeHdfsPath.strip() !\u003d \"\":\n    csv_path \u003d os.path.join(\n        dockerBasePath,\n        beforeHdfsPath.replace(\"\\\\\", \"/\"),\n        \"result.csv\"\n    )\n    print(\"CSV 파일 경로:\", csv_path)\n    \n    if os.path.exists(csv_path):\n        try:\n            inputDf \u003d pd.read_csv(csv_path)\n            print(\"Read DataFrame from:\", csv_path)\n            print(inputDf)\n        except pd.errors.EmptyDataError:\n            print(\"이전 노드 파일에 데이터 없음\", csv_path)\n            inputDf \u003d pd.DataFrame()\n    else:\n        print(\"result.csv 파일없음:\", csv_path)",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-21 10:01:51.233",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "workflow_srno": "26",
+          "note_id": "2M5Y25MGF",
+          "data_info": "{\"note_id\":\"2M5Y25MGF\",\"interpreter_name\":\"spark_single\"}",
+          "hdfs_path": "ilgoli-admin_20251120074956/nd_custom_node_65/1/data_20251120075116",
+          "reprocess_inputdate": "",
+          "workflow_path": "/home/dpadmin/knime-workspace/user/ilgoli-admin/view/ilgoli-admin_20251120074956",
+          "exec_srno": "10900",
+          "interpreter_name": "spark_single",
+          "node_nm": "",
+          "table_info": "",
+          "before_hdfs_path": "",
+          "schema_path": "",
+          "beforeSchemaPath": "",
+          "beforeHdfsPath": ""
+        },
+        "forms": {
+          "node_nm": {
+            "type": "TextBox",
+            "name": "node_nm",
+            "displayName": "node_nm",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "data_info": {
+            "type": "TextBox",
+            "name": "data_info",
+            "displayName": "data_info",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "table_info": {
+            "type": "TextBox",
+            "name": "table_info",
+            "displayName": "table_info",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "before_hdfs_path": {
+            "type": "TextBox",
+            "name": "before_hdfs_path",
+            "displayName": "before_hdfs_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "schema_path": {
+            "type": "TextBox",
+            "name": "schema_path",
+            "displayName": "schema_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "hdfs_path": {
+            "type": "TextBox",
+            "name": "hdfs_path",
+            "displayName": "hdfs_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "beforeSchemaPath": {
+            "type": "TextBox",
+            "name": "beforeSchemaPath",
+            "displayName": "beforeSchemaPath",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "beforeHdfsPath": {
+            "type": "TextBox",
+            "name": "beforeHdfsPath",
+            "displayName": "beforeHdfsPath",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763638113825_114687705",
+      "id": "paragraph_1762222444843_50142621",
+      "dateCreated": "2025-11-20 20:28:33.825",
+      "dateStarted": "2025-11-21 10:01:51.239",
+      "dateFinished": "2025-11-21 10:01:54.714",
+      "status": "FINISHED"
+    },
+    {
+      "title": "python_stock Execution",
+      "text": "%python_stock\n\n# OUTPUT 데이터 저장 예제 (최종 데이터프레임: resultDf)\nimport os\nimport pandas as pd\nfrom datetime import datetime\n\ntry:\n    if not isinstance(resultDf, pd.DataFrame):\n        resultDf \u003d pd.DataFrame()\nexcept NameError:\n    resultDf \u003d pd.DataFrame()\n\nmakePath \u003d os.path.join(dockerBasePath, hdfsPath).replace(\"\\\\\", \"/\")\nos.makedirs(makePath, exist_ok\u003dTrue)\n\nbase \u003d os.path.join(makePath, \"result.csv\")\nproc \u003d base + \".proc\"\ntimestamp \u003d datetime.now().strftime(\"%Y%m%d%H%M%S\")\nsucc \u003d f\"{base}.succ.{timestamp}\"\n\n# 1) .proc 에 먼저 저장\nresultDf.to_csv(proc, index\u003dFalse)\nprint(\"Temporary written to:\", proc)\n\n# 2) 기존 파일이 있으면 .succ.TIMESTAMP 로 백업\nif os.path.exists(base):\n    os.rename(base, succ)\n    print(\"Backed up old result.csv to:\", succ)\n\n# 3) .proc 를 최종 result.csv 로 리네임\nos.rename(proc, base)\nprint(\"Final CSV saved at:\", base)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-21 09:46:42.826",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Temporary written to: /opt/zeppelin/result/ilgoli-admin_20251120074956/nd_custom_node_65/1/data_20251120075116/result.csv.proc\nBacked up old result.csv to: /opt/zeppelin/result/ilgoli-admin_20251120074956/nd_custom_node_65/1/data_20251120075116/result.csv.succ.20251121094642\nFinal CSV saved at: /opt/zeppelin/result/ilgoli-admin_20251120074956/nd_custom_node_65/1/data_20251120075116/result.csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763638113825_687525529",
+      "id": "paragraph_1762222444849_83259709",
+      "dateCreated": "2025-11-20 20:28:33.825",
+      "dateStarted": "2025-11-21 09:46:42.830",
+      "dateFinished": "2025-11-21 09:46:42.880",
+      "status": "FINISHED"
+    },
+    {
+      "title": "python_stock Execution",
+      "text": "%python_stock\nimport requests\n\nzeppelin_host \u003d \u0027http://10.10.17.66:18080\u0027  \n\nurl \u003d f\"{zeppelin_host}/api/interpreter/setting/restart/{configData[\u0027interpreter_name\u0027]}\"\n\n# 요청 페이로드: 인터프리터 ID를 지정\npayload \u003d {\n    \"noteId\": configData[\u0027note_id\u0027]\n}\n\nheaders \u003d {\n    \"Content-Type\": \"application/json\"\n}\n\nauth_user \u003d \"admin\"    \nauth_pass \u003d \"admin\"     \n\n# 요청\nresponse \u003d requests.put(url, json\u003dpayload, headers\u003dheaders, auth\u003d(auth_user, auth_pass))\n\n\n# 결과 출력\nif response.ok:\n    print(\"인터프리터 초기화 성공:\")\n    print(response.json())\n    \n    try:\n        java_interpreter_context \u003d z.getInterpreterContext()\n        current_note_id \u003d java_interpreter_context.getNoteId()\n        \n        payload \u003d {\n            \"noteId\": current_note_id\n        }\n        \n        url \u003d f\"{zeppelin_host}/api/interpreter/setting/restart/python_stock\"\n        \n        response \u003d requests.put(url, json\u003dpayload, headers\u003dheaders, auth\u003d(auth_user, auth_pass))\n    \n    \n    except AttributeError as e:\n        print(f\"❌ 노트 ID 가져오기 실패: {e}\")\n        print(\"    현재 PySpark 환경에서는 z 객체의 내부 구조를 직접 접근해야 합니다.\")\n    \nelse:\n    print(\"인터프리터 초기화 실패:\")\n    print(response.status_code, response.text)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-21 09:47:09.946",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "인터프리터 초기화 성공:\n{\u0027status\u0027: \u0027OK\u0027, \u0027message\u0027: \u0027\u0027, \u0027body\u0027: {\u0027id\u0027: \u0027spark_single\u0027, \u0027name\u0027: \u0027spark_single\u0027, \u0027group\u0027: \u0027spark\u0027, \u0027properties\u0027: {\u0027SPARK_HOME\u0027: {\u0027name\u0027: \u0027SPARK_HOME\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Location of spark distribution\u0027}, \u0027spark.master\u0027: {\u0027name\u0027: \u0027spark.master\u0027, \u0027value\u0027: \u0027local[*]\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Spark master uri. local | yarn-client | yarn-cluster | spark master address of standalone mode, ex) spark://master_host:7077\u0027}, \u0027spark.submit.deployMode\u0027: {\u0027name\u0027: \u0027spark.submit.deployMode\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027The deploy mode of Spark driver program, either \"client\" or \"cluster\", Which means to launch driver program locally (\"client\") or remotely (\"cluster\") on one of the nodes inside the cluster.\u0027}, \u0027spark.app.name\u0027: {\u0027name\u0027: \u0027spark.app.name\u0027, \u0027value\u0027: \u0027Zeppelin_single\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027The name of spark application.\u0027}, \u0027spark.driver.cores\u0027: {\u0027name\u0027: \u0027spark.driver.cores\u0027, \u0027value\u0027: \u00271\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027Number of cores to use for the driver process, only in cluster mode.\u0027}, \u0027spark.driver.memory\u0027: {\u0027name\u0027: \u0027spark.driver.memory\u0027, \u0027value\u0027: \u00276g\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Amount of memory to use for the driver process, i.e. where SparkContext is initialized, in the same format as JVM memory strings with a size unit suffix (\"k\", \"m\", \"g\" or \"t\") (e.g. 512m, 2g).\u0027}, \u0027spark.executor.cores\u0027: {\u0027name\u0027: \u0027spark.executor.cores\u0027, \u0027value\u0027: \u00271\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027The number of cores to use on each executor\u0027}, \u0027spark.executor.memory\u0027: {\u0027name\u0027: \u0027spark.executor.memory\u0027, \u0027value\u0027: \u00271g\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Executor memory per worker instance. ex) 512m, 32g\u0027}, \u0027spark.executor.instances\u0027: {\u0027name\u0027: \u0027spark.executor.instances\u0027, \u0027value\u0027: \u00272\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027The number of executors for static allocation.\u0027}, \u0027spark.files\u0027: {\u0027name\u0027: \u0027spark.files\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Comma-separated list of files to be placed in the working directory of each executor. Globs are allowed.\u0027}, \u0027spark.jars\u0027: {\u0027name\u0027: \u0027spark.jars\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Comma-separated list of jars to include on the driver and executor classpaths. Globs are allowed.\u0027}, \u0027spark.jars.packages\u0027: {\u0027name\u0027: \u0027spark.jars.packages\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Comma-separated list of Maven coordinates of jars to include on the driver and executor classpaths. The coordinates should be groupId:artifactId:version. If spark.jars.ivySettings is given artifacts will be resolved according to the configuration in the file, otherwise artifacts will be searched for in the local maven repo, then maven central and finally any additional remote repositories given by the command-line option --repositories.\u0027}, \u0027zeppelin.spark.useHiveContext\u0027: {\u0027name\u0027: \u0027zeppelin.spark.useHiveContext\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Use HiveContext instead of SQLContext if it is true. Enable hive for SparkSession.\u0027}, \u0027zeppelin.spark.run.asLoginUser\u0027: {\u0027name\u0027: \u0027zeppelin.spark.run.asLoginUser\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether run spark job as the zeppelin login user, it is only applied when running spark job in hadoop yarn cluster and shiro is enabled\u0027}, \u0027zeppelin.spark.printREPLOutput\u0027: {\u0027name\u0027: \u0027zeppelin.spark.printREPLOutput\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Print scala REPL output\u0027}, \u0027zeppelin.spark.maxResult\u0027: {\u0027name\u0027: \u0027zeppelin.spark.maxResult\u0027, \u0027value\u0027: \u00271000\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027Max number of Spark SQL result to display.\u0027}, \u0027zeppelin.spark.enableSupportedVersionCheck\u0027: {\u0027name\u0027: \u0027zeppelin.spark.enableSupportedVersionCheck\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether checking supported spark version. Developer only setting, not for production use\u0027}, \u0027zeppelin.spark.uiWebUrl\u0027: {\u0027name\u0027: \u0027zeppelin.spark.uiWebUrl\u0027, \u0027value\u0027: \u0027\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \"Override Spark UI default URL. In Kubernetes mode, value can be Jinja template string with 3 template variables \u0027PORT\u0027, \u0027SERVICE_NAME\u0027 and \u0027SERVICE_DOMAIN\u0027. (ex: http://{{PORT}}-{{SERVICE_NAME}}.{{SERVICE_DOMAIN}})\"}, \u0027zeppelin.spark.ui.hidden\u0027: {\u0027name\u0027: \u0027zeppelin.spark.ui.hidden\u0027, \u0027value\u0027: False, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether hide spark ui in zeppelin ui\u0027}, \u0027spark.webui.yarn.useProxy\u0027: {\u0027name\u0027: \u0027spark.webui.yarn.useProxy\u0027, \u0027value\u0027: False, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027whether use yarn proxy url as spark weburl, e.g. http://localhost:8088/proxy/application_1583396598068_0004\u0027}, \u0027zeppelin.spark.scala.color\u0027: {\u0027name\u0027: \u0027zeppelin.spark.scala.color\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether enable color output of spark scala interpreter\u0027}, \u0027zeppelin.spark.deprecatedMsg.show\u0027: {\u0027name\u0027: \u0027zeppelin.spark.deprecatedMsg.show\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether show the spark deprecated message, spark 2.2 and before are deprecated. Zeppelin will display warning message by default\u0027}, \u0027zeppelin.spark.concurrentSQL\u0027: {\u0027name\u0027: \u0027zeppelin.spark.concurrentSQL\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Execute multiple SQL concurrently if set true.\u0027}, \u0027zeppelin.spark.concurrentSQL.max\u0027: {\u0027name\u0027: \u0027zeppelin.spark.concurrentSQL.max\u0027, \u0027value\u0027: \u002710\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027Max number of SQL concurrently executed\u0027}, \u0027zeppelin.spark.sql.stacktrace\u0027: {\u0027name\u0027: \u0027zeppelin.spark.sql.stacktrace\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Show full exception stacktrace for SQL queries if set to true.\u0027}, \u0027zeppelin.spark.sql.interpolation\u0027: {\u0027name\u0027: \u0027zeppelin.spark.sql.interpolation\u0027, \u0027value\u0027: False, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Enable ZeppelinContext variable interpolation into spark sql\u0027}, \u0027PYSPARK_PYTHON\u0027: {\u0027name\u0027: \u0027PYSPARK_PYTHON\u0027, \u0027value\u0027: \u0027python\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Python binary executable to use for PySpark in both driver and workers (default is python2.7 if available, otherwise python). Property `spark.pyspark.python` take precedence if it is set\u0027}, \u0027PYSPARK_DRIVER_PYTHON\u0027: {\u0027name\u0027: \u0027PYSPARK_DRIVER_PYTHON\u0027, \u0027value\u0027: \u0027python\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027Python binary executable to use for PySpark in driver only (default is `PYSPARK_PYTHON`). Property `spark.pyspark.driver.python` take precedence if it is set\u0027}, \u0027zeppelin.pyspark.useIPython\u0027: {\u0027name\u0027: \u0027zeppelin.pyspark.useIPython\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether use IPython when it is available\u0027}, \u0027zeppelin.R.knitr\u0027: {\u0027name\u0027: \u0027zeppelin.R.knitr\u0027, \u0027value\u0027: True, \u0027type\u0027: \u0027checkbox\u0027, \u0027description\u0027: \u0027Whether use knitr or not\u0027}, \u0027zeppelin.R.cmd\u0027: {\u0027name\u0027: \u0027zeppelin.R.cmd\u0027, \u0027value\u0027: \u0027R\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \u0027R binary executable path\u0027}, \u0027zeppelin.R.image.width\u0027: {\u0027name\u0027: \u0027zeppelin.R.image.width\u0027, \u0027value\u0027: \u0027100%\u0027, \u0027type\u0027: \u0027number\u0027, \u0027description\u0027: \u0027Image width of R plotting\u0027}, \u0027zeppelin.R.render.options\u0027: {\u0027name\u0027: \u0027zeppelin.R.render.options\u0027, \u0027value\u0027: \"out.format \u003d \u0027html\u0027, comment \u003d NA, echo \u003d FALSE, results \u003d \u0027asis\u0027, message \u003d F, warning \u003d F, fig.retina \u003d 2\", \u0027type\u0027: \u0027textarea\u0027, \u0027description\u0027: \u0027\u0027}, \u0027zeppelin.R.shiny.portRange\u0027: {\u0027name\u0027: \u0027zeppelin.R.shiny.portRange\u0027, \u0027value\u0027: \u0027:\u0027, \u0027type\u0027: \u0027string\u0027, \u0027description\u0027: \"Shiny app would launch a web app at some port, this property is to specify the portRange via format \u0027\u003cstart\u003e:\u003cend\u003e\u0027, e.g. \u00275000:5001\u0027. By default it is \u0027:\u0027 which means any port\"}, \u0027spark.ui.port\u0027: {\u0027name\u0027: \u0027spark.ui.port\u0027, \u0027value\u0027: \u002744040\u0027, \u0027type\u0027: \u0027textarea\u0027}, \u0027spark.driver.host\u0027: {\u0027name\u0027: \u0027spark.driver.host\u0027, \u0027value\u0027: \u0027127.0.0.1\u0027, \u0027type\u0027: \u0027textarea\u0027}, \u0027SPARK_LOCAL_IP\u0027: {\u0027name\u0027: \u0027SPARK_LOCAL_IP\u0027, \u0027value\u0027: \u0027127.0.0.1\u0027, \u0027type\u0027: \u0027textarea\u0027}}, \u0027status\u0027: \u0027READY\u0027, \u0027interpreterGroup\u0027: [{\u0027name\u0027: \u0027spark\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.SparkInterpreter\u0027, \u0027defaultInterpreter\u0027: True, \u0027editor\u0027: {\u0027language\u0027: \u0027scala\u0027, \u0027editOnDblClick\u0027: False, \u0027completionKey\u0027: \u0027TAB\u0027, \u0027completionSupport\u0027: True}}, {\u0027name\u0027: \u0027sql\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.SparkSqlInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027sql\u0027, \u0027editOnDblClick\u0027: False, \u0027completionKey\u0027: \u0027TAB\u0027, \u0027completionSupport\u0027: True}}, {\u0027name\u0027: \u0027pyspark\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.PySparkInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027python\u0027, \u0027editOnDblClick\u0027: False, \u0027completionKey\u0027: \u0027TAB\u0027, \u0027completionSupport\u0027: True}}, {\u0027name\u0027: \u0027ipyspark\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.IPySparkInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027python\u0027, \u0027editOnDblClick\u0027: False, \u0027completionSupport\u0027: True, \u0027completionKey\u0027: \u0027TAB\u0027}}, {\u0027name\u0027: \u0027r\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.SparkRInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027r\u0027, \u0027editOnDblClick\u0027: False, \u0027completionSupport\u0027: False, \u0027completionKey\u0027: \u0027TAB\u0027}}, {\u0027name\u0027: \u0027ir\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.SparkIRInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027r\u0027, \u0027editOnDblClick\u0027: False, \u0027completionSupport\u0027: True, \u0027completionKey\u0027: \u0027TAB\u0027}}, {\u0027name\u0027: \u0027shiny\u0027, \u0027class\u0027: \u0027org.apache.zeppelin.spark.SparkShinyInterpreter\u0027, \u0027defaultInterpreter\u0027: False, \u0027editor\u0027: {\u0027language\u0027: \u0027r\u0027, \u0027editOnDblClick\u0027: False, \u0027completionSupport\u0027: True, \u0027completionKey\u0027: \u0027TAB\u0027}}], \u0027dependencies\u0027: [{\u0027groupArtifactVersion\u0027: \u0027org.apache.hadoop:hadoop-aws:3.3.4\u0027, \u0027local\u0027: False}, {\u0027groupArtifactVersion\u0027: \u0027com.amazonaws:aws-java-sdk-bundle:1.12.367\u0027, \u0027local\u0027: False, \u0027exclusions\u0027: []}], \u0027option\u0027: {\u0027remote\u0027: True, \u0027port\u0027: -1, \u0027perNote\u0027: \u0027shared\u0027, \u0027perUser\u0027: \u0027shared\u0027, \u0027isExistingProcess\u0027: False, \u0027setPermission\u0027: False, \u0027owners\u0027: [], \u0027isUserImpersonate\u0027: False}}}\n인터프리터 초기화 성공:\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763638113825_312106600",
+      "id": "paragraph_1762222564038_949537356",
+      "dateCreated": "2025-11-20 20:28:33.825",
+      "dateStarted": "2025-11-21 09:46:59.143",
+      "dateFinished": "2025-11-21 09:46:59.252",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python_stock\n# 현재 실행 중인 노트의 ID를 가져오는 함수 (PySpark 환경에 최적화)\n\n\n# 사용 예시:\ntry:\n    java_interpreter_context \u003d z.getInterpreterContext()\n    current_note_id \u003d java_interpreter_context.getNoteId()\n    \n    payload \u003d {\n            \"noteId\": current_note_id\n        }\n    \n    print(f\"✅ 현재 노트 ID: {current_note_id}\")\n    \n    # 여기서 API 호출 로직을 실행할 수 있습니다.\n    # configData[\u0027note_id\u0027] \u003d current_note_id\n    \nexcept AttributeError as e:\n    print(f\"❌ 노트 ID 가져오기 실패: {e}\")\n    print(\"    현재 PySpark 환경에서는 z 객체의 내부 구조를 직접 접근해야 합니다.\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-21 09:46:18.251",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ 현재 노트 ID: {\u0027noteId\u0027: \u00272MC1BWQ3H\u0027}\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763684815832_742021237",
+      "id": "paragraph_1763684815832_742021237",
+      "dateCreated": "2025-11-21 09:26:55.832",
+      "dateStarted": "2025-11-21 09:46:12.287",
+      "dateFinished": "2025-11-21 09:46:12.300",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python_stock\n\n\n\nINTERPRETER_SETTING_ID \u003d \u0027python_stock\u0027 \n        \nrestart_url \u003d f\"{zeppelin_host}/api/interpreter/setting/restart/{INTERPRETER_SETTING_ID}\"\n\ntry:\n    restart_resp \u003d requests.put(restart_url, auth\u003d(auth_user, auth_pass), timeout\u003d(10, 3600))\n    \n    if restart_resp.ok:\n        print(f\"✅ 인터프리터 재시작 요청 성공 (Setting ID: {INTERPRETER_SETTING_ID}).\")\n        print(\"    잠시 후 PySpark 환경이 완전히 초기화됩니다.\")\n    else:\n        print(f\"❌ 인터프리터 재시작 요청 실패 (Status: {restart_resp.status_code}). Zeppelin 서버 로그를 확인하세요.\")\n        \nexcept requests.exceptions.RequestException as e:\n    print(f\"❌ 인터프리터 재시작 API 통신 실패: {e}\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-20 20:36:30.512",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Python process is abnormally exited, please check your code and log."
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763638213121_1793557768",
+      "id": "paragraph_1763638213121_1793557768",
+      "dateCreated": "2025-11-20 20:30:13.121",
+      "dateStarted": "2025-11-20 20:36:27.972",
+      "dateFinished": "2025-11-20 20:36:28.060",
+      "status": "ABORT"
+    },
+    {
+      "text": "%python_stock\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-20 20:34:11.339",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763638451339_1747341984",
+      "id": "paragraph_1763638451339_1747341984",
+      "dateCreated": "2025-11-20 20:34:11.339",
+      "status": "READY"
+    }
+  ],
+  "name": "20251120_202830_10900_1",
+  "id": "2MC1BWQ3H",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
