@@ -1,0 +1,385 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_user.pyspark\n\"\"\"\nSOH Stress Factor XGBoost 모델(v2)\n\n주요 기능:\n- XGBoost + SHAP을 이용한 daily SOH 변수 중요도 분석 \n- SHAP 절대값 평균 -\u003e 정규화 -\u003e 로그스케일로 변환하여 상대적 중요도 계산\n- SOH 주요 영향변수 및 영향도(스트레스 지수) 계산\n- 영향변수 : accum_cycle_cnt(누적 주행(방전) 사이클 수), avg_bat_temp(배터리 온도), discharge_rate(방전률), daily_avg_dod(일일 평균 방전량), \n-           volt_response_idx(배터리(전압)반응성 지수), sob(전압균형지수), sot(온도균형지수), driving_behavior_idx(주행 습관 지수)\n- update : 결과데이터셋 구조 변경(\u002725.10.31) - ID, day_of_soh, daily_soh, longterm_soh, feature_value(배열), feature_importance(배열) 로 저장\n- id, day_of_soh 파라미터 입력으로 변경\n\"\"\"\n# 필요한 라이브러리 임포트\nimport os\nimport sys\nsys.path.append(\"/home/kadap/QH/SOH_Model\")\nimport pandas as pd\nfrom kslab_soh_config import STRESS_FACTOR_IO_CONFIG, DB_QUERY_FROM_SOH_FINAL, DB_QUERY_FROM_SOH_CAPA, MLP_IO_CONFIG\nfrom kslab_soh_utils import setup_spark_session, load_data_from_csv, load_data_from_db, save_results_to_csv, save_results_to_db,load_data_from_parquet\nfrom pyspark.sql import SparkSession\nfrom pyspark.sql.functions import col, avg, stddev, exp, pow, round, corr, lag, when, abs as spark_abs, lpad\nimport matplotlib.pyplot as plt\n#import seaborn as sns\nfrom datetime import datetime\nfrom sklearn.preprocessing import MinMaxScaler, StandardScaler\nimport xgboost as xgb\nimport shap\nimport warnings\nfrom pyspark.sql.window import Window\n#from gplearn.genetic import SymbolicRegressor\nfrom pyspark.sql.types import StructType, StructField, StringType, DoubleType, BooleanType\nfrom sklearn.metrics import mean_squared_error, r2_score\nfrom sklearn.model_selection import train_test_split\nimport joblib\nimport logging\nwarnings.filterwarnings(\u0027ignore\u0027)\n\nimport numpy as np\n# numpy 2.x에서 삭제된 alias를 shap용으로 복원\nif not hasattr(np, \"int\"):\n    np.int \u003d int\nif not hasattr(np, \"bool8\"):\n    np.bool8 \u003d np.bool_\n\nimport shap\nprint(\"numpy :\", np.__version__)\nprint(\"shap  :\", shap.__version__)\n\n# 로깅 설정\nlogging.basicConfig(\n    level\u003dlogging.INFO,\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\n)\nlogger \u003d logging.getLogger(__name__)",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 16:34:26.483",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763514356378_231447798",
+      "id": "paragraph_1763514356378_231447798",
+      "dateCreated": "2025-11-19 10:05:56.378",
+      "dateStarted": "2025-11-19 15:23:02.035",
+      "dateFinished": "2025-11-19 15:23:02.060",
+      "status": "FINISHED"
+    },
+    {
+      "text": "\"\"\"\n[1] load_stress_source()\n    └ parquet(soh_final) + parquet(soh_capa)\n    └ deviceId 통일\n    └ 필요 컬럼 select\n    └ day_of_soh ≤ cut 조건 적용 가능\n    └ return: joined Spark DF (여러 단말기 포함)\n\n[2] run_stress_for_all_devices()\n    └ joined_df에서 deviceId list 추출\n    └ deviceId별로 데이터 슬라이싱\n    └ calculate_stress_factors(df_id) 실행(Pandas/XGBoost/SHAP)\n    └ 결과를 Spark DF로 변환 후 union\n\n[3] save_stress_overwrite()\n    └ result_df 전체를 parquet 경로에 overwrite\n\n[4] run_stress_batch_once()\n    └ 전체 Load → 단말기별 연산 → 전체 overwrite 저장\n\"\"\"\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.239",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u001b[1m\u001b[34mres5\u001b[0m: \u001b[1m\u001b[32mString\u001b[0m \u003d\n\"\n[1] load_stress_source()\n    └ parquet(soh_final) + parquet(soh_capa)\n    └ deviceId 통일\n    └ 필요 컬럼 select\n    └ day_of_soh ≤ cut 조건 적용 가능\n    └ return: joined Spark DF (여러 단말기 포함)\n\n[2] run_stress_for_all_devices()\n    └ joined_df에서 deviceId list 추출\n    └ deviceId별로 데이터 슬라이싱\n    └ calculate_stress_factors(df_id) 실행(Pandas/XGBoost/SHAP)\n    └ 결과를 Spark DF로 변환 후 union\n\n[3] save_stress_overwrite()\n    └ result_df 전체를 parquet 경로에 overwrite\n\n[4] run_stress_batch_once()\n    └ 전체 Load → 단말기별 연산 → 전체 overwrite 저장\n\"\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763526355341_752971845",
+      "id": "paragraph_1763526355341_752971845",
+      "dateCreated": "2025-11-19 13:25:55.341",
+      "dateStarted": "2025-11-19 15:23:02.245",
+      "dateFinished": "2025-11-19 15:23:02.391",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\ndef load_stress_source(spark, day_of_soh\u003dNone):\r\n    soh_path \u003d STRESS_FACTOR_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027]\r\n    capa_path \u003d MLP_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027]\r\n\r\n    # load_data_from_parquet() 금지 — partition 컬럼 보존 위해 직접 로드\r\n    soh_raw \u003d (\r\n        spark.read\r\n             .format(\"parquet\")\r\n             .load(soh_path)\r\n    )\r\n\r\n    capa_raw \u003d (\r\n        spark.read\r\n             .format(\"parquet\")\r\n             .load(capa_path)\r\n    )\r\n    # -----------------------------------------------\r\n\r\n    # deviceId 처리\r\n    if \"deviceId\" in soh_raw.columns:\r\n        soh \u003d soh_raw\r\n    elif \"id\" in soh_raw.columns:\r\n        soh \u003d soh_raw.withColumnRenamed(\"id\", \"deviceId\")\r\n    else:\r\n        raise ValueError(\"[Stress] soh_final에 deviceId/id 컬럼이 없습니다.\")\r\n\r\n    soh \u003d soh.withColumn(\"deviceId\", lpad(col(\"deviceId\").cast(\"string\"), 11, \"0\")) \\\r\n             .select(\"deviceId\",\"day_of_soh\",\"accum_dod\",\"avg_bms_temp\",\r\n                     \"discharge_rate\",\"daily_soh\",\"longterm_soh\")\r\n\r\n    capa \u003d capa_raw.withColumn(\r\n        \"deviceId\", lpad(col(\"deviceId\").cast(\"string\"), 11, \"0\")\r\n    ).select(\r\n        \"deviceId\",\"day_of_soh\",\"dod\",\"avg_out_temp\",\"max_mileage\",\r\n        \"avg_speed\",\"avg_torque\",\"parking_cnt\",\"parking_time\",\"discharge_time\",\r\n        \"dvdq\",\"cvdiff\",\"ctdiff\",\"sob\",\"sot\",\r\n        \"volt_based_efficiency\",\"energy_efficiency\",\"composite_efficiency\",\"driving_efficiency\"\r\n    )\r\n\r\n    if day_of_soh is not None:\r\n        soh  \u003d soh.filter(col(\"day_of_soh\") \u003c\u003d day_of_soh)\r\n        capa \u003d capa.filter(col(\"day_of_soh\") \u003c\u003d day_of_soh)\r\n\r\n    joined \u003d soh.join(capa, [\"deviceId\",\"day_of_soh\"], \"inner\")\r\n    return joined.cache()\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.444",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763521160477_1270079010",
+      "id": "paragraph_1763521160477_1270079010",
+      "dateCreated": "2025-11-19 11:59:20.477",
+      "dateStarted": "2025-11-19 15:23:02.448",
+      "dateFinished": "2025-11-19 15:23:02.458",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\n\r\ndef calculate_xgboost_weights(df, vehicle_id):\r\n    \"\"\"XGBoost를 사용하여 daily_soh에 대한 변수 가중치를 계산하는 함수\r\n    \r\n    Args:\r\n        df: Spark DataFrame (특정 ID의 데이터만 포함)\r\n        vehicle_id: 차량 ID (모델 저장/로드에 사용)\r\n    \r\n    Returns:\r\n        tuple: (normalized_importance, shap_values, feature_names, X_engineered_original, pdf_valid)\r\n    \"\"\"\r\n    \r\n    # 모델 저장 경로 설정\r\n    model_dir \u003d \u0027/home/kadap/QH/SOH_Model/models/discharge/xgb_model\u0027\r\n    if not os.path.exists(model_dir):\r\n        os.makedirs(model_dir)\r\n    \r\n    # 파일명에 특수문자 제거\r\n    safe_id \u003d str(vehicle_id).replace(\u0027/\u0027, \u0027_\u0027).replace(\u0027\\\\\u0027, \u0027_\u0027).replace(\u0027 \u0027, \u0027_\u0027)\r\n    model_file_path \u003d os.path.join(model_dir, f\u0027xgb_model_{safe_id}.joblib\u0027)\r\n    \r\n    # XGBoost에 사용할 변수 선택 \r\n    base_columns \u003d [\u0027accum_dod\u0027, \r\n                   \u0027avg_bms_temp\u0027,\r\n                   \u0027discharge_rate\u0027, #방전률 \r\n                   \u0027avg_speed\u0027, #평균 속도\r\n                   \u0027avg_torque\u0027,#평균 토크\r\n                   \u0027dod\u0027, #평균DOD(delta soc)\r\n                   \u0027parking_time\u0027, #정지시간\r\n                   \u0027dvdq\u0027, #스트레스(전압)민감도\r\n                   \u0027sob\u0027, #셀전압균형도\r\n                   \u0027sot\u0027, #모듈온도균형도\r\n                   \u0027volt_based_efficiency\u0027, #상대전비(주행거리/전압)\r\n                   \u0027composite_efficiency\u0027, #복합전비\r\n                   ] \r\n    \r\n    # Spark DataFrame을 Pandas DataFrame으로 변환\r\n    filtered_df_list \u003d df.select(*base_columns + [\u0027daily_soh\u0027, \u0027day_of_soh\u0027]).rdd.collect()\r\n    pdf \u003d pd.DataFrame([row.asDict() for row in filtered_df_list])\r\n    \r\n    # NaN 값이 있는 행 제거\r\n    valid_mask \u003d ~pdf[\u0027daily_soh\u0027].isna()\r\n    X \u003d pdf[base_columns][valid_mask]\r\n    y \u003d pdf[\u0027daily_soh\u0027][valid_mask]\r\n    pdf_valid \u003d pdf[valid_mask].copy()  # day_of_soh 포함\r\n    \r\n    # 데이터 유효성 검사\r\n    if len(X) \u003d\u003d 0:\r\n        raise ValueError(\"No valid data found after removing NaN values\")\r\n    \r\n    if y.std() \u003d\u003d 0:\r\n        print(\"Warning: Target variable (daily_soh) has no variance. This may cause model training issues.\")\r\n    \r\n    \r\n    # 엔지니어링 피처 생성\r\n    X_engineered \u003d pd.DataFrame()\r\n    \r\n    # 기본 피처 복사 \r\n    excluded_columns \u003d [\u0027volt_based_efficiency\u0027,\u0027composite_efficiency\u0027,\u0027parking_time\u0027,\u0027avg_speed\u0027,\u0027avg_torque\u0027]  # 제외할 컬럼 리스트  2025.10.31 변경   \r\n    for col in base_columns:\r\n        if col not in excluded_columns:  # 제외할 컬럼이 아닌 경우만 포함\r\n            X_engineered[col] \u003d X[col]\r\n    \r\n    # 상호작용 피처 생성\r\n    # parking_stress index: 고온 상태(25도 이상)에서 정차한 시간을 나타내는 값\r\n    #temp_diff \u003d (X[\u0027avg_bms_temp\u0027] - 25).clip(lower\u003d0)  # avg_bms_temp가 25보다 작으면 0\r\n    #X_engineered[\u0027idle_thermal_idx\u0027] \u003d X[\u0027parking_time\u0027].clip(lower\u003d0) * temp_diff\r\n    safe_driving_efficiency \u003d X[\u0027composite_efficiency\u0027].clip(lower\u003d0.001)  # 0.001보다 작은 값을 0.001로 대체\r\n    X_engineered[\u0027driving_behavior_idx\u0027] \u003d (X[\u0027avg_speed\u0027].clip(lower\u003d0) * X[\u0027avg_torque\u0027]) / safe_driving_efficiency\r\n    \r\n    # 이상치 제거\r\n    X_engineered \u003d X_engineered.replace([np.inf, -np.inf], np.nan)\r\n    valid_rows \u003d ~X_engineered.isna().any(axis\u003d1)\r\n    X_engineered \u003d X_engineered[valid_rows]\r\n    y \u003d y[valid_rows]\r\n    pdf_valid \u003d pdf_valid[valid_rows]  # day_of_soh 유지\r\n    \r\n    # 피처 엔지니어링 후 데이터 유효성 검사\r\n    if len(X_engineered) \u003d\u003d 0:\r\n        raise ValueError(\"No valid data found after feature engineering and outlier removal\")\r\n    \r\n    if X_engineered.shape[1] \u003d\u003d 0:\r\n        raise ValueError(\"No valid features found after feature engineering\")\r\n    \r\n    # 원본 데이터 저장 (feature_value 계산용)\r\n    X_engineered_original \u003d X_engineered.copy()\r\n    \r\n    # 모델 로드 또는 학습\r\n    model_loaded \u003d False\r\n    if os.path.exists(model_file_path):\r\n        print(f\"    기존 모델 로드 중: {model_file_path}\")\r\n        try:\r\n            model_data \u003d joblib.load(model_file_path)\r\n            if isinstance(model_data, dict) and \u0027model\u0027 in model_data and \u0027scaler\u0027 in model_data:\r\n                xgb_model \u003d model_data[\u0027model\u0027]\r\n                scaler \u003d model_data[\u0027scaler\u0027]\r\n                model_loaded \u003d True\r\n                print(f\"    모델 로드 완료: {model_file_path}\")\r\n            else:\r\n                # 이전 형식 호환성 (모델만 저장된 경우)\r\n                xgb_model \u003d model_data if not isinstance(model_data, dict) else model_data.get(\u0027model\u0027, model_data)\r\n                # scaler는 새로 학습\r\n                scaler \u003d StandardScaler()\r\n                X_engineered_scaled \u003d pd.DataFrame(\r\n                    scaler.fit_transform(X_engineered),\r\n                    columns\u003dX_engineered.columns,\r\n                    index\u003dX_engineered.index\r\n                )\r\n                # 모델 재학습 (scaler 업데이트)\r\n                X_train, X_test, y_train, y_test \u003d train_test_split(\r\n                    X_engineered_scaled, y, test_size\u003d0.2, random_state\u003d42\r\n                )\r\n                xgb_model.fit(X_train, y_train)\r\n                # scaler 포함하여 다시 저장\r\n                model_with_metadata \u003d {\r\n                    \u0027model\u0027: xgb_model,\r\n                    \u0027scaler\u0027: scaler\r\n                }\r\n                joblib.dump(model_with_metadata, model_file_path)\r\n                print(f\"    모델 및 scaler 저장 완료: {model_file_path}\")\r\n        except Exception as e:\r\n            print(f\"    모델 로드 실패: {e}. 새 모델 학습을 진행합니다.\")\r\n            # 모델 로드 실패 시 새로 학습\r\n            scaler \u003d StandardScaler()\r\n            X_engineered_scaled \u003d pd.DataFrame(\r\n                scaler.fit_transform(X_engineered),\r\n                columns\u003dX_engineered.columns,\r\n                index\u003dX_engineered.index\r\n            )\r\n            X_train, X_test, y_train, y_test \u003d train_test_split(\r\n                X_engineered_scaled, y, test_size\u003d0.2, random_state\u003d42\r\n            )\r\n            xgb_model \u003d xgb.XGBRegressor(\r\n                n_estimators\u003d500,\r\n                learning_rate\u003d0.01,\r\n                max_depth\u003d5,\r\n                min_child_weight\u003d1,\r\n                subsample\u003d0.8,\r\n                colsample_bytree\u003d0.8,\r\n                reg_alpha\u003d0.0,\r\n                reg_lambda\u003d0.1,\r\n                random_state\u003d42\r\n            )\r\n            xgb_model.fit(X_train, y_train)\r\n            model_with_metadata \u003d {\r\n                \u0027model\u0027: xgb_model,\r\n                \u0027scaler\u0027: scaler\r\n            }\r\n            joblib.dump(model_with_metadata, model_file_path)\r\n            print(f\"    모델 저장 완료: {model_file_path}\")\r\n    else:\r\n        print(f\"    모델이 없어 새로 학습합니다: {vehicle_id}\")\r\n        # Feature 정규화 (스케일 차이로 인한 중요도 편향 방지)\r\n        scaler \u003d StandardScaler()\r\n        X_engineered_scaled \u003d pd.DataFrame(\r\n            scaler.fit_transform(X_engineered),\r\n            columns\u003dX_engineered.columns,\r\n            index\u003dX_engineered.index\r\n        )\r\n        \r\n        # 데이터 분할\r\n        X_train, X_test, y_train, y_test \u003d train_test_split(\r\n            X_engineered_scaled, y, test_size\u003d0.2, random_state\u003d42\r\n        )\r\n        \r\n        # XGBoost 모델 학습 (정규화된 데이터 사용)\r\n        xgb_model \u003d xgb.XGBRegressor(\r\n            n_estimators\u003d500,\r\n            learning_rate\u003d0.01,\r\n            max_depth\u003d5,              # 트리 깊이 증가로 비선형성 포착\r\n            min_child_weight\u003d1,\r\n            subsample\u003d0.8,\r\n            colsample_bytree\u003d0.8,\r\n            reg_alpha\u003d0.0,      # L1 페널티 (스파스성 증가)\r\n            reg_lambda\u003d0.1,     # L2 페널티 (모델 안정성 증가)\r\n            random_state\u003d42\r\n        )\r\n        \r\n        xgb_model.fit(X_train, y_train)\r\n        \r\n        # 모델과 scaler 저장\r\n        model_with_metadata \u003d {\r\n            \u0027model\u0027: xgb_model,\r\n            \u0027scaler\u0027: scaler\r\n        }\r\n        joblib.dump(model_with_metadata, model_file_path)\r\n        print(f\"    모델 저장 완료: {model_file_path}\")\r\n    \r\n    # scaler가 로드된 경우 X_engineered_scaled 재계산 (모델이 로드되었고 scaler만 있는 경우)\r\n    if model_loaded:\r\n        # 모델이 로드된 경우, X_engineered_scaled를 scaler로 변환\r\n        X_engineered_scaled \u003d pd.DataFrame(\r\n            scaler.transform(X_engineered),\r\n            columns\u003dX_engineered.columns,\r\n            index\u003dX_engineered.index\r\n        )\r\n        # 테스트 데이터 분할 (SHAP 계산을 위해 필요)\r\n        X_train, X_test, y_train, y_test \u003d train_test_split(\r\n            X_engineered_scaled, y, test_size\u003d0.2, random_state\u003d42\r\n        )   \r\n    \r\n    # SHAP 값 계산 (정규화된 데이터 사용 - 중요도 계산에 더 공정함)\r\n    explainer \u003d shap.TreeExplainer(xgb_model)\r\n    shap_values \u003d explainer.shap_values(X_test)\r\n    \r\n    # 변수 중요도 계산 (SHAP 값의 절대 평균)\r\n    raw_importance \u003d {}\r\n    for i, feature in enumerate(X_engineered.columns):\r\n        importance \u003d np.abs(shap_values[:, i]).mean()\r\n        raw_importance[feature] \u003d float(importance)\r\n    \r\n    # SHAP 값이 모두 0인 경우 대안적 중요도 계산 (feature_importances_ 사용)\r\n    if all(v \u003d\u003d 0 for v in raw_importance.values()):\r\n        feature_importances \u003d xgb_model.feature_importances_\r\n        for i, feature in enumerate(X_engineered.columns):\r\n            raw_importance[feature] \u003d float(feature_importances[i])\r\n    \r\n    # 중요도 정규화\r\n    total_importance \u003d sum(raw_importance.values())\r\n    \r\n    # total_importance가 0인 경우 처리\r\n    if total_importance \u003d\u003d 0:\r\n        # 모든 변수에 동일한 가중치 부여 (1/n)\r\n        n_features \u003d len(raw_importance)\r\n        relative_importance \u003d {k: 100.0 / n_features for k in raw_importance.keys()}\r\n        normalized_importance \u003d {k: np.log1p(100.0 / n_features) for k in raw_importance.keys()}\r\n    else:\r\n        # 상대 중요도 (퍼센트): 각 변수의 SHAP 기여도를 전체 대비 비율로 계산\r\n        relative_importance \u003d {k: (v/total_importance) * 100 for k, v in raw_importance.items()}\r\n        \r\n        # 로그 스케일 변환: 편중 문제 완화를 위해 사용\r\n        normalized_importance \u003d {k: np.log1p((v/total_importance) * 100) for k, v in raw_importance.items()}\r\n    \r\n    # 전체 데이터와 날짜 정보 반환 (전체 날짜 사용)\r\n    # X_engineered_original(원본)과 pdf_valid의 인덱스를 일치시키기 위해 reset_index 하지 않음\r\n    # 원본 데이터를 반환하여 feature_value 계산 시 실제 값을 사용\r\n    return normalized_importance, shap_values, X_engineered.columns.tolist(), X_engineered_original, pdf_valid[[\u0027day_of_soh\u0027]]\r\n\r\ndef get_display_name(var_name):\r\n    \"\"\"변수명을 표시용 이름으로 변환하는 함수\"\"\"\r\n    if var_name \u003d\u003d \u0027dvdq\u0027:\r\n        return \u0027volt_response_idx\u0027 #배터리(전압)반응성 지수(dv/dq)\r\n    elif var_name \u003d\u003d \u0027avg_bms_temp\u0027: \r\n        return \u0027avg_bat_temp\u0027 #배터리 온도\r\n    elif var_name \u003d\u003d \u0027dod\u0027:\r\n        return \u0027daily_avg_dod\u0027 #일일 평균 방전량\r\n    elif var_name \u003d\u003d \u0027accum_dod\u0027: \r\n        return \u0027accum_cycle_cnt\u0027 #누적 주행(방전) 사이클 수\r\n    return var_name\r\n\r\n\r\ndef calculate_stress_factors(df):\r\n    \"\"\"스트레스 요인을 계산 (단일 deviceId 처리)\"\"\"\r\n      \r\n    # 전체 날짜 정보 가져오기\r\n    df_info \u003d (\r\n        df.select(\u0027deviceId\u0027, \u0027day_of_soh\u0027, \u0027daily_soh\u0027, \u0027longterm_soh\u0027)\r\n          .orderBy(\u0027day_of_soh\u0027)\r\n          .distinct()\r\n    )\r\n    df_info_list \u003d df_info.rdd.collect()\r\n    df_info_pd \u003d pd.DataFrame([row.asDict() for row in df_info_list])\r\n    \r\n    # 단일 deviceId 처리 (이미 필터링된 데이터)\r\n    vehicle_id \u003d df_info_pd[\u0027deviceId\u0027].iloc[0] if len(df_info_pd) \u003e 0 else None\r\n    if vehicle_id is None:\r\n        logger.warning(\"처리할 데이터가 없습니다.\")\r\n        return pd.DataFrame()\r\n    \r\n    logger.info(f\"deviceId 처리 중: {vehicle_id}\")\r\n    \r\n    # XGBoost 가중치 및 전체 feature 데이터 계산\r\n    normalized_weights, shap_values, feature_names, X_engineered, pdf_valid \u003d \\\r\n        calculate_xgboost_weights(df, vehicle_id)\r\n    \r\n    # feature_importance 딕셔너리 생성\r\n    feature_importance_dict \u003d {}\r\n    for k, v in normalized_weights.items():\r\n        display_key \u003d get_display_name(k)\r\n        try:\r\n            feature_importance_dict[display_key] \u003d round(float(v), 3)\r\n        except (ValueError, TypeError):\r\n            feature_importance_dict[display_key] \u003d v\r\n    \r\n    def dict_to_string(d, is_importance\u003dFalse):\r\n        items \u003d []\r\n        for k, v in d.items():\r\n            if isinstance(v, (int, float)):\r\n                if is_importance:\r\n                    items.append(f\"{k}: {v:.3f}\")\r\n                else:\r\n                    items.append(f\"{k}: {v:.2f}\")\r\n            else:\r\n                items.append(f\"{k}: {v}\")\r\n        return \"{\" + \", \".join(items) + \"}\"\r\n    \r\n    feature_importance_str \u003d dict_to_string(feature_importance_dict, is_importance\u003dTrue)\r\n    \r\n    # 각 날짜별로 결과 생성\r\n    all_result_rows \u003d []\r\n    for idx, row in df_info_pd.iterrows():\r\n        day_of_soh \u003d row[\u0027day_of_soh\u0027]\r\n        daily_soh \u003d row[\u0027daily_soh\u0027] if pd.notna(row[\u0027daily_soh\u0027]) else None\r\n        longterm_soh \u003d row[\u0027longterm_soh\u0027] if pd.notna(row[\u0027longterm_soh\u0027]) else None\r\n        \r\n        # 해당 날짜의 feature 값 찾기\r\n        day_indices \u003d pdf_valid[pdf_valid[\u0027day_of_soh\u0027] \u003d\u003d day_of_soh].index\r\n        if len(day_indices) \u003e 0:\r\n            last_idx \u003d day_indices[-1]\r\n            day_feature_values \u003d X_engineered.iloc[last_idx].to_dict()\r\n        else:\r\n            day_feature_values \u003d {k: 0.0 for k in feature_names}\r\n        \r\n        feature_value_dict \u003d {}\r\n        for k, v in day_feature_values.items():\r\n            display_key \u003d get_display_name(k)\r\n            try:\r\n                feature_value_dict[display_key] \u003d round(float(v), 2)\r\n            except (ValueError, TypeError):\r\n                feature_value_dict[display_key] \u003d v\r\n        \r\n        all_result_rows.append({\r\n            \u0027deviceId\u0027: vehicle_id,\r\n            \u0027day_of_soh\u0027: day_of_soh,\r\n            \u0027daily_soh\u0027: daily_soh,\r\n            \u0027longterm_soh\u0027: longterm_soh,\r\n            \u0027feature_value\u0027: dict_to_string(feature_value_dict, is_importance\u003dFalse),\r\n            \u0027feature_importance\u0027: feature_importance_str\r\n        })\r\n    \r\n    # 결과를 DataFrame으로 변환\r\n    result_df \u003d pd.DataFrame(all_result_rows)\r\n    \r\n    # deviceId, day_of_soh로 정렬\r\n    result_df \u003d result_df.sort_values(by\u003d[\u0027deviceId\u0027, \u0027day_of_soh\u0027]).reset_index(drop\u003dTrue)\r\n    \r\n    return result_df\r\n\r\n\r\n# def soh_stress_factor(spark, id_value\u003dNone, day_of_soh\u003dNone):\r\n#     \"\"\"\r\n#     SOH Stress Factor XGBoost 모델 함수\r\n    \r\n#     Args:\r\n#         spark: SparkSession\r\n#         id_value: 차량 ID (optional)\r\n#         day_of_soh: SOH 날짜 (optional, YYYY-MM-DD 형식)\r\n#     \"\"\"\r\n#     # SOH FINAL 데이터 로드 (CSV OR DB)\r\n#     if STRESS_FACTOR_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027csv\u0027: \r\n#         # id는 필수조건\r\n#         if not id_value:\r\n#             logger.error(\"ID가 입력되지 않았습니다. 프로그램을 종료합니다.\")\r\n#             sys.exit(1)\r\n        \r\n#         # CSV 파일 경로 구성\r\n#         soh_fc_csv_path \u003d STRESS_FACTOR_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n#         # {id} 플레이스홀더를 실제 id로 치환\r\n#         csv_path \u003d soh_fc_csv_path.replace(\u0027{id}\u0027, id_value)\r\n        \r\n#         logger.info(f\"ID: {id_value} 의 CSV 파일을 로드합니다: {csv_path}\")\r\n#         soh_df \u003d load_data_from_csv(spark, csv_path)\r\n\r\n#         if day_of_soh:\r\n#             soh_df \u003d soh_df.filter(col(\u0027day_of_soh\u0027) \u003c\u003d day_of_soh)\r\n#             logger.info(f\"CSV 데이터에서 Day of SOH: {day_of_soh} 이전 전체 데이터 필터링\")\r\n#         else:\r\n#             logger.info(\"날짜가 입력되지 않았습니다. 전체 데이터를 추출합니다\")\r\n\r\n#     else:  # \u0027db\u0027\r\n#         # id와 day_of_soh가 제공되면 쿼리에 반영\r\n#         if not id_value:\r\n#             logger.info(\"ID가 입력되지 않았습니다. 프로그램을 종료합니다.\")\r\n#             sys.exit(0)\r\n        \r\n#         query_soh \u003d DB_QUERY_FROM_SOH_FINAL.format(id_value\u003did_value)\r\n        \r\n#         if day_of_soh:\r\n#             query_soh +\u003d f\" AND day_of_soh \u003c\u003d \u0027{day_of_soh}\u0027\"\r\n#             logger.info(f\"ID: {id_value}, Day of SOH: {day_of_soh} 의 데이터를 추출합니다\")\r\n#         else:\r\n#             logger.info(f\"ID: {id_value} 전체 데이터를 추출합니다\")\r\n        \r\n#         soh_df \u003d load_data_from_db(spark, query_soh)\r\n        \r\n#         # 데이터가 비어있는지 확인\r\n#         if soh_df.count() \u003d\u003d 0:\r\n#             logger.warning(f\"ID {id_value}에 대한 데이터가 없습니다.\")\r\n#             return pd.DataFrame()\r\n\r\n#     # sof_df 필요 데이터 필터링  \r\n#     soh_df \u003d soh_df.withColumn(\"id\", lpad(col(\"id\").cast(\"string\"), 11, \"0\"))   # ID를 11자리 문자열로 변환\r\n#     soh_df \u003d soh_df.select([\u0027id\u0027,\u0027day_of_soh\u0027,\u0027accum_dod\u0027,\u0027avg_bms_temp\u0027,\u0027discharge_rate\u0027,\u0027daily_soh\u0027,\u0027longterm_soh\u0027])\r\n\r\n\r\n#     # capa 데이터 로드 (CSV OR DB)\r\n#     if MLP_IO_CONFIG[\u0027input\u0027][\u0027source\u0027].lower() \u003d\u003d \u0027parquet\u0027:\r\n\r\n#         # CSV 파일 경로 구성\r\n#         capa_csv_path \u003d MLP_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027]\r\n#         # {id} 플레이스홀더를 실제 id로 치환\r\n#         csv_path \u003d capa_csv_path.replace(\u0027{id}\u0027, id_value)\r\n        \r\n#         logger.info(f\"ID: {id_value} 의 CSV 파일을 로드합니다: {csv_path}\")\r\n#         capa_df \u003d load_data_from_csv(spark, csv_path)\r\n        \r\n#         if day_of_soh:\r\n#             capa_df \u003d capa_df.filter(col(\u0027day_of_soh\u0027) \u003c\u003d day_of_soh)\r\n#             logger.info(f\"CSV 데이터에서 Day of SOH: {day_of_soh} 이전 전체 데이터 필터링\")\r\n#         else:\r\n#             logger.info(\"날짜가 입력되지 않았습니다. 전체 데이터를 추출합니다\")\r\n\r\n#     else:  # \u0027db\u0027\r\n#         # id와 day_of_soh가 제공되면 쿼리에 반영\r\n#         if not id_value:\r\n#             logger.info(\"ID가 입력되지 않았습니다. 프로그램을 종료합니다.\")\r\n#             sys.exit(0)\r\n        \r\n#         query_capa \u003d DB_QUERY_FROM_SOH_CAPA.format(id_value\u003did_value)\r\n        \r\n#         if day_of_soh:\r\n#             query_capa +\u003d f\" AND day_of_soh \u003c\u003d \u0027{day_of_soh}\u0027\"\r\n#             logger.info(f\"ID: {id_value}, Day of SOH: {day_of_soh} 의 데이터를 추출합니다\")\r\n#         else:\r\n#             logger.info(f\"ID: {id_value} 전체 데이터를 추출합니다\")\r\n\r\n#         capa_df \u003d load_data_from_db(spark, query_capa)\r\n        \r\n#         # capa_df 데이터가 비어있는지 확인\r\n#         if capa_df.count() \u003d\u003d 0:\r\n#             logger.warning(f\"ID {id_value}에 대한 capa 데이터가 없습니다.\")\r\n#             return pd.DataFrame()\r\n\r\n#     # CAPA DATASET 필요 데이터 필터링\r\n#     capa_df \u003d capa_df.withColumn(\"id\", lpad(col(\"id\").cast(\"string\"), 11, \"0\"))   # ID를 11자리 문자열로 변환    \r\n#     #capa_df \u003d capa_df.select([\u0027id\u0027,\u0027day_of_soh\u0027,\u0027dod\u0027,\u0027avg_out_temp\u0027,\u0027max_mileage\u0027,\u0027d_mileage\u0027,\u0027avg_speed\u0027,\u0027avg_torque\u0027,\u0027parking_cnt\u0027,\u0027discharge_time\u0027,\u0027e_mileage\u0027])\r\n#     capa_df \u003d capa_df.select([\u0027id\u0027,\u0027day_of_soh\u0027,\u0027dod\u0027,\u0027avg_out_temp\u0027,\u0027max_mileage\u0027,\u0027avg_speed\u0027,\u0027avg_torque\u0027,\\\r\n#                               \u0027parking_cnt\u0027,\u0027parking_time\u0027,\u0027discharge_time\u0027,\u0027dvdq\u0027,\u0027cvdiff\u0027,\u0027ctdiff\u0027,\u0027sob\u0027,\u0027sot\u0027,\\\r\n#                                 \u0027volt_based_efficiency\u0027,\u0027energy_efficiency\u0027,\u0027composite_efficiency\u0027,\u0027driving_efficiency\u0027])\r\n\r\n\r\n#     joined_df \u003d soh_df.join(capa_df, [\u0027id\u0027, \u0027day_of_soh\u0027], \u0027inner\u0027)\r\n        \r\n#     # 조인 결과가 비어있는지 확인\r\n#     if joined_df.count() \u003d\u003d 0:\r\n#         logger.warning(f\"ID {id_value}에 대한 조인 결과가 없습니다.\")\r\n#         return pd.DataFrame()\r\n        \r\n#     # 결과를 DataFrame으로 변환 (내부에서 XGBoost 계산 수행)\r\n#     result_df \u003d calculate_stress_factors(joined_df)\r\n        \r\n#     return result_df\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.548",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761881215913_806024380",
+      "id": "paragraph_1761881215913_806024380",
+      "dateCreated": "2025-10-31 12:26:55.913",
+      "dateStarted": "2025-11-19 15:23:02.555",
+      "dateFinished": "2025-11-19 15:23:02.623",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\ndef run_stress_for_all_devices(spark, src_df):\n    device_ids \u003d [r[\"deviceId\"] for r in src_df.select(\"deviceId\").distinct().collect()]\n    result_df_all \u003d None\n\n    for did in device_ids:\n        df_device \u003d src_df.filter(col(\"deviceId\") \u003d\u003d did)\n\n        # 기존 연산 로직 그대로 사용 (Pandas + XGBoost + SHAP)\n        pdf \u003d calculate_stress_factors(df_device)\n\n        if pdf is None or len(pdf) \u003d\u003d 0:\n            continue\n\n        sdf \u003d spark.createDataFrame(pdf)\n\n        if result_df_all is None:\n            result_df_all \u003d sdf\n        else:\n            result_df_all \u003d result_df_all.unionByName(sdf)\n\n    return result_df_all\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.654",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763527033275_1773843771",
+      "id": "paragraph_1763527033275_1773843771",
+      "dateCreated": "2025-11-19 13:37:13.275",
+      "dateStarted": "2025-11-19 15:23:02.658",
+      "dateFinished": "2025-11-19 15:23:02.674",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\ndef save_stress_overwrite(spark, final_df):\n    out_path \u003d STRESS_FACTOR_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]\n\n    (\n        final_df\n            .write\n            .mode(\"overwrite\")\n            .partitionBy(\"deviceId\")\n            .parquet(out_path)\n    )\n\n    logger.info(f\"[SAVE] deviceId 기준 partition 저장 완료: {out_path}\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.758",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763514484163_1581514014",
+      "id": "paragraph_1763514484163_1581514014",
+      "dateCreated": "2025-11-19 10:08:04.163",
+      "dateStarted": "2025-11-19 15:23:02.762",
+      "dateFinished": "2025-11-19 15:23:02.781",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\ndef run_stress_batch_once(spark, day_of_soh_cut\u003dNone):\n    # 1) 전체 데이터 로드 (여러 deviceId 포함)\n    src_df \u003d load_stress_source(spark, day_of_soh\u003dday_of_soh_cut)\n\n    if src_df.rdd.isEmpty():\n        logger.info(\"[BATCH] 소스 데이터 없음.\")\n        return\n\n    # 2) 단말기별 stress factor 연산\n    new_df \u003d run_stress_for_all_devices(spark, src_df)\n\n    if new_df is None or new_df.rdd.isEmpty():\n        logger.info(\"[BATCH] 결과 없음.\")\n        return\n\n    # 3) 전체 overwrite\n    save_stress_overwrite(spark, new_df)\n\n    logger.info(\"[BATCH] StressFactor 전체 배치 완료.\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.862",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763527050073_486181048",
+      "id": "paragraph_1763527050073_486181048",
+      "dateCreated": "2025-11-19 13:37:30.073",
+      "dateStarted": "2025-11-19 15:23:02.867",
+      "dateFinished": "2025-11-19 15:23:02.893",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\nrun_stress_batch_once(spark, day_of_soh_cut\u003dNone) ",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:02.966",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-19 15:23:05,423 - INFO - deviceId 처리 중: 01229898903\n    기존 모델 로드 중: /home/kadap/QH/SOH_Model/models/discharge/xgb_model/xgb_model_01229898903.joblib\n    모델 로드 완료: /home/kadap/QH/SOH_Model/models/discharge/xgb_model/xgb_model_01229898903.joblib\n2025-11-19 15:23:07,538 - INFO - [SAVE] deviceId 기준 partition 저장 완료: hdfs:///QH/SOH_Model/discharge/soh_stress_factor/\n2025-11-19 15:23:07,540 - INFO - [BATCH] StressFactor 전체 배치 완료.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37911/jobs/job?id\u003d21"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763529545226_1430557327",
+      "id": "paragraph_1763529545226_1430557327",
+      "dateCreated": "2025-11-19 14:19:05.226",
+      "dateStarted": "2025-11-19 15:23:02.971",
+      "dateFinished": "2025-11-19 15:23:07.544",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 15:23:07.579",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true,
+        "editorSetting": {}
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763529573681_30394494",
+      "id": "paragraph_1763529573681_30394494",
+      "dateCreated": "2025-11-19 14:19:33.682",
+      "dateStarted": "2025-11-19 15:23:07.583",
+      "dateFinished": "2025-11-19 15:23:07.595",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "8.soh_stress_factor_xgboost",
+  "id": "2MA33CFTM",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false
+  }
+}
