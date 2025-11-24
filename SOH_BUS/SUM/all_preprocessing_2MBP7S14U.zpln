@@ -1,0 +1,468 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_single.pyspark\r\n\"\"\"\r\nsoh base (Bulk Version) : 모든 차량의 CSV 데이터를 한 번에 읽어 전처리\r\n\r\n- raw data 입력 : HDFS의 CSV 파일들이 있는 디렉토리 (와일드카드 * 사용)\r\n- 처리 : 모든 차량 데이터 일괄 로드 -\u003e 전처리 -\u003e 필터링 -\u003e 파생변수 생성\r\n- 결과 데이터셋 : vehicle_id 컬럼이 포함된 통합 데이터\r\n- 결과 저장 : HDFS에 단일 CSV 파일(soh_base_result_all.csv)로 저장\r\n\"\"\"\r\n\r\nimport os\r\nimport sys\r\nfrom typing import Optional, List, Dict, Any\r\nimport logging\r\nfrom datetime import datetime\r\n\r\n# Spark 관련 모듈\r\nfrom pyspark.sql import SparkSession, DataFrame\r\nfrom pyspark.sql.functions import (\r\n    col, lit, when, count, sum, min, max, avg,\r\n    to_timestamp, unix_timestamp, from_unixtime,\r\n    date_format, hour, minute, second, \r\n    lag, lead, window, expr, round, regexp_extract,\r\n    concat, concat_ws\r\n)\r\nfrom pyspark.sql.window import Window\r\nfrom pyspark.sql.types import (\r\n    StructType, StructField, StringType, IntegerType,\r\n    DoubleType, TimestampType, BooleanType\r\n)\r\n\r\n# 로깅 설정\r\nlogging.basicConfig(\r\n    level\u003dlogging.INFO,\r\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\r\n)\r\nlogger \u003d logging.getLogger(__name__)\r\n\r\n# ####################################################################\r\n# ## --- 1. Configuration (Modified for Bulk Processing) ---\r\n# ####################################################################\r\n\r\n# 특정 ID 대신 전체를 의미하는 태그 사용\r\nVEHICLE_ID \u003d \"ALL\"\r\n\r\n# Preprocessing Input/Output configuration\r\nSOH_BASE_IO_CONFIG \u003d {\r\n    \u0027input\u0027: {\r\n        \u0027source\u0027: \u0027csv\u0027,\r\n        # [수정] *.csv를 사용하여 해당 폴더의 모든 csv 파일을 읽습니다.\r\n        # 경로가 /Data/soh/csv/ 라면 /Data/soh/csv/*.csv 로 지정\r\n        \u0027csv_path\u0027: z.input(\"parquet_glob\") \r\n    },\r\n    \u0027output\u0027: {\r\n        \u0027format\u0027: \u0027csv\u0027,\r\n        # [수정] 결과 파일명도 통합된 이름으로 변경\r\n        \u0027csv_path\u0027: z.input(\"auto_base_path\") + \"/soh_base_result_all.csv\"\r\n    }\r\n}\r\n\r\n\r\n# ####################################################################\r\n# ## --- 2. Utility Functions ---\r\n# ####################################################################\r\n\r\ndef print_timestamp(message: str) -\u003e None:\r\n    \"\"\"Print message with current timestamp\"\"\"\r\n    print(f\"[{datetime.now().strftime(\u0027%Y-%m-%d %H:%M:%S\u0027)}] {message}\")\r\n\r\ndef load_data_from_csv(spark: SparkSession, file_path: str) -\u003e DataFrame:\r\n    \"\"\"Load data from CSV files (supports wildcards).\"\"\"\r\n    print_timestamp(f\"Loading data from HDFS CSV (Bulk): {file_path}\")\r\n    try:\r\n        # header\u003dTrue로 설정하면 여러 파일을 읽을 때도 헤더를 자동으로 처리합니다.\r\n        df \u003d spark.read.csv(file_path, header\u003dTrue, inferSchema\u003dTrue)\r\n        return df\r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to read HDFS CSV file: {file_path}\")\r\n        print(e)\r\n        return spark.createDataFrame([], schema\u003dStructType([]))\r\n\r\ndef save_to_csv(df: DataFrame, output_path: str) -\u003e str:\r\n    \"\"\"\r\n    Spark DataFrame을 HDFS에 *단일* CSV 파일로 저장합니다.\r\n    \"\"\"\r\n    print_timestamp(f\"Saving data to HDFS *single file*: {output_path}\")\r\n    \r\n    import os\r\n    base_dir \u003d os.path.dirname(output_path)\r\n    temp_dir \u003d os.path.join(base_dir, \".temp_save_dir_all\") # 임시 디렉터리 이름 변경\r\n    \r\n    print_timestamp(f\"Using temporary save directory: {temp_dir}\")\r\n\r\n    try:\r\n        # coalese(1)을 사용하여 모든 데이터를 하나의 파티션으로 모읍니다.\r\n        # 데이터가 매우 클 경우(수십 GB 이상)에는 repartition(1)을 쓰거나\r\n        # 분할 저장 후 병합하는 방식을 고려해야 하지만, 10대 분량은 충분합니다.\r\n        (df.coalesce(1)\r\n           .write\r\n           .option(\"header\", \"true\")\r\n           .mode(\"overwrite\")\r\n           .csv(temp_dir))\r\n\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        part_file_pattern \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.csv\")\r\n        file_list_status \u003d fs.globStatus(part_file_pattern)\r\n\r\n        if not file_list_status:\r\n            raise Exception(f\"No \u0027part-\u0027 file found in temp directory: {temp_dir}\")\r\n            \r\n        source_file_path \u003d file_list_status[0].getPath() \r\n        print_timestamp(f\"Found temporary data file: {source_file_path}\")\r\n\r\n        dest_file_path \u003d spark._jvm.org.apache.hadoop.fs.Path(output_path)\r\n        \r\n        if fs.exists(dest_file_path):\r\n            fs.delete(dest_file_path, False)\r\n            print_timestamp(\"Existing file deleted.\")\r\n\r\n        fs.rename(source_file_path, dest_file_path)\r\n        \r\n        fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n\r\n        print_timestamp(f\"Successfully saved to single HDFS file: {output_path}\")\r\n        \r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to save to single HDFS file: {output_path}\")\r\n        print(e)\r\n        try:\r\n            fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n            fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n        except:\r\n            pass \r\n        raise \r\n        \r\n    return output_path\r\n\r\n\r\n# ####################################################################\r\n# ## --- 3. Core SOH Base Logic ---\r\n# ####################################################################\r\n\r\ndef convert_df(df: DataFrame) -\u003e DataFrame:\r\n    # 리스트 타입 변환 함수\r\n    def parse_list_column(col_name):\r\n        return expr(f\"transform(split(regexp_replace(CAST({col_name} AS STRING), \u0027[{{}}]\u0027, \u0027\u0027), \u0027,\u0027), x -\u003e CAST(trim(x) AS DOUBLE))\")\r\n\r\n    # 시간 파싱\r\n    df \u003d df.withColumn(\r\n        \"time_str\",\r\n        when(col(\"time\").isNull(), lit(None))\r\n        .otherwise(\r\n            regexp_extract(\r\n                col(\"time\").cast(\"string\"),\r\n                r\"(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\",\r\n                1\r\n            )\r\n        )\r\n    ).withColumn(\r\n        \"time\",\r\n        to_timestamp(col(\"time_str\"), \"yyyy-MM-dd HH:mm:ss\")\r\n    ).drop(\"time_str\") \\\r\n        .withColumn(\"vehicle_id\", col(\"vehicle_id\").cast(\"string\")) \\\r\n        .withColumn(\"voltage\", parse_list_column(\"voltage\")) \\\r\n        .withColumn(\"current\", parse_list_column(\"current\")) \\\r\n        .withColumn(\"soc\", parse_list_column(\"soc\")) \\\r\n        .withColumn(\"soh\", parse_list_column(\"soh\")) \\\r\n        .withColumn(\"cell_min_v\", parse_list_column(\"cell_min_v\")) \\\r\n        .withColumn(\"cell_max_v\", parse_list_column(\"cell_max_v\")) \\\r\n        .withColumn(\"cell_min_t\", parse_list_column(\"cell_min_t\")) \\\r\n        .withColumn(\"cell_max_t\", parse_list_column(\"cell_max_t\")) \\\r\n        .withColumn(\"bus_speed\", col(\"bus_speed\").cast(\"int\")) \\\r\n        .withColumn(\"mileage\", col(\"mileage\").cast(\"double\")) \\\r\n        .withColumn(\"is_key_on\", col(\"is_key_on\").cast(\"boolean\")) \\\r\n        .withColumn(\"is_parking_brake_on\", col(\"is_parking_brake_on\").cast(\"boolean\")) \\\r\n        .withColumn(\"is_charger_connected\", col(\"is_charger_connected\").cast(\"boolean\")) \\\r\n        .withColumn(\"dnr\", col(\"dnr\").cast(\"string\")) \\\r\n        .withColumn(\"retarder\", col(\"retarder\").cast(\"int\")) \\\r\n        .withColumn(\"warn_temp_trac\", col(\"warn_temp_trac\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_bms_idiot_light\", col(\"warn_bms_idiot_light\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_trac_limit\", col(\"warn_trac_limit\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_isolation_low\", col(\"warn_isolation_low\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_front_air\", col(\"warn_front_air\").cast(\"boolean\")) \\\r\n        .withColumn(\"warn_rear_air\", col(\"warn_rear_air\").cast(\"boolean\"))\r\n\r\n    return df\r\n\r\ndef add_status(df: DataFrame) -\u003e DataFrame:\r\n    df \u003d df.withColumn(\"status\",\r\n    when(col(\"is_charger_connected\") \u003d\u003d True, \"CHARGE\")\r\n    .when((col(\"is_key_on\") \u003d\u003d True) \u0026 (col(\"is_parking_brake_on\") \u003d\u003d False), \"DRIVING\")\r\n    .otherwise(\"STOP\")\r\n    )      \r\n    return df\r\n\r\ndef add_list_columns(df: DataFrame) -\u003e DataFrame:\r\n    df \u003d df.withColumn(\r\n        \u0027pvdiff\u0027,\r\n        expr(\u0027zip_with(cell_max_v, cell_min_v, (x, y) -\u003e CAST(x AS DOUBLE) - CAST(y AS DOUBLE))\u0027)\r\n    )\r\n    df \u003d df.withColumn(\r\n        \u0027ptdiff\u0027,\r\n        expr(\u0027zip_with(cell_max_t, cell_min_t, (x, y) -\u003e CAST(x AS DOUBLE) - CAST(y AS DOUBLE))\u0027)\r\n    )\r\n    return df\r\n\r\ndef add_columns_avg(df: DataFrame) -\u003e DataFrame:\r\n    array_cols \u003d [\u0027voltage\u0027, \u0027current\u0027, \u0027soc\u0027, \u0027soh\u0027, \u0027pvdiff\u0027,\u0027ptdiff\u0027]\r\n\r\n    for arr_col in array_cols:\r\n        for i in range(1, 7):\r\n            df \u003d df.withColumn(f\"{arr_col}_{i}\", col(arr_col)[i-1])\r\n\r\n    from functools import reduce\r\n    from operator import add\r\n    \r\n    for arr_col in array_cols:\r\n        sum_col \u003d reduce(add, [when(col(f\"{arr_col}_{i}\") !\u003d 0, col(f\"{arr_col}_{i}\")).otherwise(0) for i in range(1, 7)])\r\n        count_col \u003d reduce(add, [when(col(f\"{arr_col}_{i}\") !\u003d 0, 1).otherwise(0) for i in range(1, 7)])\r\n        df \u003d df.withColumn(f\"{arr_col}_avg\", when(count_col \u003e 0, sum_col / count_col).otherwise(0.0))\r\n\r\n    drop_cols \u003d [f\"{c}_{i}\" for c in array_cols for i in range(1, 7)]\r\n    df \u003d df.drop(*drop_cols)\r\n\r\n    df \u003d df.withColumn(\"voltage_avg\", round(col(\"voltage_avg\"), 2))\r\n    df \u003d df.withColumn(\"current_avg\", round(col(\"current_avg\"), 2))\r\n    df \u003d df.withColumn(\"soc_avg\", round(col(\"soc_avg\"), 2))\r\n    df \u003d df.withColumn(\"soh_avg\", round(col(\"soh_avg\"), 2))\r\n    df \u003d df.withColumn(\"mileage\", round(col(\"mileage\"), 2))\r\n    df \u003d df.withColumn(\"pvdiff_avg\", round(col(\"pvdiff_avg\"), 2))\r\n    df \u003d df.withColumn(\"ptdiff_avg\", round(col(\"ptdiff_avg\"), 2))\r\n\r\n    return df\r\n\r\ndef add_columns(df: DataFrame) -\u003e DataFrame:\r\n    df \u003d add_list_columns(df)\r\n    df \u003d add_columns_avg(df)    \r\n\r\n    df \u003d df.withColumn(\r\n        \"cell_avg_temp\",\r\n        expr(\"transform(zip_with(cell_min_t, cell_max_t, (a, b) -\u003e (CAST(a AS DOUBLE) + CAST(b AS DOUBLE)) / 2.0), x -\u003e round(x, 2))\")\r\n    )\r\n\r\n    df \u003d df.withColumn(\r\n        \"bat_temp\",\r\n        round(expr(\"CASE WHEN size(cell_avg_temp) \u003e 0 THEN aggregate(cell_avg_temp, 0D, (acc, x) -\u003e acc + x) / size(cell_avg_temp) ELSE NULL END\"), 2)\r\n    )\r\n\r\n    return df\r\n\r\n\r\n# ####################################################################\r\n# ## --- 4. Main Process Function (Modified for Bulk) ---\r\n# ####################################################################\r\n\r\ndef process_soh_base_data_bulk(spark: SparkSession, day_of_soh: Optional[str] \u003d None) -\u003e None:\r\n    \"\"\"\r\n    SOH Base Bulk Data Processing\r\n    \"\"\"\r\n\r\n    # Step 1: Load data (csv with wildcard)\r\n    print_timestamp(\"Step 1\u003e Loading ALL data from HDFS CSVs\")\r\n\r\n    # 와일드카드가 포함된 경로 사용\r\n    csv_path \u003d SOH_BASE_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n    logger.info(f\"Target HDFS CSV Path: {csv_path}\")\r\n\r\n    # [수정] vehicle_id 파라미터 체크 로직 제거 -\u003e 바로 로드\r\n    df \u003d load_data_from_csv(spark, csv_path)\r\n    \r\n    # [수정] day_of_soh가 있으면 날짜 필터링 (전체 차량에 대해)\r\n    if day_of_soh:\r\n        df \u003d df.filter(date_format(col(\"time\"), \"yyyy-MM-dd\") \u003d\u003d day_of_soh)\r\n        logger.info(f\"Filtered by Day of SOH: {day_of_soh}\")\r\n        \r\n    # [수정] vehicle_id 필터링 제거 -\u003e 모든 ID 포함\r\n\r\n    if df.count() \u003e 0:\r\n        print(f\"Loaded Total Data Count: {df.count()} rows\")\r\n        # 데이터에 어떤 차량들이 있는지 확인용 로그\r\n        try:\r\n            unique_vehicles \u003d [row.vehicle_id for row in df.select(\"vehicle_id\").distinct().collect()]\r\n            print(f\"Included Vehicles: {unique_vehicles}\")\r\n        except:\r\n            pass\r\n    else:\r\n        print(\"No Data Loaded\")\r\n        sys.exit(\"Program terminated due to empty input data.\")\r\n\r\n    # Step 2: Convert column names and data types\r\n    print_timestamp(\"Step 2\u003e Converting column names and data types\")\r\n    df \u003d convert_df(df)\r\n    \r\n    # Step 3: Add status column\r\n    print_timestamp(\"Step 3\u003e Adding status column\")\r\n    df \u003d add_status(df)\r\n\r\n    # Step 4: Filtering data\r\n    print_timestamp(\"Step 4\u003e filtering data (Charge, Error, Mileage)\")\r\n    df \u003d df.filter(col(\"status\") \u003d\u003d \"CHARGE\")\r\n    df \u003d df.filter(~(col(\u0027warn_temp_trac\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_bms_idiot_light\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_trac_limit\u0027) \u003d\u003d True) \u0026 ~(col(\u0027warn_isolation_low\u0027) \u003d\u003d True))\r\n    df \u003d df.filter((col(\"mileage\") \u003e 0) \u0026 (col(\"bus_speed\") \u003d\u003d 0))\r\n    \r\n    # Step 5: Add columns\r\n    print_timestamp(\"Step 5\u003e Adding derived columns\")\r\n    df \u003d add_columns(df)\r\n\r\n    print_timestamp(\"Step 6\u003e Selecting final columns\")\r\n    SELECTED_COLUMNS_BASE \u003d [\r\n        \u0027vehicle_id\u0027, \u0027time\u0027, \u0027status\u0027,\u0027mileage\u0027,\u0027voltage_avg\u0027,\u0027current_avg\u0027,\u0027soc_avg\u0027,\u0027soh_avg\u0027,\u0027bat_temp\u0027,\u0027pvdiff_avg\u0027,\u0027ptdiff_avg\u0027,\u0027soh\u0027]\r\n    result_df \u003d df.select(*SELECTED_COLUMNS_BASE)\r\n    \r\n    result_df \u003d result_df.withColumn(\r\n        \"soh_str\",\r\n        concat(\r\n            lit(\"[\"),\r\n            concat_ws(\", \", col(\"soh\")),\r\n            lit(\"]\")\r\n        )\r\n    ).drop(\"soh\").withColumnRenamed(\"soh_str\", \"soh\")\r\n\r\n    print(f\"Final DataFrame shape: {result_df.count()} rows\")\r\n\r\n    try:\r\n        # Step 7: Save results - HDFS Single CSV\r\n        print_timestamp(\"Step 7\u003e Saving merged results to HDFS\")\r\n        \r\n        # 통합된 출력 경로 사용\r\n        output_path \u003d SOH_BASE_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027]\r\n        \r\n        # Spark HDFS CSV 저장 함수 호출\r\n        save_to_csv(result_df, output_path) \r\n        print(f\"Results saved to HDFS: {output_path}\")\r\n\r\n    except Exception as e:\r\n        print(f\"Error during processing: {str(e)}\")\r\n        raise\r\n            \r\n    print_timestamp(\"Processing complete.\")\r\n    \r\n\r\n# ####################################################################\r\n# ## --- 5. Main Execution ---\r\n# ####################################################################\r\n\r\ndef main():\r\n    try:\r\n        # Bulk 처리를 위해 ID 인자 제거\r\n        day_of_soh \u003d None \r\n        \r\n        process_soh_base_data_bulk(spark, day_of_soh\u003dday_of_soh)\r\n        \r\n    except Exception as e:\r\n        import traceback\r\n        traceback.print_exc()\r\n        raise\r\n    finally:\r\n        print_timestamp(\"Main function finished.\")\r\n        pass\r\n\r\nmain()",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 15:30:18.289",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "parquet_glob": "/Data/soh/csv/*",
+          "auto_base_path": "/Data/soh/result/integrate/all"
+        },
+        "forms": {
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[2025-11-24 14:58:51] Step 1\u003e Loading ALL data from HDFS CSVs\n2025-11-24 14:58:51,210 - INFO - Target HDFS CSV Path: /Data/soh/csv/*\n[2025-11-24 14:58:51] Loading data from HDFS CSV (Bulk): /Data/soh/csv/*\nLoaded Total Data Count: 17529579 rows\nIncluded Vehicles: [100, 103, 104, 111, 125, 170, 93, 95]\n[2025-11-24 14:59:36] Step 2\u003e Converting column names and data types\n[2025-11-24 14:59:36] Step 3\u003e Adding status column\n[2025-11-24 14:59:36] Step 4\u003e filtering data (Charge, Error, Mileage)\n[2025-11-24 14:59:36] Step 5\u003e Adding derived columns\n[2025-11-24 14:59:38] Step 6\u003e Selecting final columns\nFinal DataFrame shape: 2342708 rows\n[2025-11-24 14:59:48] Step 7\u003e Saving merged results to HDFS\n[2025-11-24 14:59:48] Saving data to HDFS *single file*: /Data/soh/result/integrate/all/soh_base_result_all.csv\n[2025-11-24 14:59:48] Using temporary save directory: /Data/soh/result/integrate/all/.temp_save_dir_all\n[2025-11-24 15:03:00] Found temporary data file: hdfs://mycluster/Data/soh/result/integrate/all/.temp_save_dir_all/part-00000-fc041212-07fe-4a4b-9888-740e050e7e67-c000.csv\n[2025-11-24 15:03:01] Successfully saved to single HDFS file: /Data/soh/result/integrate/all/soh_base_result_all.csv\nResults saved to HDFS: /Data/soh/result/integrate/all/soh_base_result_all.csv\n[2025-11-24 15:03:01] Processing complete.\n[2025-11-24 15:03:01] Main function finished.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763963533567_926111000",
+      "id": "paragraph_1763963533567_926111000",
+      "dateCreated": "2025-11-24 14:52:13.567",
+      "dateStarted": "2025-11-24 14:58:51.123",
+      "dateFinished": "2025-11-24 15:03:01.022",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\r\n\"\"\"\r\nsoh summary (Bulk Version) : 통합 데이터를 읽어 차량별 SOH 요약 정보 생성\r\n\r\n- 입력 데이터셋(soh_base_result_all.csv): Step 1에서 생성된 통합 CSV\r\n- 처리:\r\n    1. 충전 시퀀스(ch_seq) 넘버링 (차량별)\r\n    2. 시퀀스 단위 요약 (Summary)\r\n    3. 누적 DoD 및 초기 DoD(회귀분석) 산출 (차량별)\r\n    4. C-rate 산출\r\n- 결과 데이터셋(soh_summary_result_all.csv) : HDFS에 단일 통합 CSV 파일로 저장\r\n\"\"\"\r\n\r\nimport os\r\nimport sys\r\nfrom typing import Optional, List, Dict, Any\r\nimport logging\r\nfrom datetime import datetime\r\n\r\n# Spark 관련 모듈\r\nfrom pyspark.sql import SparkSession, DataFrame\r\nfrom pyspark.sql.functions import (\r\n    lag, lead, col, when, expr, round as pyspark_round, sum as pyspark_sum,\r\n    max as pyspark_max, min as pyspark_min, avg as pyspark_avg,\r\n    abs as pyspark_abs, first as pyspark_first, count, lit, coalesce, unix_timestamp, date_format,\r\n    row_number, split, transform, concat_ws\r\n)\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\nfrom pyspark.sql.types import (\r\n    StructType, StructField, StringType, IntegerType,\r\n    DoubleType, TimestampType, BooleanType, ArrayType\r\n)\r\n\r\n# Pandas/Numpy/Sklearn (cal_accum_dod용)\r\nimport pandas as pd\r\nimport numpy as np\r\nfrom sklearn.linear_model import LinearRegression\r\n\r\n# 로깅 설정\r\nlogging.basicConfig(\r\n    level\u003dlogging.INFO,\r\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\r\n)\r\nlogger \u003d logging.getLogger(__name__)\r\n\r\n# ####################################################################\r\n# ## --- 1. Configuration (Bulk) ---\r\n# ####################################################################\r\n\r\n#VEHICLE_ID \u003d \"ALL\"\r\n\r\n# SOH Summary Input/Output configuration\r\nSOH_SUMMARY_IO_CONFIG \u003d {\r\n    \u0027input\u0027: {\r\n        \u0027source\u0027: \u0027csv\u0027,\r\n        # [수정] Step 1에서 생성한 통합 파일 경로\r\n        \u0027csv_path\u0027: z.input(\"parquet_glob\") + \"/soh_base_result_all.csv\"\r\n    },\r\n    \u0027output\u0027: {\r\n        \u0027format\u0027: \u0027csv\u0027,\r\n        # [수정] 결과 파일명도 통합된 이름으로 변경\r\n        \u0027csv_path\u0027: z.input(\"auto_base_path\") + \"/soh_summary_result_all.csv\"\r\n    }\r\n}\r\n\r\n\r\n# ####################################################################\r\n# ## --- 2. Utility Functions ---\r\n# ####################################################################\r\n\r\ndef print_timestamp(message: str) -\u003e None:\r\n    \"\"\"Print message with current timestamp\"\"\"\r\n    print(f\"[{datetime.now().strftime(\u0027%Y-%m-%d %H:%M:%S\u0027)}] {message}\")\r\n\r\ndef print_dfcount(df: DataFrame, message: str) -\u003e None:\r\n    \"\"\"Print DataFrame count with message\"\"\"\r\n    count \u003d df.count()\r\n    print_timestamp(f\"{message}: {count:,} rows\")\r\n\r\n\r\ndef load_data_from_csv(spark: SparkSession, file_path: str) -\u003e DataFrame:\r\n    \"\"\"Load data from a CSV file.\"\"\"\r\n    print_timestamp(f\"Loading data from HDFS CSV: {file_path}\")\r\n    try:\r\n        # Step 1 결과는 단일 CSV 파일이므로 직접 읽음\r\n        df \u003d spark.read.csv(file_path, header\u003dTrue, inferSchema\u003dTrue)\r\n        return df\r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to read HDFS CSV file: {file_path}\")\r\n        print(e)\r\n        return spark.createDataFrame([], schema\u003dStructType([]))\r\n\r\ndef save_to_csv(df: DataFrame, output_path: str) -\u003e str:\r\n    \"\"\"\r\n    Spark DataFrame을 HDFS에 *단일* CSV 파일로 저장합니다.\r\n    \"\"\"\r\n    print_timestamp(f\"Saving data to HDFS *single file*: {output_path}\")\r\n    \r\n    import os\r\n    base_dir \u003d os.path.dirname(output_path)\r\n    temp_dir \u003d os.path.join(base_dir, \".temp_summary_save_dir_all\") # 임시 폴더명 변경\r\n    \r\n    print_timestamp(f\"Using temporary save directory: {temp_dir}\")\r\n\r\n    try:\r\n        (df.coalesce(1)\r\n           .write\r\n           .option(\"header\", \"true\")\r\n           .mode(\"overwrite\")\r\n           .csv(temp_dir))\r\n\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        part_file_pattern \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.csv\")\r\n        file_list_status \u003d fs.globStatus(part_file_pattern)\r\n\r\n        if not file_list_status:\r\n            raise Exception(f\"No \u0027part-\u0027 file found in temp directory: {temp_dir}\")\r\n            \r\n        source_file_path \u003d file_list_status[0].getPath()\r\n        print_timestamp(f\"Found temporary data file: {source_file_path}\")\r\n\r\n        dest_file_path \u003d spark._jvm.org.apache.hadoop.fs.Path(output_path)\r\n\r\n        print_timestamp(f\"Checking for existing file and deleting if present: {output_path}\")\r\n        if fs.exists(dest_file_path):\r\n            fs.delete(dest_file_path, False)\r\n            print_timestamp(\"Existing file deleted.\")\r\n\r\n        fs.rename(source_file_path, dest_file_path)\r\n        \r\n        fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n\r\n        print_timestamp(f\"Successfully saved to single HDFS file: {output_path}\")\r\n        \r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to save to single HDFS file: {output_path}\")\r\n        print(e)\r\n        try:\r\n            fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n            fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n        except:\r\n            pass \r\n        raise \r\n        \r\n    return output_path\r\n\r\n\r\n# ####################################################################\r\n# ## --- 3. Core SOH Summary Logic (Modified for Bulk) ---\r\n# ####################################################################\r\n\r\ndef number_sequence(df):\r\n    # [설명] vehicle_id 파티션이 이미 적용되어 있어 여러 차량 데이터가 섞여 있어도\r\n    # 차량별로 독립적으로 시퀀스를 계산합니다. 수정 불필요.\r\n    \r\n    # vehicle_id와 time으로 정렬\r\n    df \u003d df.orderBy(\"vehicle_id\", \"time\")\r\n\r\n    # 이전 행과 비교하기 위한 Window 함수 (차량별 파티션)\r\n    w \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"time\")\r\n\r\n    # 이전 time과 soc_avg 값 가져오기\r\n    df \u003d df \\\r\n        .withColumn(\"prev_time\", lag(\"time\", 1).over(w)) \\\r\n        .withColumn(\"prev_soc\", lag(\"soc_avg\", 1).over(w))\r\n\r\n    # 충전 시퀀스 구분 조건\r\n    df \u003d df.withColumn(\"new_seq_flag\",\r\n        when(\r\n            (unix_timestamp(col(\"time\")) - unix_timestamp(col(\"prev_time\")) \u003e\u003d 600) \u0026\r\n            (col(\"prev_soc\") - col(\"soc_avg\") \u003e\u003d 5),\r\n            1\r\n        ).otherwise(0)\r\n    )\r\n\r\n    # vehicle_id별로 누적 합으로 시퀀스 번호 생성\r\n    w2 \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"time\").rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n    df \u003d df.withColumn(\"ch_seq\", pyspark_sum(\"new_seq_flag\").over(w2) + 1)\r\n\r\n    # 중간 컬럼 제거\r\n    df \u003d df.drop(\"prev_time\", \"prev_soc\", \"new_seq_flag\")\r\n\r\n    return df\r\n\r\ndef summary_by_seq(df):\r\n    # [설명] vehicle_id를 그룹 키에 포함시켜 차량별/시퀀스별 요약 수행\r\n    df_agg \u003d df.groupBy(\"vehicle_id\", \"ch_seq\").agg(\r\n        pyspark_min(\"time\").alias(\"start_time\"),\r\n        pyspark_max(\"time\").alias(\"end_time\"),\r\n        pyspark_round(pyspark_avg(\"mileage\"), 2).alias(\"mileage\"),\r\n        pyspark_round(pyspark_avg(\"bat_temp\"), 1).alias(\"avg_bat_temp\"),\r\n        pyspark_round(pyspark_max(\"pvdiff_avg\"), 3).alias(\"cvdiff\"),\r\n        pyspark_round(pyspark_max(\"ptdiff_avg\"), 3).alias(\"ctdiff\"),\r\n        pyspark_round(pyspark_min(\"soc_avg\"), 2).alias(\"start_soc\"),\r\n        pyspark_round(pyspark_max(\"soc_avg\"), 2).alias(\"end_soc\"),\r\n        pyspark_round(pyspark_avg(\"soh_avg\"), 2).alias(\"soh_avg\"),\r\n        pyspark_round((pyspark_max(\"soc_avg\") - pyspark_min(\"soc_avg\")), 2).alias(\"delta_soc\"),\r\n        pyspark_round(pyspark_avg(\"current_avg\"), 2).alias(\"current_avg_mean\"),\r\n    )\r\n\r\n    # 동일 (vehicle_id, ch_seq) 내에서 마지막 soh 값 추가\r\n    w_last \u003d Window.partitionBy(\"vehicle_id\", \"ch_seq\").orderBy(col(\"time\").desc())\r\n    df_last_soh \u003d (\r\n        df.withColumn(\"rn\", row_number().over(w_last))\r\n          .filter(col(\"rn\") \u003d\u003d 1)\r\n          .select(\"vehicle_id\", \"ch_seq\", col(\"soh\").alias(\"soh\"))\r\n    )\r\n\r\n    df_agg \u003d df_agg.join(df_last_soh, [\"vehicle_id\", \"ch_seq\"], \"left\")\r\n\r\n    return df_agg\r\n\r\ndef cal_accum_dod(df):\r\n    \"\"\"\r\n    누적 DoD 계산 함수 (Bulk 버전)\r\n    - accum_dod는 Spark Window로 계산 (차량별)\r\n    - initial_dod는 Pandas로 수집 후 차량별로 회귀분석 수행하여 Join\r\n    \"\"\"\r\n    # 1) vehicle_id, ch_seq로 정렬\r\n    df \u003d df.orderBy(\"vehicle_id\", \"ch_seq\")\r\n    \r\n    # 2) accum_dod \u003d delta_soc / 100을 누적으로 더함 (차량별 파티션)\r\n    w \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"ch_seq\").rowsBetween(Window.unboundedPreceding, Window.currentRow)\r\n    df \u003d df.withColumn(\"accum_dod\", pyspark_sum((col(\"delta_soc\") / lit(100))).over(w))\r\n    \r\n    # 3) initial_dod 계산 (Linear Regression)\r\n    # [수정] 차량별로 회귀식을 돌려야 하므로, 데이터를 요약해서 가져온 뒤 차량별 Loop 수행\r\n    \r\n    print_timestamp(\"Collecting summary data to Pandas for Linear Regression (per vehicle)...\")\r\n    \r\n    # Summary 데이터는 용량이 매우 작으므로(차량당 수천 건) collect해도 안전합니다.\r\n    # mileage와 accum_dod, vehicle_id만 가져옵니다.\r\n    pdf_for_reg \u003d df.select(\"vehicle_id\", \"mileage\", \"accum_dod\").toPandas()\r\n    \r\n    unique_vehicles \u003d pdf_for_reg[\u0027vehicle_id\u0027].unique()\r\n    initial_dod_list \u003d []\r\n\r\n    print_timestamp(f\"Calculating initial_dod for {len(unique_vehicles)} vehicles...\")\r\n\r\n    for vid in unique_vehicles:\r\n        # 해당 차량 데이터 필터링\r\n        pdf_v \u003d pdf_for_reg[pdf_for_reg[\u0027vehicle_id\u0027] \u003d\u003d vid]\r\n        \r\n        # NaN 제거\r\n        pdf_v \u003d pdf_v.dropna(subset\u003d[\"mileage\", \"accum_dod\"])\r\n        \r\n        X \u003d pdf_v[[\"mileage\"]].values\r\n        y \u003d pdf_v[\"accum_dod\"].values\r\n        \r\n        initial_dod \u003d 0.0\r\n        if len(X) \u003e 1:\r\n            try:\r\n                reg \u003d LinearRegression()\r\n                reg.fit(X, y)\r\n                initial_dod \u003d abs(reg.intercept_)\r\n            except Exception as e:\r\n                print(f\"Regression failed for vehicle {vid}: {e}\")\r\n        \r\n        initial_dod_list.append((str(vid), float(initial_dod)))\r\n\r\n    # 차량별 initial_dod를 담은 DataFrame 생성\r\n    initial_dod_schema \u003d StructType([\r\n        StructField(\"vehicle_id\", StringType(), True),\r\n        StructField(\"initial_dod\", DoubleType(), True)\r\n    ])\r\n    \r\n    initial_dod_df \u003d spark.createDataFrame(initial_dod_list, schema\u003dinitial_dod_schema)\r\n    \r\n    # 4) 원본 df에 initial_dod 조인\r\n    df \u003d df.join(initial_dod_df, \"vehicle_id\", \"left\")\r\n    \r\n    # 조인 후 null값(혹시 모를) 처리\r\n    df \u003d df.fillna(0.0, subset\u003d[\"initial_dod\"])\r\n\r\n    # 5) acc_cycle_cnt 계산\r\n    df \u003d df.withColumn(\"acc_cycle_cnt\", col(\"accum_dod\") + col(\"initial_dod\"))\r\n    df \u003d df.withColumn(\"acc_cycle_cnt\", pyspark_round(col(\"acc_cycle_cnt\"), 2))\r\n    \r\n    return df\r\n\r\n\r\n# ####################################################################\r\n# ## --- 4. Main Process Function (Modified for Bulk) ---\r\n# ####################################################################\r\n\r\ndef process_summary_data_bulk(spark: SparkSession, day_of_soh: Optional[str] \u003d None):\r\n    \"\"\"\r\n    SOH Summary Bulk Data Processing\r\n    \"\"\"\r\n    # Step 0: Load data\r\n    print_timestamp(\"Step 0\u003e Loading data (Bulk)\")\r\n    \r\n    csv_path \u003d SOH_SUMMARY_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n    df \u003d load_data_from_csv(spark, csv_path)\r\n\r\n    if day_of_soh:\r\n        df \u003d df.filter(date_format(col(\"time\"), \"yyyy-MM-dd\") \u003c\u003d day_of_soh)\r\n        logger.info(f\"Filtered data up to: {day_of_soh}\")\r\n\r\n    if df.count() \u003d\u003d 0:\r\n        print(\"No Data Loaded. Exiting.\")\r\n        sys.exit(\"Program terminated due to empty input data.\")\r\n        \r\n    print_timestamp(f\"Step 0 - Initial data count: {df.count()}\")\r\n\r\n    # [수정] Step 1의 결과에서 soh는 문자열로 저장되었으므로 다시 배열로 변환\r\n    print_timestamp(\"Converting \u0027soh\u0027 string column back to ArrayType...\")\r\n    # 문자열 \"[98.1, 98.2]\" -\u003e 배열로 변환\r\n    df \u003d df.withColumn(\"soh\", \r\n        transform(\r\n            split(\r\n                expr(\"regexp_replace(soh, \u0027\\\\[|\\\\]\u0027, \u0027\u0027)\"), # 대괄호 제거\r\n                \",\"\r\n            ),\r\n            lambda x: x.cast(\"double\")\r\n        ).alias(\"soh\")\r\n    )\r\n\r\n    # 1. data filtering\r\n    print_timestamp(\"Step 1\u003e Filtering data (Charge only, etc.)\")\r\n    df \u003d df.filter(col(\"status\") \u003d\u003d \"CHARGE\")\r\n    df \u003d df.filter((col(\"mileage\") \u003e 0) \u0026 (col(\"soc_avg\") \u003e 0) \u0026 (col(\"soc_avg\") \u003c 100) \u0026 (col(\"current_avg\") \u003c -0.5)) \r\n    print_dfcount(df, \"After Step 1 filtering\")\r\n     \r\n    # 2. Numbering sequence (Partitioned by vehicle_id)\r\n    print_timestamp(\"Step 2\u003e Numbering charge sequence\")\r\n    df \u003d number_sequence(df)\r\n\r\n    # 3. Summary (Group by vehicle_id, ch_seq)\r\n    print_timestamp(\"Step 3\u003e Summarizing by sequence\")\r\n    df_agg \u003d summary_by_seq(df)\r\n\r\n    # day_of_soh 추가\r\n    df_agg \u003d df_agg.withColumn(\"day_of_soh\", date_format(col(\"start_time\"), \"yyyy-MM-dd\"))\r\n\r\n    # 4. 누적 DoD 계산 (차량별 회귀분석 포함)\r\n    print_timestamp(\"Step 4\u003e Calculating accumulated DoD (per vehicle)\")\r\n    df_agg \u003d cal_accum_dod(df_agg)\r\n\r\n    # 5. C-rate 계산\r\n    print_timestamp(\"Step 5\u003e Calculating C-rate\")\r\n    df_agg \u003d df_agg.withColumn(\"delta_t_hour\", (unix_timestamp(col(\"end_time\")) - unix_timestamp(col(\"start_time\"))) / 3600)\\\r\n        .withColumn(\r\n            \"c_rate\",\r\n            pyspark_round(\r\n                when(col(\"delta_t_hour\") !\u003d 0,\r\n                     (col(\"delta_soc\") / lit(100)) / col(\"delta_t_hour\"))\r\n                .otherwise(lit(0.0)),\r\n                2\r\n            )\r\n        )\r\n\r\n    print_timestamp(\"Step 6\u003e Selecting final columns\")\r\n    df_result \u003d df_agg.filter(col(\"c_rate\") \u003e 0)\r\n    \r\n    # Select columns\r\n    final_cols \u003d [\"vehicle_id\", \"day_of_soh\", \"ch_seq\", \"start_time\", \"end_time\", \"mileage\", \"acc_cycle_cnt\", \"avg_bat_temp\", \"cvdiff\", \"ctdiff\",\"start_soc\", \"end_soc\", \"delta_soc\", \"c_rate\",\"soh_avg\", \"soh\"]\r\n    df_result \u003d df_result.select(*final_cols)\r\n    \r\n    print_dfcount(df_result, \"Final result count\")\r\n    \r\n    return df_result\r\n\r\n# ####################################################################\r\n# ## --- 5. Main Execution ---\r\n# ####################################################################\r\n\r\ndef main():\r\n    try:\r\n        # Bulk 처리이므로 ID는 없음\r\n        day_of_soh \u003d None \r\n            \r\n        result_df \u003d process_summary_data_bulk(spark, day_of_soh\u003dday_of_soh)\r\n        \r\n        # Save to HDFS CSV\r\n        print_timestamp(\"Step 7\u003e Saving results to HDFS\")\r\n        \r\n        # 저장 전 \u0027soh\u0027 배열을 다시 문자열로 변환 (CSV 호환)\r\n        result_df_for_csv \u003d result_df.withColumn(\"soh\", concat_ws(\",\", col(\"soh\")))\r\n        \r\n        # 정렬 (차량별, 시퀀스별)\r\n        result_df_for_csv \u003d result_df_for_csv.orderBy(\"vehicle_id\", \"ch_seq\")\r\n        \r\n        output_path \u003d SOH_SUMMARY_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027]\r\n        save_to_csv(result_df_for_csv, output_path) \r\n        print(f\"Results saved to HDFS: {output_path}\")\r\n\r\n    except Exception as e:\r\n        import traceback\r\n        traceback.print_exc()\r\n        raise\r\n    finally:\r\n        print_timestamp(\"Main function finished.\")\r\n\r\nmain()",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 15:20:01.095",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "auto_base_path": "/Data/soh/result/integrate/all",
+          "parquet_glob": "/Data/soh/result/integrate/all"
+        },
+        "forms": {
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[2025-11-24 15:20:01] Step 0\u003e Loading data (Bulk)\n[2025-11-24 15:20:01] Loading data from HDFS CSV: /Data/soh/result/integrate/all/soh_base_result_all.csv\n[2025-11-24 15:20:05] Step 0 - Initial data count: 2342708\n[2025-11-24 15:20:05] Converting \u0027soh\u0027 string column back to ArrayType...\n[2025-11-24 15:20:05] Step 1\u003e Filtering data (Charge only, etc.)\n[2025-11-24 15:20:07] After Step 1 filtering: 1,863,317 rows\n[2025-11-24 15:20:07] Step 2\u003e Numbering charge sequence\n[2025-11-24 15:20:07] Step 3\u003e Summarizing by sequence\n[2025-11-24 15:20:07] Step 4\u003e Calculating accumulated DoD (per vehicle)\n[2025-11-24 15:20:07] Collecting summary data to Pandas for Linear Regression (per vehicle)...\n[2025-11-24 15:20:17] Calculating initial_dod for 8 vehicles...\n[2025-11-24 15:20:17] Step 5\u003e Calculating C-rate\n[2025-11-24 15:20:17] Step 6\u003e Selecting final columns\n[2025-11-24 15:20:27] Final result count: 982 rows\n[2025-11-24 15:20:27] Step 7\u003e Saving results to HDFS\n[2025-11-24 15:20:27] Saving data to HDFS *single file*: /Data/soh/result/integrate/all/soh_summary_result_all.csv\n[2025-11-24 15:20:27] Using temporary save directory: /Data/soh/result/integrate/all/.temp_summary_save_dir_all\n[2025-11-24 15:20:41] Found temporary data file: hdfs://mycluster/Data/soh/result/integrate/all/.temp_summary_save_dir_all/part-00000-b0343991-7998-4959-a295-361da15603bd-c000.csv\n[2025-11-24 15:20:41] Checking for existing file and deleting if present: /Data/soh/result/integrate/all/soh_summary_result_all.csv\n[2025-11-24 15:20:41] Successfully saved to single HDFS file: /Data/soh/result/integrate/all/soh_summary_result_all.csv\nResults saved to HDFS: /Data/soh/result/integrate/all/soh_summary_result_all.csv\n[2025-11-24 15:20:41] Main function finished.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d68"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d69"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d70"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d71"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d72"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d73"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d74"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d75"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d76"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d77"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d78"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d79"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d80"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d81"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d82"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d83"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d84"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d85"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d86"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d87"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d88"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d89"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d90"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d91"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d92"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d93"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d94"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d95"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d96"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d97"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d98"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d99"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d100"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d101"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d102"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d103"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d104"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d105"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d106"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d107"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d108"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d109"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d110"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d111"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d112"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d113"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d114"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d115"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d116"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d117"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d118"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763963801337_1843523488",
+      "id": "paragraph_1763963801337_1843523488",
+      "dateCreated": "2025-11-24 14:56:41.337",
+      "dateStarted": "2025-11-24 15:20:01.102",
+      "dateFinished": "2025-11-24 15:20:41.666",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\r\n\"\"\"\r\nSOH Forecast Preprocess (Bulk Version) : 통합 데이터를 읽어 모델링용 데이터셋 생성\r\n\r\n- 입력: Step 2 결과 (soh_summary_result_all.csv)\r\n- 처리:\r\n    1. \u0027일(day)\u0027 단위로 데이터 재집계 (summary_by_day) - 차량별 그룹핑\r\n    2. 학습/테스트 분리 플래그(train_flag) 추가 - 차량별 시계열 기준 80% Train\r\n- 출력: HDFS에 단일 Parquet 파일 (forecast_preprocessed_all.parquet) 저장\r\n\"\"\"\r\n\r\nimport os\r\nimport sys\r\nfrom typing import Optional\r\nimport logging\r\nfrom datetime import datetime\r\n\r\n# Spark 관련 모듈\r\nfrom pyspark.sql import SparkSession, DataFrame\r\nfrom pyspark.sql.functions import (\r\n    col, expr, round as pyspark_round, max as pyspark_max, avg as pyspark_avg,\r\n    count, lit, date_format, split, transform, row_number, concat_ws, regexp_replace\r\n)\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\nfrom pyspark.sql.types import StructType, DoubleType\r\n\r\n# 로깅 설정\r\nlogging.basicConfig(\r\n    level\u003dlogging.INFO,\r\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\r\n)\r\nlogger \u003d logging.getLogger(__name__)\r\n\r\n# ####################################################################\r\n# ## --- 1. Configuration (Bulk) ---\r\n# ####################################################################\r\n\r\nVEHICLE_ID \u003d \"ALL\"\r\n\r\n# 3단계(Forecast Preprocess) I/O 설정 (HDFS)\r\nSOH_FORECAST_PREPROCESS_IO_CONFIG \u003d {\r\n    \u0027input\u0027: {\r\n        \u0027source\u0027: \u0027csv\u0027,\r\n        # [수정] Step 2에서 생성한 통합 파일 경로\r\n        \u0027csv_path\u0027: z.input(\"auto_base_path\") + \"/soh_summary_result_all.csv\"\r\n    },\r\n    \u0027output\u0027: {\r\n        \u0027format\u0027: \u0027parquet\u0027,\r\n        # [수정] 결과 파일명도 통합된 이름으로 변경\r\n        \u0027parquet_path\u0027: z.input(\"parquet_glob\") + \"/intermediate/forecast_preprocessed_all.parquet\"\r\n    }\r\n}\r\n\r\n# [체크] 이미 생성된 글로벌 모델이 있는지 확인할 경로\r\nGLOBAL_MODEL_CHECK_PATH \u003d z.input(\"parquet_glob\") + \"/models/xgb_model/model_global.pkl\"\r\n\r\n\r\n# ####################################################################\r\n# ## --- 2. Utility Functions ---\r\n# ####################################################################\r\n\r\ndef print_timestamp(message: str) -\u003e None:\r\n    \"\"\"Print message with current timestamp\"\"\"\r\n    print(f\"[{datetime.now().strftime(\u0027%Y-%m-%d %H:%M:%S\u0027)}] {message}\")\r\n\r\ndef print_dfcount(df: DataFrame, message: str) -\u003e None:\r\n    \"\"\"Print DataFrame count with message\"\"\"\r\n    count \u003d df.count()\r\n    print_timestamp(f\"{message}: {count:,} rows\")\r\n\r\ndef load_data_from_csv(spark: SparkSession, file_path: str) -\u003e DataFrame:\r\n    \"\"\"Load data from a HDFS CSV file.\"\"\"\r\n    print_timestamp(f\"Loading data from HDFS CSV: {file_path}\")\r\n    try:\r\n        # 통합 파일이므로 직접 읽음\r\n        df \u003d spark.read.csv(file_path, header\u003dTrue, inferSchema\u003dTrue)\r\n        return df\r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to read HDFS CSV file: {file_path}\")\r\n        print(e)\r\n        return spark.createDataFrame([], schema\u003dStructType([]))\r\n\r\ndef save_to_parquet(df: DataFrame, output_path: str) -\u003e str:\r\n    \"\"\"\r\n    Spark DataFrame을 HDFS에 *단일* Parquet 파일로 저장합니다.\r\n    \"\"\"\r\n    print_timestamp(f\"Saving data to HDFS *single file*: {output_path}\")\r\n\r\n    import os\r\n    base_dir \u003d os.path.dirname(output_path)\r\n    temp_dir \u003d os.path.join(base_dir, \".temp_parquet_save_dir_all\") \r\n    \r\n    print_timestamp(f\"Using temporary save directory: {temp_dir}\")\r\n\r\n    try:\r\n        (df.coalesce(1)\r\n           .write\r\n           .option(\"compression\", \"snappy\")\r\n           .mode(\"overwrite\")\r\n           .parquet(temp_dir))\r\n\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        part_file_pattern \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.snappy.parquet\")\r\n        file_list_status \u003d fs.globStatus(part_file_pattern)\r\n\r\n        if not file_list_status:\r\n            # Snappy가 아닐 경우 대비\r\n            part_file_pattern_generic \u003d spark._jvm.org.apache.hadoop.fs.Path(f\"{temp_dir}/part-*.parquet\")\r\n            file_list_status \u003d fs.globStatus(part_file_pattern_generic)\r\n            if not file_list_status:\r\n                 raise Exception(f\"No \u0027part-\u0027 file found in temp directory: {temp_dir}\")\r\n        \r\n        source_file_path \u003d file_list_status[0].getPath()\r\n        print_timestamp(f\"Found temporary data file: {source_file_path}\")\r\n\r\n        dest_file_path \u003d spark._jvm.org.apache.hadoop.fs.Path(output_path)\r\n\r\n        print_timestamp(f\"Checking for existing file and deleting if present: {output_path}\")\r\n        if fs.exists(dest_file_path):\r\n            fs.delete(dest_file_path, False)\r\n            print_timestamp(\"Existing file deleted.\")\r\n\r\n        print_timestamp(f\"Moving file to final destination: {output_path}\")\r\n        fs.rename(source_file_path, dest_file_path)\r\n        \r\n        print_timestamp(f\"Cleaning up temporary directory: {temp_dir}\")\r\n        fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n\r\n        print_timestamp(f\"Successfully saved to single HDFS Parquet file: {output_path}\")\r\n        \r\n    except Exception as e:\r\n        print_timestamp(f\"[ERROR] Failed to save to single HDFS Parquet file: {output_path}\")\r\n        print(e)\r\n        try:\r\n            fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n            fs.delete(spark._jvm.org.apache.hadoop.fs.Path(temp_dir), True)\r\n            print_timestamp(\"Cleaned up temporary directory after error.\")\r\n        except:\r\n            pass\r\n        raise\r\n        \r\n    return output_path\r\n\r\n\r\n# ####################################################################\r\n# ## --- 3. Core SOH Forecast Preprocess Logic (Bulk) ---\r\n# ####################################################################\r\n\r\ndef summary_by_day(df):\r\n    \"\"\"\r\n    \u0027시퀀스(ch_seq)\u0027별 데이터를 \u0027일(day)\u0027 단위로 재집계.\r\n    Bulk 처리이므로 vehicle_id를 그룹 키에 포함해야 함.\r\n    \"\"\"\r\n    \r\n    # 이상치 필터링\r\n    df \u003d df.filter((col(\"delta_soc\") \u003e\u003d 5) \u0026 (col(\"c_rate\") \u003e 0) \u0026 (col(\"c_rate\") \u003c 2.0))\r\n    \r\n    # Group By에 vehicle_id 포함\r\n    df_agg \u003d df.groupBy(\"vehicle_id\", \"day_of_soh\").agg(\r\n        pyspark_round(pyspark_avg(\"mileage\"), 2).alias(\"mileage\"),\r\n        pyspark_round(pyspark_max(\"acc_cycle_cnt\"), 0).alias(\"acc_cycle_cnt\"),\r\n        pyspark_round(pyspark_avg(\"avg_bat_temp\"), 1).alias(\"avg_bat_temp\"),\r\n        pyspark_round(pyspark_max(\"cvdiff\"), 3).alias(\"cvdiff\"),\r\n        pyspark_round(pyspark_max(\"ctdiff\"), 3).alias(\"ctdiff\"),\r\n        pyspark_round(pyspark_avg(\"c_rate\"), 2).alias(\"c_rate\"),\r\n        pyspark_round(pyspark_avg(\"soh_avg\"), 2).alias(\"soh_avg\"), # Target\r\n    )\r\n\r\n    # 일(day) 기준 해당 차량의 마지막 soh_list 가져오기\r\n    w_last_time_of_day \u003d Window.partitionBy(\"vehicle_id\", \"day_of_soh\").orderBy(col(\"start_time\").desc())\r\n    \r\n    df_last_soh_of_day \u003d (\r\n        df.withColumn(\"rn\", row_number().over(w_last_time_of_day))\r\n          .filter(col(\"rn\") \u003d\u003d 1)\r\n          .select(\"vehicle_id\", \"day_of_soh\", col(\"soh\").alias(\"soh_list\"))\r\n    )\r\n    \r\n    df_agg \u003d df_agg.join(df_last_soh_of_day, [\"vehicle_id\", \"day_of_soh\"], \"left\")\r\n\r\n    return df_agg\r\n\r\ndef process_forecast_preprocess_bulk(spark: SparkSession):\r\n    \"\"\"\r\n    SOH Forecast Bulk Preprocessing (HDFS CSV -\u003e HDFS Parquet)\r\n    \"\"\"\r\n    # Step 0: Load data\r\n    print_timestamp(\"Step 0\u003e Loading Bulk Summary Data (CSV)\")\r\n    \r\n    csv_path \u003d SOH_FORECAST_PREPROCESS_IO_CONFIG[\u0027input\u0027][\u0027csv_path\u0027]\r\n    df \u003d load_data_from_csv(spark, csv_path)\r\n    \r\n    if df.count() \u003d\u003d 0:\r\n        print(\"No Data Loaded. Exiting.\")\r\n        sys.exit(\"Program terminated due to empty input data.\")\r\n        \r\n    print_timestamp(f\"Step 0 - Loaded {df.count()} rows\")\r\n\r\n    # \u0027soh\u0027 컬럼(문자열)을 배열로 변환\r\n    print_timestamp(\"Converting \u0027soh\u0027 string column back to ArrayType...\")\r\n    df \u003d df.withColumn(\"soh\",   \r\n        transform(\r\n            split(regexp_replace(col(\"soh\"), r\"[\\[\\]]\", \"\"), \",\"),\r\n            lambda x: x.cast(\"double\")\r\n        ).alias(\"soh\")\r\n    )\r\n    \r\n    # Step 0.5: 피처/타겟 컬럼 타입을 Double로 강제 변환\r\n    print_timestamp(\"Step 0.5\u003e Casting feature/target columns to Double...\")\r\n    \r\n    feature_cols \u003d [\"acc_cycle_cnt\", \"avg_bat_temp\", \"c_rate\", \"cvdiff\", \"ctdiff\"]\r\n    target_col \u003d \"soh_avg\"\r\n    other_numeric_cols \u003d [\"delta_soc\", \"mileage\"]\r\n    \r\n    numeric_cols \u003d feature_cols + [target_col] + other_numeric_cols\r\n    \r\n    for col_name in numeric_cols:\r\n        if col_name in df.columns:\r\n            # 대괄호 제거 및 Double 형변환\r\n            df \u003d df.withColumn(col_name, regexp_replace(col(col_name), r\"[\\[\\]]\", \"\"))\r\n            df \u003d df.withColumn(col_name, col(col_name).cast(DoubleType()))\r\n\r\n    # Step 1: \u0027일(Day)\u0027 단위로 데이터 요약 (차량별)\r\n    print_timestamp(\"Step 1\u003e Summarizing data by day per vehicle\")\r\n    df_summary_day \u003d summary_by_day(df) \r\n\r\n    # Step 2: 학습/테스트 분리 플래그 생성\r\n    # [중요] 차량별로(partitionBy vehicle_id) 날짜순 정렬하여 80% 지점 계산\r\n    print_timestamp(\"Step 2\u003e Creating train/test split flag (per vehicle)\")\r\n    \r\n    df_summary_day \u003d df_summary_day.orderBy(\"vehicle_id\", \"day_of_soh\")\r\n    \r\n    w_order \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"day_of_soh\")\r\n    w_count \u003d Window.partitionBy(\"vehicle_id\") # 차량별 전체 일수\r\n\r\n    df_preprocessed \u003d (\r\n        df_summary_day\r\n        .withColumn(\"rownum\", row_number().over(w_order))\r\n        .withColumn(\"cnt\", count(lit(1)).over(w_count))\r\n        .withColumn(\r\n            \"train_flag\",\r\n            (col(\"rownum\") \u003c\u003d col(\"cnt\") * lit(0.8)).cast(\"boolean\")\r\n        )\r\n    )\r\n\r\n    # Step 3: 모델링에 필요한 컬럼 선택\r\n    print_timestamp(\"Step 3\u003e Selecting final columns\")\r\n    \r\n    output_df \u003d df_preprocessed.select(\r\n        \"vehicle_id\",\r\n        \"day_of_soh\",\r\n        *feature_cols,\r\n        target_col,    # soh_avg\r\n        \"train_flag\",\r\n        \"soh_list\"\r\n    )\r\n\r\n    return output_df\r\n\r\n# ####################################################################\r\n# ## --- 4. Main Execution ---\r\n# ####################################################################\r\n\r\ndef main():\r\n    try:\r\n        # HDFS 파일시스템 객체\r\n        fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jsc.hadoopConfiguration())\r\n        \r\n        # 🔽 [모델 존재 확인 로직] 통합 모델(global model) 확인 🔽\r\n        model_hdfs_path \u003d spark._jvm.org.apache.hadoop.fs.Path(GLOBAL_MODEL_CHECK_PATH)\r\n        \r\n        if fs.exists(model_hdfs_path):\r\n            logger.info(f\"Existing GLOBAL Model found at: {GLOBAL_MODEL_CHECK_PATH}\")\r\n            logger.info(\"통합 모델이 이미 존재하므로, 3단계 전처리(forecast_preprocess)를 건너뜁니다.\")\r\n            return # 종료\r\n        else:\r\n            logger.info(f\"Global Model NOT found at: {GLOBAL_MODEL_CHECK_PATH}\")\r\n            logger.info(\"모델이 없으므로, 3단계 전처리를 진행합니다.\")\r\n        \r\n        # 전처리 실행\r\n        print_timestamp(\"Step 0~3\u003e Starting Bulk Forecast Preprocess...\")\r\n        result_df \u003d process_forecast_preprocess_bulk(spark)\r\n        \r\n        # 결과 저장 (Parquet)\r\n        print_timestamp(\"Step 4\u003e Saving preprocessed results to HDFS Parquet\")\r\n        \r\n        output_path \u003d SOH_FORECAST_PREPROCESS_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]\r\n        save_to_parquet(result_df, output_path)\r\n        print(f\"Preprocessed data saved to: {output_path}\")\r\n\r\n    except Exception as e:\r\n        import traceback\r\n        traceback.print_exc()\r\n        raise\r\n    finally:\r\n        print_timestamp(\"Main function (Forecast Preprocess Bulk) finished.\")\r\n\r\nmain()",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 15:21:44.274",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "auto_base_path": "/Data/soh/result/integrate/all",
+          "parquet_glob": "/Data/soh/result/integrate/all"
+        },
+        "forms": {
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "",
+            "hidden": false
+          },
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-24 15:21:10,455 - INFO - Global Model NOT found at: /Data/soh/result/integrate/all/models/xgb_model/xgb_model_global_v1.pkl\n2025-11-24 15:21:10,459 - INFO - 모델이 없으므로, 3단계 전처리를 진행합니다.\n[2025-11-24 15:21:10] Step 0~3\u003e Starting Bulk Forecast Preprocess...\n[2025-11-24 15:21:10] Step 0\u003e Loading Bulk Summary Data (CSV)\n[2025-11-24 15:21:10] Loading data from HDFS CSV: /Data/soh/result/integrate/all/soh_summary_result_all.csv\n[2025-11-24 15:21:11] Step 0 - Loaded 982 rows\n[2025-11-24 15:21:11] Converting \u0027soh\u0027 string column back to ArrayType...\n[2025-11-24 15:21:11] Step 0.5\u003e Casting feature/target columns to Double...\n[2025-11-24 15:21:11] Step 1\u003e Summarizing data by day per vehicle\n[2025-11-24 15:21:11] Step 2\u003e Creating train/test split flag (per vehicle)\n[2025-11-24 15:21:11] Step 3\u003e Selecting final columns\n[2025-11-24 15:21:11] Step 4\u003e Saving preprocessed results to HDFS Parquet\n[2025-11-24 15:21:11] Saving data to HDFS *single file*: /Data/soh/result/integrate/all/intermediate/forecast_preprocessed_all.parquet\n[2025-11-24 15:21:11] Using temporary save directory: /Data/soh/result/integrate/all/intermediate/.temp_parquet_save_dir_all\n[2025-11-24 15:21:13] Found temporary data file: hdfs://mycluster/Data/soh/result/integrate/all/intermediate/.temp_parquet_save_dir_all/part-00000-ab75267b-6941-4470-be6f-4aa367392429-c000.snappy.parquet\n[2025-11-24 15:21:13] Checking for existing file and deleting if present: /Data/soh/result/integrate/all/intermediate/forecast_preprocessed_all.parquet\n[2025-11-24 15:21:13] Moving file to final destination: /Data/soh/result/integrate/all/intermediate/forecast_preprocessed_all.parquet\n[2025-11-24 15:21:13] Cleaning up temporary directory: /Data/soh/result/integrate/all/intermediate/.temp_parquet_save_dir_all\n[2025-11-24 15:21:13] Successfully saved to single HDFS Parquet file: /Data/soh/result/integrate/all/intermediate/forecast_preprocessed_all.parquet\nPreprocessed data saved to: /Data/soh/result/integrate/all/intermediate/forecast_preprocessed_all.parquet\n[2025-11-24 15:21:13] Main function (Forecast Preprocess Bulk) finished.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d119"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d120"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d121"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d122"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d123"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d124"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d125"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d126"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d127"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d128"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d129"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d130"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d131"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763964251130_301332284",
+      "id": "paragraph_1763964251130_301332284",
+      "dateCreated": "2025-11-24 15:04:11.130",
+      "dateStarted": "2025-11-24 15:21:10.360",
+      "dateFinished": "2025-11-24 15:21:13.354",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 15:17:10.965",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763965030965_1354564877",
+      "id": "paragraph_1763965030965_1354564877",
+      "dateCreated": "2025-11-24 15:17:10.965",
+      "status": "READY"
+    }
+  ],
+  "name": "Allpreprocessing",
+  "id": "2MBP7S14U",
+  "defaultInterpreterGroup": "spark_single",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
