@@ -1,0 +1,31 @@
+{
+  "paragraphs": [
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764402914392_262226044",
+      "id": "paragraph_1764402914392_262226044",
+      "dateCreated": "2025-11-29 16:55:14.392",
+      "status": "READY"
+    }
+  ],
+  "name": "Integrated Schema_Bus",
+  "id": "2MDH5VM7F",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
