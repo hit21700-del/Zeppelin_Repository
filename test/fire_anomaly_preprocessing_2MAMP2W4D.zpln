@@ -1,0 +1,365 @@
+{
+  "paragraphs": [
+    {
+      "text": "",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-17 17:20:20.733",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763000829340_871321033",
+      "id": "paragraph_1763000829340_871321033",
+      "dateCreated": "2025-11-13 11:27:09.340",
+      "status": "READY"
+    },
+    {
+      "title": "BUS preprocessing",
+      "text": "%spark_single.pyspark\n\nimport sys\n# sys.path.append(\"/home/kadap/python/pre_processing\") # 이전 테스트 경로\nsys.path.append(\"/home/kadap/QH/Pre_Processed\")\n\nfrom outlier_limits import bus_device_outlier_limits\n\nfrom functools import reduce\nimport joblib\nimport json\nimport logging\nimport shutil\nimport subprocess\nimport tempfile\nimport numpy as np\nimport operator\nimport os\n\nfrom datetime import datetime\nfrom pyspark.sql import SparkSession, DataFrame\nimport pyspark.sql.functions as F\nfrom pyspark.sql.functions import pandas_udf\nfrom pyspark.sql.types import ArrayType, DoubleType\nfrom pyspark.sql.window import Window\nfrom scipy.stats import chi2\nfrom sklearn.decomposition import PCA\nfrom sklearn.linear_model import LinearRegression\nfrom sklearn.metrics import r2_score, mean_squared_error\nimport sklearn.preprocessing as sklearn_prep\n\nlogging.basicConfig(level\u003dlogging.INFO, format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027)\nlogger \u003d logging.getLogger(\"prep\")\n\nclass PCATrainPreprocessorBus:\n\n    # intialize variables\n\n    def __init__(self, \n                 spark_session: SparkSession,\n                 input_base_path: str,\n                 output_base_path: str,\n                 vehicle_id: str,\n                 outlier_th,\n                 date,\n                 logger \u003d None\n                 ):\n        \n        self.spark \u003d spark_session\n        self.input_base_path \u003d input_base_path\n        self.output_base_path \u003d output_base_path\n        self.vehicle_id \u003d vehicle_id\n        self.outlier_th \u003d outlier_th\n        self.start_date \u003d date[0]\n        self.end_date \u003d date[1]\n        self.logger \u003d logger\n        self.start_time \u003d datetime.now().strftime(\"%Y%m%d%H\")\n        self.artifacts \u003d {}\n        \n    # Public methods\n    \n    def preprocess(self, data_file_name):\n        \n        # 데이터 로드\n        self.logger.info(\"Start data preprocessing for PCA ...\")\n        \n        df \u003d self._load_data(data_file_name, format \u003d \"csv\")\n        df \u003d df.filter(F.col(\"createdAt\").between(self.start_date, self.end_date))\n\n        pack_info \u003d self._load_data(\"battery_pack_serial_info\", format \u003d \"parquet\")\n        vehicle_info \u003d self._load_data(\"vehicle_info\", format \u003d \"parquet\")\n        vehicle_model_info \u003d self._load_data(\"vehicle_model_info\", format \u003d \"parquet\")\n\n        self.logger.info(\"Load data successfully ...\")\n        # 팩 개수 및 모델명 추출\n        # vid \u003d df.select(\"deviceId\").first()[0]\n        pack_cnt \u003d self._pack_count(pack_info)\n        model_name \u003d self._get_model_name(vehicle_info, vehicle_model_info)\n\n        # Data Type 변환 / Voltage slice\n        converted_data \u003d self._convert_data(df, pack_cnt)\n\n        self.logger.info(\"Convert data type and slice array values successfully ...\")\n\n        # 사용 데이터 선택 # break 오타 \n        converted_data \u003d converted_data.select(\n                                \"deviceId\",\"createdAt\", \"speed\", \"totalMileage\", \"isEVReady\",\n                                \"isParkingBreakOn\",  \"isFastChargeConnected\", \"batteryPackVoltages\",\n                                \"batteryPackCurrents\",  \"batteryPackSocs\", \"batteryPackSohs\",\n                                \"maxCellVoltages\", \"minCellVoltages\", \"maxBatteryPackTempertures\",\n                                \"minBatteryPackTempertures\"\n                            )\n                            \n        \n        self.artifacts[\"raw_features\"] \u003d self._extract_features(converted_data)\n        \n        # 단말이상 제거 및 기초 파생변수 생성\n        processed_data \u003d self._process_device_outlier(converted_data, model_name)\n        self.logger.info(\"Completed removing device outlier successfully ...\")\n\n        processed_data \u003d self._get_derivation_features(processed_data, mode \u003d \"PCA\")\n        self.logger.info(\"Completed getting derivation features successfully ...\")\n\n        # Array type data parsing \n    \n        parsing_data \u003d self._parsing_data(processed_data, pack_cnt)\n        selected_data \u003d self._select_train_columns(parsing_data, pack_cnt)\n        \n        self.artifacts[\"input_features\"] \u003d self._extract_features(selected_data)\n        self.artifacts[\"feature_index_map\"] \u003d self._extract_feature_index_map(selected_data)\n        \n        self.logger.info(\"Completed parsing values and selecting columns ...\")\n        \n        # Save preprocessed data\n        self._save_data(selected_data)\n        \n        self.logger.info(\"Finish data preprocessing ...\")\n\n        return \n\n    # Helper methods\n    \n    def _extract_features(self, df):\n        \"\"\"\n        Extract feature name \u0026 type as json\n        \"\"\"\n        return {f.name: f.dataType.simpleString() for f in df.schema.fields}\n    \n    \n    def _extract_feature_index_map(self, df):\n        \"\"\"\n        Extract feature index_map\n        \"\"\"\n        return {name: idx for idx, name in enumerate(df.columns)}\n    \n    def _load_data(self, file_name, format \u003d \"csv\"):\n        \n        input_path \u003d os.path.join(self.input_base_path, file_name)\n\n        if format \u003d\u003d \"csv\":\n            df \u003d self.spark.read.csv(input_path, header \u003d True, inferSchema \u003d True)\n\n        elif format \u003d\u003d \"parquet\":\n            df \u003d self.spark.read.parquet(input_path)\n\n        else:\n            raise Exception(\"Incorrect format value. Use \u0027csv\u0027 or \u0027parquet\u0027\")\n    \n        return df\n    \n    def _pack_count(self, pack_info: DataFrame):\n        pack_cnt \u003d (pack_info.filter(F.col(\"vehicle_id\") \u003d\u003d self.vehicle_id)\n                    .agg(F.max(\"pack_index\"))\n                    .collect()[0][0]) + 1\n\n        return pack_cnt\n\n    \n    def _get_model_name(self, vehicle_info: DataFrame, vehicle_model_info: DataFrame):\n        # get model name\n        model_id \u003d (\n            vehicle_info.filter(F.col(\"id\") \u003d\u003d self.vehicle_id)\n                        .select(\"model_id\")\n                        .collect()[0][0]\n        )\n        model_name \u003d (\n            vehicle_model_info.filter(F.col(\"id\") \u003d\u003d model_id)\n                            .select(\"model_name\")\n                            .collect()[0][0]\n        )\n        return model_name\n\n    def _clean_array(self, col):\n        return F.split(\n                    F.regexp_replace(\n                        F.regexp_replace(F.col(col), \"[\\\\{\\\\[\\\\]\\\\}]\", \"\"), \" \", \"\"\n                        ), \",\").cast(\"array\u003cdouble\u003e\")\n\n    def _convert_data(self, df, pack_cnt):\n    \n        df \u003d (\n        df.withColumn(\"isEVready\", F.col(\"isEvready\").cast(\"int\"))\n        .withColumn(\"isParkingBreakOn\", F.col(\"isParkingBreakOn\").cast(\"int\"))\n        .withColumn(\"isFastChargeConnected\", F.col(\"isFastChargeConnected\").cast(\"int\"))\n        .withColumn(\"isWarnTractionTemp\", F.col(\"isWarnTractionTemp\").cast(\"int\"))\n        .withColumn(\"isWarnBmsIdiotLight\", F.col(\"isWarnBmsIdiotLight\").cast(\"int\"))\n        .withColumn(\"sWarnTractionLimit\", F.col(\"isWarnTractionLimit\").cast(\"int\"))\n        .withColumn(\"warn_isolation_low\", F.col(\"isWarnInsulationLow\").cast(\"int\"))\n        .withColumn(\"warn_front_air\", F.col(\"isWarnFrontAir\").cast(\"int\"))\n        .withColumn(\"warn_rear_air\", F.col(\"isWarnRearAir\").cast(\"int\"))\n        )\n        df \u003d (df.withColumn(\"batteryPackVoltages\", self._clean_array(\"batteryPackVoltages\"))\n                .withColumn(\"batteryPackCurrents\", self._clean_array(\"batteryPackCurrents\"))\n                .withColumn(\"batteryPackSocs\", self._clean_array(\"batteryPackSocs\"))\n                .withColumn(\"batteryPackSohs\", self._clean_array(\"batteryPackSohs\"))\n                .withColumn(\"minCellVoltages\", self._clean_array(\"minCellVoltages\"))\n                .withColumn(\"maxCellVoltages\", self._clean_array(\"maxCellVoltages\"))\n                .withColumn(\"minBatteryPackTempertures\", self._clean_array(\"minBatteryPackTempertures\")) # temperature 스펠링\n                .withColumn(\"maxBatteryPackTempertures\", self._clean_array(\"maxBatteryPackTempertures\"))\n        )\n\n        df \u003d (df.withColumn(\"batteryPackVoltages\", F.slice(F.col(\"batteryPackVoltages\"), 1, pack_cnt))\n                .withColumn(\"batteryPackCurrents\", F.slice(F.col(\"batteryPackCurrents\"), 1, pack_cnt))\n                .withColumn(\"batteryPackSocs\", F.slice(F.col(\"batteryPackSocs\"), 1, pack_cnt))\n                .withColumn(\"batteryPackSohs\", F.slice(F.col(\"batteryPackSohs\"), 1, pack_cnt))\n                .withColumn(\"minCellVoltages\", F.slice(F.col(\"minCellVoltages\"), 1, pack_cnt))\n                .withColumn(\"maxCellVoltages\", F.slice(F.col(\"maxCellVoltages\"), 1, pack_cnt))\n                .withColumn(\"minBatteryPackTempertures\", F.slice(F.col(\"minBatteryPackTempertures\"), 1, pack_cnt))\n                .withColumn(\"maxBatteryPackTempertures\", F.slice(F.col(\"maxBatteryPackTempertures\"), 1, pack_cnt))\n        )\n\n        df \u003d df.withColumn(\"maxCellVoltages\", F.transform(F.col(\"maxCellVoltages\"), lambda x: x * 0.001))\n        df \u003d df.withColumn(\"minCellVoltages\", F.transform(F.col(\"minCellVoltages\"), lambda x: x * 0.001))\n\n        return df\n    \n    def _process_device_outlier(self, df, model_name):\n        \n        def _all_zero_remove(df):\n            remove_target \u003d [\"batteryPackVoltages\", \"batteryPackSocs\", \"minBatteryPackTempertures\", \"maxBatteryPackTempertures\", \n                            \"minCellVoltages\", \"maxCellVoltages\"]\n            conditions \u003d [F.forall(F.col(c), lambda x: x \u003d\u003d 0).cast(\"int\") for c in remove_target]\n            sum_allzero \u003d reduce(lambda a, b: a + b, conditions)\n\n            return df.filter(sum_allzero \u003d\u003d 0)\n            \n        def _remove_outlier(df, col, model_name, outlier_th):\n\n            th \u003d outlier_th[col]\n            if col in [\n                    \"totalMileage\", \"bms_soc\", \"bms_soh\", \"batteryPackVoltages\", \"batteryPackCurrents\", \n                    \"batteryPackSocs\", \"batteryPackSohs\", \"minCellVoltages\", \"maxCellVoltages\", \n                    \"minBatteryPackTempertures\", \"maxBatteryPackTempertures\"\n                    ]:\n                th \u003d th[\"all\"]\n\n            elif col \u003d\u003d \"speed\":\n                if model_name \u003d\u003d \"ap1200_23my\":\n                    th \u003d th[model_name]\n                else:\n                    th \u003d th[\"all\"]\n\n            lower, upper \u003d th[\"min\"], th[\"max\"]\n\n            if dict(df.dtypes)[col].startswith(\"array\"):\n                df \u003d df.filter(\n                    F.forall(F.col(col), lambda x: (x \u003e lower) \u0026 (x \u003c upper)))\n            else:\n                df \u003d df.filter(F.col(col).between(lower, upper))\n\n            return df\n        \n        remove_cols \u003d [\n            \"totalMileage\", \"speed\", \"batteryPackVoltages\", \"batteryPackCurrents\", \"batteryPackSocs\",\n            \"batteryPackSohs\", \"minCellVoltages\", \"maxCellVoltages\", \"minBatteryPackTempertures\", \"maxBatteryPackTempertures\"\n            ]\n\n        removed_data \u003d _all_zero_remove(df)\n        for col in remove_cols:\n            removed_data \u003d _remove_outlier(removed_data, col, model_name, self.outlier_th)\n        \n        return removed_data\n\n    def _get_derivation_features(self, df, mode \u003d \"PCA\"):\n    \n        df \u003d df.withColumn(\"cvdiff\", F.zip_with(\"maxCellVoltages\", \"minCellVoltages\", lambda x, y: F.round(x - y, 2)))\n        df \u003d df.withColumn(\"ctdiff\", F.zip_with(\"maxBatteryPackTempertures\", \"minBatteryPackTempertures\", \n                                                lambda x, y: F.round(x - y, 2)))\n        df \u003d df.withColumn(\"meanpt\", F.zip_with(\"maxBatteryPackTempertures\", \"minBatteryPackTempertures\", \n                                                lambda x, y: F.round((x + y)/2, 3))) # PCA 활용 용도\n\n        if mode \u003d\u003d \"PCA\":\n            return df\n        \n        w \u003d Window.partitionBy(\"vehicle_id\").orderBy(\"time\")\n\n        df \u003d (df.withColumn(\"prev_time\", F.lag(\"time\").over(w))\n                    .withColumn(\"gap_sec\", F.unix_timestamp(\"createdAt\") - F.unix_timestamp(\"prev_time\"))\n        ) \n\n        df \u003d (df.withColumn(\"trip_flag\", F.when(F.col(\"gap_sec\") \u003e\u003d 600, 1).otherwise(0))\n                    .withColumn(\"trip_id\", F.sum(\"trip_flag\").over(w))\n        )\n\n\n        w_trip \u003d Window.partitionBy(\"trip_id\").orderBy(\"time\")\n\n        df \u003d (df.withColumn(\"prev_cell_max_t\", F.lag(\"maxBatteryPackTempertures\", 60).over(w_trip)) # 차후 변수화\n                    .withColumn(\"prev_cell_min_t\", F.lag(\"minBatteryPackTempertures\", 60).over(w_trip))\n                    .withColumn(\"delta_cell_max_t\",F.zip_with(\"maxBatteryPackTempertures\", \"prev_cell_max_t\", lambda x, y: F.round(x - y, 2)))\n                    .withColumn(\"delta_cell_min_t\",F.zip_with(\"minBatteryPackTempertures\", \"prev_cell_min_t\", lambda x, y: F.round(x - y, 2)))\n                    .drop(\"prev_time\", \"gap_sec\", \"trip_flag\", \"trip_id\", \"prev_cell_max_t\", \"prev_cell_min_t\")\n        )\n\n        return df.dropna(subset\u003d[\"delta_cell_max_t\", \"delta_cell_min_t\"])\n        \n    def _parsing_data(self, df, pack_cnt):\n    \n        # 문 여닫음, 앞 뒤축 공기압 데이터 제외 \n        df_parsing \u003d df.select(\u0027deviceId\u0027,\n                                \u0027createdAt\u0027,\n                                \u0027speed\u0027,\n                                \u0027totalMileage\u0027,\n                                \u0027isEVReady\u0027,\n                                \u0027isParkingBreakOn\u0027,\n                                \u0027isFastChargeConnected\u0027,\n                                *[F.col(\"batteryPackVoltages\").getItem(i).alias(f\"p{i+1}_v\") for i in range(pack_cnt)],\n                                *[F.col(\"batteryPackCurrents\").getItem(i).alias(f\"p{i+1}_c\") for i in range(pack_cnt)],\n                                *[F.round(F.col(\"batteryPackSocs\").getItem(i), 1).alias(f\"p{i+1}_soc\") for i in range(pack_cnt)],\n                                *[F.round(F.col(\"batteryPackSohs\").getItem(i), 1).alias(f\"p{i+1}_soh\") for i in range(pack_cnt)],\n                                *[F.round(F.col(\"maxCellVoltages\").getItem(i), 2).alias(f\"p{i+1}_maxcv\") for i in range(pack_cnt)],\n                                *[F.round(F.col(\"minCellVoltages\").getItem(i), 2).alias(f\"p{i+1}_mincv\") for i in range(pack_cnt)],\n                                *[F.col(\"maxBatteryPackTempertures\").getItem(i).alias(f\"p{i+1}_maxct\") for i in range(pack_cnt)],\n                                *[F.col(\"minBatteryPackTempertures\").getItem(i).alias(f\"p{i+1}_minct\") for i in range(pack_cnt)],\n                                *[F.col(\"cvdiff\").getItem(i).alias(f\"p{i+1}_cvdiff\") for i in range(pack_cnt)],\n                                *[F.col(\"ctdiff\").getItem(i).alias(f\"p{i+1}_ctdiff\") for i in range(pack_cnt)],\n                                *[F.col(\"meanpt\").getItem(i).alias(f\"p{i+1}_meanpt\") for i in range(pack_cnt)]\n                    )\n\n        return df_parsing\n\n    def _select_train_columns(self, df, pack_cnt):\n        targets \u003d [f\"p{i}_v\" for i in range(1, pack_cnt + 1)]\n        soc_cols \u003d [f\"p{i}_soc\" for i in range(1, pack_cnt + 1)]\n        temp_cols \u003d [f\"p{i}_meanpt\" for i in range(1, pack_cnt + 1)]\n\n        use_cols \u003d ([\"createdAt\", \"isFastChargeConnected\"] + soc_cols + temp_cols + targets)\n\n        return df.select(*use_cols).orderBy(\"createdAt\")\n        \n    def _sh(self, cmd: str):\n        return subprocess.run(cmd, shell\u003dTrue, capture_output\u003dTrue, text\u003dTrue)    \n        \n    def _save_json_hdfs(self, data: dict, local_path: str, hdfs_path: str):\n        # 1) write local json\n        with open(local_path, \"w\", encoding\u003d\"utf-8\") as f:\n            json.dump(data, f, indent\u003d2, ensure_ascii\u003dFalse)\n    \n        # 2) upload to HDFS\n        cmd \u003d f\"hdfs dfs -put -f {local_path} {hdfs_path}\"\n        proc \u003d self._sh(cmd)\n    \n        if proc.returncode !\u003d 0:\n            raise RuntimeError(\n                f\"Failed to upload JSON to HDFS: {hdfs_path}\\n\"\n                f\"stderr: {proc.stderr}\"\n            )\n            \n    def _save_data(self, df):\n        \n        vehicle_dir \u003d os.path.join(self.output_base_path, str(self.vehicle_id))\n        data_dir \u003d os.path.join(vehicle_dir, \"data\")\n        output_path \u003d os.path.join(data_dir, self.start_time)\n        \n        # timestamp 폴더생성\n        cmd \u003d f\"hdfs dfs -mkdir -p {output_path}/output\"\n        self._sh(cmd)\n        \n        cmd \u003d f\"hdfs dfs -mkdir -p {output_path}/artifacts\"\n        self._sh(cmd)\n        \n        # 임시 로컬 폴더 생성\n        tmp_dir \u003d tempfile.mkdtemp(prefix\u003d\"pca_prep_\", dir\u003d\"/tmp/\")\n        \n        # output, artifact 저장경로 분리\n        data_output_path \u003d os.path.join(output_path, \"output\")\n        artifact_output_path \u003d os.path.join(output_path, \"artifacts\")\n        \n        # input data 저장\n        try:\n            df.write.parquet(data_output_path, mode\u003d\"overwrite\")\n        except Exception as e:\n            raise RuntimeError(f\"Failed to write parquet: {e}\")\n        \n        # artifacts 저장\n        try:\n\n            for name, artifact in self.artifacts.items():\n                local_path \u003d os.path.join(tmp_dir, f\"{name}.json\")\n                hdfs_path \u003d f\"{artifact_output_path}/{name}.json\"\n                self._save_json_hdfs(artifact, local_path, hdfs_path)\n                \n        except Exception as e:\n            raise RuntimeError(f\"Failed to save preprocessed data \u0026 artifacts: {e}\")\n            \n        finally:\n            shutil.rmtree(tmp_dir, ignore_errors\u003dTrue)\n            self.logger.info(f\"Removed temporary directory: {tmp_dir}\")\n        \n        \n        self.logger.info(f\"Complete saving data ...: {output_path}\")\n\ndef get_runtime_params():\n\n    try:\n        auto_base_path \u003d z.input(\"auto_base_path\", \"/Data/MLFLOW/test/2025110409/\")\n    except NameError:\n        auto_base_path \u003d os.environ.get(\"AUTO_BASE_PATH\", \"/Data/MLFLOW/test/2025110409/\")\n\n    \n    # Zeppelin 환경이면 z.input 사용, 아니면 환경변수/기본값\n    try:\n        _ \u003d z  # Zeppelin 제공 객체 존재 여부 체크\n        parquet_glob \u003d z.input(\"parquet_glob\", \"/Data/MLFLOW/sample_data/*\")\n    except NameError:\n        parquet_glob \u003d os.environ.get(\"PARQUET_GLOB\", \"/Data/MLFLOW/sample_data/*\")\n\n    return parquet_glob, auto_base_path\n    \ninput_base, output_base \u003d get_runtime_params()\n\n# pack_info_path \u003d parquet_glob + \"battery_pack_serial_info\"\n# vehicle_info_path \u003d parquet_glob + \"vehicle_info\"\n# vehicle_model_info_path \u003d parquet_glob + \"vehicle_model_info\"\n# data_path \u003d parquet_glob + \"schema_result_woojin_104\"\n\npca_preprocessor \u003d PCATrainPreprocessorBus(spark_session \u003d spark, \n                                           input_base_path \u003d input_base, \n                                           output_base_path \u003d output_base, \n                                           vehicle_id \u003d \"104\", \n                                           outlier_th \u003d bus_device_outlier_limits,\n                                           date \u003d (\"2025-09-01\", \"2025-10-01\"),\n                                           logger \u003d logger)\n\n# df \u003d pca_preprocessor.load_data(\"schema_result_woojin_104\", format \u003d \"csv\")\n# pack_info \u003d pca_preprocessor.load_data(\"battery_pack_serial_info\", format \u003d \"parquet\")\n# vid \u003d df.select(\"deviceId\").first()[0]\n\npca_preprocessor.preprocess(\"schema_result_woojin_104\")\n# df.show(3)\n    ",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 01:58:00.888",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": false,
+        "results": {},
+        "enabled": true,
+        "title": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {
+          "parquet_glob": "/QH/DATA/",
+          "auto_base_path": "/QH/bus/anomaly_detection/pca_squared_prediction_error/"
+        },
+        "forms": {
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "/Data/MLFLOW/test/2025110409/",
+            "hidden": false
+          },
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "/Data/MLFLOW/sample_data/*",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-26 15:00:37,716 - INFO - Start data preprocessing for PCA ...\n2025-11-26 15:00:54,070 - INFO - Load data successfully ...\n2025-11-26 15:00:56,441 - INFO - Convert data type and slice array values successfully ...\n2025-11-26 15:00:57,304 - INFO - Completed removing device outlier successfully ...\n2025-11-26 15:00:57,588 - INFO - Completed getting derivation features successfully ...\n2025-11-26 15:00:58,083 - INFO - Completed parsing values and selecting columns ...\n2025-11-26 15:01:56,328 - INFO - Removed temporary directory: /tmp/pca_prep_bqf6ds4d\n2025-11-26 15:01:56,330 - INFO - Complete saving data ...: /QH/bus/anomaly_detection/pca_squared_prediction_error/104/data/2025112615\n2025-11-26 15:01:56,331 - INFO - Finish data preprocessing ...\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763000832037_1316340361",
+      "id": "paragraph_1763000832037_1316340361",
+      "dateCreated": "2025-11-13 11:27:12.037",
+      "dateStarted": "2025-11-26 15:00:17.333",
+      "dateFinished": "2025-11-26 15:01:56.351",
+      "status": "FINISHED"
+    },
+    {
+      "title": "Taxi Preprocessing",
+      "text": "%spark_single.pyspark\n\nimport sys\n# sys.path.append(\"/home/kadap/python/pre_processing\") # 이전 테스트 경로\nsys.path.append(\"/home/kadap/QH/Pre_Processed\")\n\nfrom outlier_limits import taxi_device_outlier_limits\n\nfrom functools import reduce\nimport joblib\nimport json\nimport logging\nimport shutil\nimport subprocess\nimport tempfile\nimport numpy as np\nimport operator\nimport os\nimport pyspark.sql.functions as F\n\nfrom datetime import datetime\nfrom pyspark.sql import SparkSession, DataFrame\nfrom pyspark.sql.functions import pandas_udf\nfrom pyspark.sql.types import ArrayType, DoubleType\nfrom pyspark.sql.window import Window\nfrom pyspark.ml.feature import VectorAssembler\nfrom pyspark.ml.regression import LinearRegression\n\nlogging.basicConfig(level\u003dlogging.INFO, format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027)\nlogger \u003d logging.getLogger(\"test_pca_prep\")\n\n\nclass PCATrainPreprocessorTaxi:\n\n    # initialize variables\n\n    def __init__(self,\n                 spark_session: SparkSession,\n                 input_base_path: str,\n                 output_base_path: str,\n                 vehicle_id: str,\n                 outlier_th: dict \u003d None,\n                 date \u003d None,\n                 logger \u003d None\n                 ):\n        \n        self.logger \u003d logger\n        \n        self.spark \u003d spark_session\n        self.input_base_path \u003d input_base_path\n        self.output_base_path \u003d output_base_path\n        self.vehicle_id \u003d vehicle_id\n        self.outlier_th \u003d outlier_th\n        \n        self.start_time \u003d datetime.now().strftime(\"%Y%m%d%H\")\n        self.date \u003d date\n\n        if date is not None:\n            self.start_date \u003d date[0]\n            self.end_date \u003d date[1]\n            \n        self.artifacts \u003d {}\n\n    def preprocess(self, data_file_name):\n\n        # 데이터 로드 및 필요 컬럼 선택\n        self.logger.info(\"Start data preprocessing for PCA ...\")\n        \n        df \u003d self._load_data(data_file_name, format \u003d \"parquet\")\n        \n        if self.date is not None:\n            df \u003d df.filter(F.col(\"createdAt\").between(self.start_date, self.end_date))\n\n        pca_columns \u003d [\n                \u0027deviceId\u0027, \u0027createdAt\u0027, \u0027SOC\u0027, \u0027mcuMotorRpm\u0027, \u0027batteryPackCurrents\u0027,\n                \u0027batteryModuleTemperatures\u0027, \u0027status\u0027, \u0027cellVoltages\u0027\n            ]\n        \n        df \u003d df.select(*pca_columns)\n        \n        self.artifacts[\"raw_features\"] \u003d self._extract_features(df)\n\n        # 데이터 변환, 변수생성 및 정상데이터 추출\n        df \u003d self._convert_data(df)\n        # df \u003d self._process_device_outlier(df)\n        df \u003d self._get_derivation_features(df)\n        df \u003d self._filter_normal_data_spark(df)\n\n        # 셀 데이터 파싱\n        parsed_data, cell_cnt \u003d self._parsing_data(df)\n        _ \u003d parsed_data.cache()\n\n        reg_coefs \u003d self._voltage_linear_fitting(parsed_data, cell_cnt)\n        corrected_data \u003d self._temp_correction(parsed_data, reg_coefs, cell_cnt)\n\n        # input data save\n        output \u003d self._select_train_columns(corrected_data, cell_cnt)\n        \n        self.artifacts[\"input_features\"] \u003d self._extract_features(output)\n        self.artifacts[\"feature_index_map\"] \u003d self._extract_feature_index_map(output)\n        self.artifacts[\"temp_correction_coef\"] \u003d reg_coefs\n        \n        self._save_data(output)\n\n        return\n    \n    # helper\n    \n    def _extract_features(self, df):\n        \"\"\"\n        Extract feature name \u0026 type as json\n        \"\"\"\n        return {f.name: f.dataType.simpleString() for f in df.schema.fields}\n    \n    \n    def _extract_feature_index_map(self, df):\n        \"\"\"\n        Extract feature index_map\n        \"\"\"\n        return {name: idx for idx, name in enumerate(df.columns)}\n\n    def _load_data(self, file_name, format \u003d \"csv\"):\n    \n        input_path \u003d os.path.join(self.input_base_path, file_name)\n\n        if format \u003d\u003d \"csv\":\n            df \u003d self.spark.read.csv(input_path, header \u003d True, inferSchema \u003d True)\n            self.logger.info(f\"Load csv data successfully ...: {file_name}\")\n        elif format \u003d\u003d \"parquet\":\n            df \u003d self.spark.read.parquet(input_path)\n            self.logger.info(f\"Load parquet data successfully ...: {file_name}\")\n        else:\n            raise Exception(\"Incorrect format value. Use \u0027csv\u0027 or \u0027parquet\u0027\")\n    \n        return df\n    \n    def _convert_data(self, df: DataFrame) -\u003e DataFrame:\n        \"\"\"\n        표준화된 스키마에 맞게 string -\u003e numeric/timestamp 변환\n        array형 컬럼은 array\u003cdouble\u003e로 변환\n        \"\"\"\n        # 일반 숫자형/시간형 컬럼 타입 매핑\n        cast_map \u003d {\n            \u0027deviceId\u0027: \u0027string\u0027,\n            \u0027createdAt\u0027: \u0027timestamp\u0027,\n            \u0027longitude\u0027: \u0027double\u0027,\n            \u0027latitude\u0027: \u0027double\u0027,\n            \u0027isEVReady\u0027: \u0027integer\u0027,\n            \u0027totalMileage\u0027: \u0027integer\u0027,\n            \u0027isBreak\u0027: \u0027integer\u0027,\n            \u0027accelPedalDepth\u0027: \u0027double\u0027,\n            \u0027speed\u0027: \u0027integer\u0027,\n            \u0027SOC\u0027: \u0027double\u0027,\n            \u0027displaySoc\u0027: \u0027double\u0027,\n            \u0027totalSlowChargeCount\u0027: \u0027integer\u0027,\n            \u0027totalSlowChargeDuration\u0027: \u0027integer\u0027,\n            \u0027isMotorPulseWidthModulationOn\u0027: \u0027integer\u0027,\n            \u0027inverterDcInputVoltage\u0027: \u0027double\u0027,\n            \u0027motorPhaseCurrentRms\u0027: \u0027double\u0027,\n            \u0027mcuMotorRpm\u0027: \u0027double\u0027,\n            \u0027motorTorqueActual\u0027: \u0027double\u0027,\n            \u0027SOH\u0027: \u0027double\u0027,\n            \u0027totalActiveTime\u0027: \u0027integer\u0027,\n            \u0027batteryPackVoltages\u0027: \u0027double\u0027,\n            \u0027batteryPackCurrents\u0027: \u0027double\u0027,\n            \u0027inverterCapacitorVoltage\u0027: \u0027double\u0027,\n            \u0027batteryTotalChargedCapacity\u0027: \u0027double\u0027,\n            \u0027batteryTotalDischargedCapacity\u0027: \u0027double\u0027,\n            \u0027batteryTotalChargedEnergy\u0027: \u0027double\u0027,\n            \u0027batteryTotalDischargedEnergy\u0027: \u0027double\u0027,\n            \u0027batteryMaxChargePower\u0027: \u0027double\u0027,\n            \u0027batteryMaxDischargePower\u0027: \u0027double\u0027,\n            \u0027batteryCellVoltageDiff\u0027: \u0027double\u0027,\n            \u0027maxCellVoltageNum\u0027: \u0027integer\u0027,\n            \u0027maxCellVoltages\u0027: \u0027double\u0027,\n            \u0027minCellVoltageNum\u0027: \u0027integer\u0027,\n            \u0027minCellVoltages\u0027: \u0027double\u0027,\n            \u0027isBatteryHeaterRelayOn\u0027: \u0027integer\u0027,\n            \u0027airconditionCompressorRpm\u0027: \u0027integer\u0027,\n            \u0027BMSMotorRpm\u0027: \u0027integer\u0027,\n            \u0027insulationResistance\u0027: \u0027integer\u0027,\n            \u0027obcOutputVoltage\u0027: \u0027double\u0027,\n            \u0027obcOutputCurrent\u0027: \u0027double\u0027,\n            \u0027acInputVoltage\u0027: \u0027double\u0027,\n            \u0027ldcOutputVoltage\u0027: \u0027double\u0027,\n            \u0027ldcOutputCurrent\u0027: \u0027double\u0027,\n            \u0027auxiliaryBatteryVoltage\u0027: \u0027double\u0027,\n            \u0027auxiliaryBatteryCurrent\u0027: \u0027double\u0027,\n            \u0027auxiliaryBatterySoC\u0027: \u0027double\u0027,\n            \u0027auxiliaryBatteryTemperature\u0027: \u0027double\u0027,\n            \u0027motorTemperature\u0027: \u0027double\u0027,\n            \u0027inverterTemperature\u0027: \u0027double\u0027,\n            \u0027heatSinkTemperature\u0027: \u0027double\u0027,\n            \u0027igbtTemperature\u0027: \u0027double\u0027,\n            \u0027heater1Temperature\u0027: \u0027double\u0027,\n            \u0027maxModuleTemperatures\u0027: \u0027double\u0027,\n            \u0027minModuleTemperatures\u0027: \u0027double\u0027,\n            \u0027batteryCoolantInletTemperature\u0027: \u0027double\u0027,\n            \u0027batteryPraBusbarTemperature\u0027: \u0027double\u0027,\n            \u0027ltrOutletTemperature\u0027: \u0027double\u0027,\n            \u0027internalTemperatureFront\u0027: \u0027double\u0027,\n            \u0027externalTemperature\u0027: \u0027double\u0027,\n            \u0027isMcuFault\u0027: \u0027integer\u0027,\n            \u0027isMcuTorqueLimited\u0027: \u0027integer\u0027,\n            \u0027isMcuMotorControllable\u0027: \u0027integer\u0027,\n            \u0027isBmsMainRelayOn\u0027: \u0027integer\u0027,\n            \u0027isBmsBatteryUsable\u0027: \u0027integer\u0027,\n            \u0027isBmsWarning\u0027: \u0027integer\u0027,\n            \u0027isBmsFault\u0027: \u0027integer\u0027,\n            \u0027isBmsFused\u0027: \u0027integer\u0027,\n            \u0027isWinterModeActive\u0027: \u0027integer\u0027,\n            \u0027isCharge\u0027: \u0027integer\u0027,\n            \u0027isSlowChargeConnected\u0027: \u0027integer\u0027,\n            \u0027isFastChargeConnected\u0027: \u0027integer\u0027,\n            \u0027isMcuMainRelayOffRequest\u0027: \u0027integer\u0027,\n            \u0027isMcuReady\u0027: \u0027integer\u0027,\n            \u0027isHvptcDrive\u0027: \u0027integer\u0027,\n            \u0027isObcFault\u0027: \u0027integer\u0027,\n            \u0027isObcChargeComplete\u0027: \u0027integer\u0027,\n            \u0027isObcChargeStatus\u0027: \u0027integer\u0027,\n            \u0027paddleShiftUp\u0027: \u0027integer\u0027,\n            \u0027paddleShiftDown\u0027: \u0027integer\u0027,\n            \u0027status\u0027: \u0027string\u0027\n        }\n\n        for col_name, dtype in cast_map.items():\n            if col_name in df.columns:\n                df \u003d df.withColumn(col_name, F.col(col_name).cast(dtype))\n\n        # array\u003cdouble\u003e로 변환\n        array_cols \u003d [\u0027cellVoltages\u0027, \u0027batteryModuleTemperatures\u0027]\n\n        for c in array_cols:\n            if c in df.columns:\n                df \u003d df.withColumn(c, F.split(F.col(c), \",\").cast(\"array\u003cdouble\u003e\"))\n\n        self.logger.info(\"Complete converting data type ...\")\n        return df\n    \n    def _process_device_outlier(self, df, model_name \u003d None):\n        \n        def _all_zero_remove(df):\n            remove_target \u003d [\"cellVoltages\", \"batteryModuleTemperatures\"]\n            conditions \u003d [F.forall(F.col(c), lambda x: x \u003d\u003d 0).cast(\"int\") for c in remove_target]\n            sum_allzero \u003d reduce(lambda a, b: a + b, conditions)\n\n            return df.filter(sum_allzero \u003d\u003d 0)\n            \n        def _remove_outlier(df, col, model_name, outlier_th):\n                \n            remove_cols \u003d list(self.outlier_th.keys())\n\n            if col not in remove_cols:\n                return df\n    \n            th \u003d outlier_th[col][\"all\"]\n            lower, upper \u003d th[\"min\"], th[\"max\"]\n\n            if dict(df.dtypes)[col].startswith(\"array\"):\n                df \u003d df.filter(\n                    F.forall(F.col(col), lambda x: (x \u003e lower) \u0026 (x \u003c upper)))\n            else:\n                df \u003d df.filter(F.col(col).between(lower, upper))\n\n            return df\n        \n        df_col_list \u003d list(df.columns)\n        removed_data \u003d _all_zero_remove(df)\n\n        for col in df_col_list:\n            removed_data \u003d _remove_outlier(removed_data, col, model_name, self.outlier_th)\n        \n        self.logger.info(\"Complete removing device outlier...\")\n        return removed_data\n        \n    def _get_derivation_features(self, df, mode \u003d \"PCA\"):\n        df \u003d df.withColumn(\"module_temp\",\n                           F.aggregate(\"batteryModuleTemperatures\", F.lit(0.0), lambda acc, x: acc + x)/F.size(\"batteryModuleTemperatures\"))\n        \n        if mode \u003d\u003d \"PCA\":\n            return df\n        \n        return df\n        \n    def _filter_normal_data_spark(self, df):\n        \"\"\"\n        정상 데이터만 필터링 (PySpark)\n        \n        필터링 조건:\n        - SOC: 20~80%\n        - 온도: 20~35°C\n        - 상태별 조건:\n        * DRIVING: 전류 \u003e 0, RPM \u003e 0\n        * CHARGE_S/CHARGE_F: 전류 \u003c -1A\n        * STOP: 전류 \u003d 0\n        \n        Args:\n            df: 입력 Spark DataFrame\n            \n        Returns:\n            DataFrame: 필터링된 정상 데이터\n        \"\"\"\n\n        # 정상 데이터 필터링\n        df \u003d df.filter(\n            (F.col(\u0027SOC\u0027) \u003e\u003d 0) \u0026 (F.col(\u0027SOC\u0027) \u003c\u003d 100) \u0026\n            (F.col(\u0027module_temp\u0027) \u003e\u003d 0) \u0026 (F.col(\u0027module_temp\u0027) \u003c\u003d 60) \u0026\n            (\n                ((F.col(\u0027status\u0027) \u003d\u003d \u0027DRIVING\u0027) \u0026 (F.col(\u0027batteryPackCurrents\u0027) \u003e 0) \u0026 (F.col(\u0027mcuMotorRpm\u0027) \u003e 0)) |\n                ((F.col(\u0027status\u0027).isin([\u0027CHARGE_S\u0027, \u0027CHARGE_F\u0027])) \u0026 (F.col(\u0027batteryPackCurrents\u0027) \u003c -1)) |\n                ((F.col(\u0027status\u0027) \u003d\u003d \u0027STOP\u0027) \u0026 (F.col(\u0027batteryPackCurrents\u0027) \u003d\u003d 0))\n            )\n        )\n\n        # 모든 셀 전압 센서 이상 row 삭제, cv가 1 미만인 값들을 제외하고 count\n        df \u003d df.withColumn(\n            \"valid_cv_cnt\",\n            F.aggregate(\"cellVoltages\", \n                        F.lit(0.0), \n                        lambda acc, x: acc + F.when(x \u003e 1.0, 1).otherwise(0)\n                    )\n                )\n\n        # count가 80 이상인 경우만 택하여 0.1~2가 과하게 반복되는 row 제거\n        df \u003d df.filter(F.col(\"valid_cv_cnt\") \u003e\u003d 50)\n        self.logger.info(\"Complete filtering device outlier data ...\")\n        return df\n\n    def _get_cell_cnt(self, df):\n        # 최빈값으로 cell 개수 추정\n    \n        mode_df \u003d df.groupBy(\"valid_cv_cnt\").count().orderBy(\"count\", ascending \u003d False).limit(1)\n        # .collect()[0][\"l\"]\n        return int(mode_df.collect()[0][\"valid_cv_cnt\"])\n    \n    def _parsing_data(self, df):\n\n        # 첼 개수 계산, 계산량이 있으므로 제원정보로 넣을 필요 있음. \n        cell_cnt \u003d self._get_cell_cnt(df)\n\n        # 동적으로 각 셀별 전압 컬럼 생성\n        for i in range(cell_cnt):\n            df \u003d df.withColumn(\n                f\"cv_{i+1}\",\n                F.round(\n                    F.when(\n                        F.col(\"cellVoltages\").getItem(i).isNotNull(),  # NULL이 아닌 경우만 변환\n                        F.col(\"cellVoltages\").getItem(i).cast(\u0027float\u0027)\n                        ).otherwise(0),  # NULL 값은 0으로 대체\n                    3))\n\n        cv_cols \u003d [f\"cv_{i+1}\" for i in range(cell_cnt)]\n        df \u003d df.select([\"deviceId\", \"createdAt\", \"status\", \"SOC\", \"module_temp\"] + cv_cols)\n\n        self.logger.info(\"Parsing cell voltages successfully ...\")\n        return df, cell_cnt\n    \n    def _voltage_linear_fitting(self, df, cell_cnt):\n        df_result \u003d df\n\n        reg_coefs \u003d {}\n        results_r2 \u003d []\n        for cid in range(1, 3 +1):\n            assembler \u003d VectorAssembler(inputCols\u003d[\"module_temp\", \"SOC\"], outputCol \u003d f\"features\")\n            df_vec \u003d assembler.transform(df_result)\n\n            lr \u003d LinearRegression(featuresCol \u003d \"features\", labelCol \u003d f\"cv_{cid}\", predictionCol \u003d f\"cv_{cid}_pred\",\n                                regParam \u003d 0.1, elasticNetParam \u003d 0)\n            model \u003d lr.fit(df_vec)\n            summary \u003d model.summary\n\n            df_result \u003d (\n                model.transform(df_vec)\n                    .withColumn(f\"cv_{cid}_residual\", F.col(f\"cv_{cid}\")-F.col(f\"cv_{cid}_pred\"))\n                    .drop(f\"features\", f\"cv_{cid}_pred\")\n            )\n\n            # print(f\"pack {cid}: coef \u003d {model.coefficients}, intercept \u003d {model.intercept}\")\n            # print(f\"pack {cid} - RMSE: {summary.rootMeanSquaredError:.4f}, MSE: {summary.meanSquaredError:.4f}, R2: {summary.r2:.4f}\")\n            results_r2.append(summary.r2)\n\n            reg_coefs[f\"cv_{cid}\"] \u003d {\n                    \"coef\": {\n                        \"module_temp\": model.coefficients[0],\n                        \"soc\": model.coefficients[1]\n                    },\n                    \"intercept\": model.intercept\n            } \n        self.logger.info(f\"Average R2 score for cells:{float(np.round(np.mean(results_r2), 2))}\")\n        return reg_coefs\n    \n    def _temp_correction(self, df, reg_coefs, cell_cnt):\n\n        exprs \u003d df.columns\n\n        for cid in range(1, 3 +1):\n            cv_col \u003d f\"cv_{cid}\"\n            coef \u003d reg_coefs[cv_col][\"coef\"]\n            intercept \u003d reg_coefs[cv_col][\"intercept\"]\n\n            expr \u003d (\n                f\"{cv_col} - (\"\n                f\" {intercept}\"\n                f\" + ({coef[\u0027module_temp\u0027]} * module_temp)\"\n                f\" + ({coef[\u0027soc\u0027]} * soc)\"\n                f\") AS {cv_col}_residual\"\n            )\n\n            exprs.append(expr)\n        self.logger.info(\"Complete correcting data with temp ...\")\n        return df.selectExpr(*exprs)\n\n    def _select_train_columns(self, df, cell_cnt):\n\n        targets \u003d ([\"createdAt\"] + \n                   [f\"cv_{cid}_residual\" for cid in range(1, 3 +1)] + \n                   [f\"cv_{cid}\" for cid in range(1, 3 +1)])\n                   \n        df \u003d df.select(*targets).orderBy(\"createdAt\")\n        return df\n    \n    def _sh(self, cmd: str):\n        return subprocess.run(cmd, shell\u003dTrue, capture_output\u003dTrue, text\u003dTrue)    \n        \n    def _save_json_hdfs(self, data: dict, local_path: str, hdfs_path: str):\n        # 1) write local json\n        with open(local_path, \"w\", encoding\u003d\"utf-8\") as f:\n            json.dump(data, f, indent\u003d2, ensure_ascii\u003dFalse)\n    \n        # 2) upload to HDFS\n        cmd \u003d f\"hdfs dfs -put -f {local_path} {hdfs_path}\"\n        proc \u003d self._sh(cmd)\n    \n        if proc.returncode !\u003d 0:\n            raise RuntimeError(\n                f\"Failed to upload JSON to HDFS: {hdfs_path}\\n\"\n                f\"stderr: {proc.stderr}\"\n            )\n            \n    def _save_data(self, df):\n        \n        vehicle_dir \u003d os.path.join(self.output_base_path, str(self.vehicle_id))\n        data_dir \u003d os.path.join(vehicle_dir, \"data\")\n        output_path \u003d os.path.join(data_dir, self.start_time)\n        \n        # timestamp 폴더생성\n        cmd \u003d f\"hdfs dfs -mkdir -p {output_path}/output\"\n        self._sh(cmd)\n        \n        cmd \u003d f\"hdfs dfs -mkdir -p {output_path}/artifacts\"\n        self._sh(cmd)\n        \n        # 임시 로컬 폴더 생성\n        tmp_dir \u003d tempfile.mkdtemp(prefix\u003d\"pca_prep_\", dir\u003d\"/tmp/\")\n        \n        # output, artifact 저장경로 분리\n        data_output_path \u003d os.path.join(output_path, \"output\")\n        artifact_output_path \u003d os.path.join(output_path, \"artifacts\")\n        \n        # input data 저장\n        try:\n            df.write.parquet(data_output_path, mode\u003d\"overwrite\")\n        except Exception as e:\n            raise RuntimeError(f\"Failed to write parquet: {e}\")\n        \n        # artifacts 저장\n        try:\n\n            for name, artifact in self.artifacts.items():\n                local_path \u003d os.path.join(tmp_dir, f\"{name}.json\")\n                hdfs_path \u003d f\"{artifact_output_path}/{name}.json\"\n                self._save_json_hdfs(artifact, local_path, hdfs_path)\n                \n        except Exception as e:\n            raise RuntimeError(f\"Failed to save preprocessed data \u0026 artifacts: {e}\")\n            \n        finally:\n            shutil.rmtree(tmp_dir, ignore_errors\u003dTrue)\n            self.logger.info(f\"Removed temporary directory: {tmp_dir}\")\n        \n        \n        self.logger.info(f\"Complete saving data ...: {output_path}\")\n \n \ndef get_runtime_params():\n\n    try:\n        auto_base_path \u003d z.input(\"auto_base_path\", \"/Data/MLFLOW/test/2025110409/\")\n    except NameError:\n        auto_base_path \u003d os.environ.get(\"AUTO_BASE_PATH\", \"/Data/MLFLOW/test/2025110409/\")\n\n    \n    # Zeppelin 환경이면 z.input 사용, 아니면 환경변수/기본값\n    try:\n        _ \u003d z  # Zeppelin 제공 객체 존재 여부 체크\n        parquet_glob \u003d z.input(\"parquet_glob\", \"/Data/MLFLOW/sample_data/*\")\n    except NameError:\n        parquet_glob \u003d os.environ.get(\"PARQUET_GLOB\", \"/Data/MLFLOW/sample_data/*\")\n\n    return parquet_glob, auto_base_path\n    \ninput_base, output_base \u003d get_runtime_params()\n\npca_preprocessor \u003d PCATrainPreprocessorTaxi(spark_session \u003d spark, \n                                            input_base_path \u003d input_base, \n                                            output_base_path \u003d output_base, \n                                            vehicle_id \u003d \"01229898903\", \n                                          outlier_th \u003d taxi_device_outlier_limits,\n                                            date \u003d None,\n                                            logger \u003d logger)\n\npca_preprocessor.preprocess(\"01229898903\")\n# pca_preprocessor.preprocess(\"schema_result_kmon_01229898903\")\n\n# test",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-27 16:52:40.314",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 94.325,
+              "optionOpen": false
+            }
+          }
+        },
+        "enabled": true,
+        "title": true
+      },
+      "settings": {
+        "params": {
+          "auto_base_path": "/QH/taxi/anomaly_detection/pca_squared_prediction_error/",
+          "parquet_glob": "/QH/Intergrated_Schema/Passenger_Car"
+        },
+        "forms": {
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "/Data/MLFLOW/test/2025110409/",
+            "hidden": false
+          },
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "/Data/MLFLOW/sample_data/*",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-27 16:52:40,456 - INFO - Start data preprocessing for PCA ...\n2025-11-27 16:52:40,862 - INFO - Load parquet data successfully ...: 01229898903\n2025-11-27 16:52:41,405 - INFO - Complete converting data type ...\n2025-11-27 16:52:41,940 - INFO - Complete filtering device outlier data ...\n2025-11-27 16:53:06,806 - INFO - Parsing cell voltages successfully ...\n2025-11-27 16:53:22,866 - INFO - Average R2 score for cells:0.81\n2025-11-27 16:53:22,922 - INFO - Complete correcting data with temp ...\n2025-11-27 16:54:07,888 - INFO - Removed temporary directory: /tmp/pca_prep_c0upcr3d\n2025-11-27 16:54:07,890 - INFO - Complete saving data ...: /QH/taxi/anomaly_detection/pca_squared_prediction_error/01229898903/data/2025112716\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d16"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763367627735_857890683",
+      "id": "paragraph_1763367627735_857890683",
+      "dateCreated": "2025-11-17 17:20:27.735",
+      "dateStarted": "2025-11-27 16:52:40.331",
+      "dateFinished": "2025-11-27 16:54:07.894",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n\ndf \u003d pca_preprocessor._load_data(\"schema_result_kmon_01229898903\")\ndf\u003d pca_preprocessor._convert_data(df)\n\ndf \u003d df.orderBy(\"createdAt\", ascending \u003d True).filter(F.col(\"createdAt\").between(\"2025-06-25\", \"2025-07-01\")).repartition(5)\n\n_ \u003d df.count()\n\ndf.write.parquet(\"hdfs:///QH/DATA/sample_testset\", mode \u003d \"overwrite\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 17:02:44.185",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-24 17:02:54,335 - INFO - Load csv data successfully ...: schema_result_kmon_01229898903\n2025-11-24 17:03:01,169 - INFO - Complete converting data type ...\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d172"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d173"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d174"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d175"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d176"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d177"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d178"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d179"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d180"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d181"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d182"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763001532228_315606270",
+      "id": "paragraph_1763001532228_315606270",
+      "dateCreated": "2025-11-13 11:38:52.228",
+      "dateStarted": "2025-11-24 17:02:44.190",
+      "dateFinished": "2025-11-24 17:03:32.062",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-24 16:37:14.016",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763969834016_2083242671",
+      "id": "paragraph_1763969834016_2083242671",
+      "dateCreated": "2025-11-24 16:37:14.016",
+      "status": "READY"
+    }
+  ],
+  "name": "test_preprocessing_PCA",
+  "id": "2MAMP2W4D",
+  "defaultInterpreterGroup": "spark_single",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
