@@ -1,0 +1,269 @@
+{
+  "paragraphs": [
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764263363153_785664636",
+      "id": "paragraph_1764263363153_785664636",
+      "dateCreated": "2025-11-28 02:09:23.153",
+      "status": "READY"
+    },
+    {
+      "title": "01229898903",
+      "text": "%spark_single.pyspark\n\nimport sys\nsys.path.append(\"/home/kadap/QH/Pre_Processed\")\n\nimport logging\n\nfrom outlier_limits import taxi_device_outlier_limits\nfrom pca_preprocessing import PCATrainPreprocessorTaxi\n\nlogging.basicConfig(level\u003dlogging.INFO, format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027)\nlogger \u003d logging.getLogger(\"pca_prep_taxi\")\n\ndef get_runtime_params():\n\n    try:\n        auto_base_path \u003d z.input(\"auto_base_path\", \"/Data/MLFLOW/test/2025110409/\")\n    except NameError:\n        auto_base_path \u003d os.environ.get(\"AUTO_BASE_PATH\", \"/Data/MLFLOW/test/2025110409/\")\n\n    \n    # Zeppelin 환경이면 z.input 사용, 아니면 환경변수/기본값\n    try:\n        _ \u003d z  # Zeppelin 제공 객체 존재 여부 체크\n        parquet_glob \u003d z.input(\"parquet_glob\", \"/Data/MLFLOW/sample_data/*\")\n    except NameError:\n        parquet_glob \u003d os.environ.get(\"PARQUET_GLOB\", \"/Data/MLFLOW/sample_data/*\")\n\n    return parquet_glob, auto_base_path\n    \ninput_base, output_base \u003d get_runtime_params()\n\npca_preprocessor \u003d PCATrainPreprocessorTaxi(spark_session \u003d spark, \n                                            input_base_path \u003d input_base, \n                                            output_base_path \u003d output_base, \n                                            vehicle_id \u003d \"01229898903\", \n                                            outlier_th \u003d taxi_device_outlier_limits,\n                                            date \u003d None,\n                                            logger \u003d logger)\n\npca_preprocessor.preprocess(\"01229898903\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 02:59:34.675",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "auto_base_path": "/QH/taxi/anomaly_detection/pca_squared_prediction_error/",
+          "parquet_glob": "/QH/Intergrated_Schema/Passenger_Car"
+        },
+        "forms": {
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "/Data/MLFLOW/test/2025110409/",
+            "hidden": false
+          },
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "/Data/MLFLOW/sample_data/*",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-28 02:18:13,571 - INFO - Start data preprocessing for PCA ...\n2025-11-28 02:18:19,042 - INFO - Load parquet data successfully ...: 01229898903\n2025-11-28 02:18:19,366 - INFO - Complete converting data type ...\n2025-11-28 02:18:19,686 - INFO - Complete filtering device outlier data ...\n2025-11-28 02:18:34,921 - INFO - Parsing cell voltages successfully ...\n2025-11-28 02:18:42,912 - INFO - Average R2 score for cells:0.81\n2025-11-28 02:18:42,925 - INFO - Complete correcting data with temp ...\n2025-11-28 02:19:07,715 - INFO - Removed temporary directory: /tmp/pca_prep_vp47ko2c\n2025-11-28 02:19:07,717 - INFO - Complete saving data ...: /QH/taxi/anomaly_detection/pca_squared_prediction_error/01229898903/data/2025112802\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d12"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764263483499_1617263176",
+      "id": "paragraph_1764263483499_1617263176",
+      "dateCreated": "2025-11-28 02:11:23.499",
+      "dateStarted": "2025-11-28 02:18:13.544",
+      "dateFinished": "2025-11-28 02:19:07.723",
+      "status": "FINISHED"
+    },
+    {
+      "title": "01229438897",
+      "text": "%spark_single.pyspark\n\nimport sys\nsys.path.append(\"/home/kadap/QH/Pre_Processed\")\n\nimport logging\n\nfrom outlier_limits import taxi_device_outlier_limits\nfrom pca_preprocessing import PCATrainPreprocessorTaxi\n\nlogging.basicConfig(level\u003dlogging.INFO, format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027)\nlogger \u003d logging.getLogger(\"pca_prep_taxi\")\n\ndef get_runtime_params():\n\n    try:\n        auto_base_path \u003d z.input(\"auto_base_path\", \"/Data/MLFLOW/test/2025110409/\")\n    except NameError:\n        auto_base_path \u003d os.environ.get(\"AUTO_BASE_PATH\", \"/Data/MLFLOW/test/2025110409/\")\n\n    \n    # Zeppelin 환경이면 z.input 사용, 아니면 환경변수/기본값\n    try:\n        _ \u003d z  # Zeppelin 제공 객체 존재 여부 체크\n        parquet_glob \u003d z.input(\"parquet_glob\", \"/Data/MLFLOW/sample_data/*\")\n    except NameError:\n        parquet_glob \u003d os.environ.get(\"PARQUET_GLOB\", \"/Data/MLFLOW/sample_data/*\")\n\n    return parquet_glob, auto_base_path\n    \ninput_base, output_base \u003d get_runtime_params()\n\npca_preprocessor \u003d PCATrainPreprocessorTaxi(spark_session \u003d spark, \n                                            input_base_path \u003d input_base, \n                                            output_base_path \u003d output_base, \n                                            vehicle_id \u003d \"01229438897\", \n                                            outlier_th \u003d taxi_device_outlier_limits,\n                                            date \u003d None,\n                                            logger \u003d logger)\n\npca_preprocessor.preprocess(\"01229438897\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 03:44:15.751",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {
+          "auto_base_path": "/QH/taxi/anomaly_detection/pca_squared_prediction_error/",
+          "parquet_glob": "/QH/Intergrated_Schema/Passenger_Car"
+        },
+        "forms": {
+          "auto_base_path": {
+            "type": "TextBox",
+            "name": "auto_base_path",
+            "displayName": "auto_base_path",
+            "defaultValue": "/Data/MLFLOW/test/2025110409/",
+            "hidden": false
+          },
+          "parquet_glob": {
+            "type": "TextBox",
+            "name": "parquet_glob",
+            "displayName": "parquet_glob",
+            "defaultValue": "/Data/MLFLOW/sample_data/*",
+            "hidden": false
+          }
+        }
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-11-28 02:27:10,820 - INFO - Start data preprocessing for PCA ...\n2025-11-28 02:27:10,963 - INFO - Load parquet data successfully ...: 01229438897\n2025-11-28 02:27:11,063 - INFO - Complete converting data type ...\n2025-11-28 02:27:11,235 - INFO - Complete filtering device outlier data ...\n2025-11-28 02:27:24,846 - INFO - Parsing cell voltages successfully ...\n2025-11-28 02:27:33,922 - INFO - Average R2 score for cells:0.86\n2025-11-28 02:27:33,991 - INFO - Complete correcting data with temp ...\n2025-11-28 02:27:47,786 - INFO - Removed temporary directory: /tmp/pca_prep_353042bu\n2025-11-28 02:27:47,788 - INFO - Complete saving data ...: /QH/taxi/anomaly_detection/pca_squared_prediction_error/01229438897/data/2025112802\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "http://127.0.0.1:44040/jobs/job?id\u003d25"
+            }
+          ],
+          "interpreterSettingId": "spark_single"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764263575005_71272945",
+      "id": "paragraph_1764263575005_71272945",
+      "dateCreated": "2025-11-28 02:12:55.005",
+      "dateStarted": "2025-11-28 02:27:10.800",
+      "dateFinished": "2025-11-28 02:27:47.793",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_single.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 10:44:04.292",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764553444292_1507843361",
+      "id": "paragraph_1764553444292_1507843361",
+      "dateCreated": "2025-12-01 10:44:04.292",
+      "status": "READY"
+    }
+  ],
+  "name": "pca_spe_preprocessing",
+  "id": "2MCFWQC3T",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
