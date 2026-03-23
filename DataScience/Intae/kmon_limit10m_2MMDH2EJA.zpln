@@ -1,0 +1,256 @@
+{
+  "paragraphs": [
+    {
+      "title": "1. 환경 설정",
+      "text": "%spark_high.pyspark\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# MySQL -\u003e S3(Ceph) 마이그레이션 설정\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nMYSQL_HOST     \u003d \"59.6.99.131\"\nMYSQL_PORT     \u003d \"3306\"\nMYSQL_DB       \u003d \"QH_KSLAB\"\nMYSQL_TABLE    \u003d \"kmon\"\nMYSQL_USER     \u003d \"feda\"\nMYSQL_PASSWORD \u003d \"feda123\"\n\nS3_ENDPOINT    \u003d \"http://192.168.0.105:80\"\nS3_BUCKET      \u003d \"bigdata\"\nS3_PATH_CSV    \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/csv\"\nS3_PATH_PARQ   \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/parquet\"\n\nJDBC_URL \u003d (\n    f\"jdbc:mysql://{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\n    f\"?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\"\n)\n\nNUM_PARTITIONS \u003d 50\nFETCH_SIZE     \u003d \"10000\"\n\nprint(\"설정 완료\")\nprint(f\"JDBC URL: {JDBC_URL}\")\nprint(f\"CSV  경로: {S3_PATH_CSV}\")\nprint(f\"Parquet 경로: {S3_PATH_PARQ}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-23 18:37:58.184",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "설정 완료\nJDBC URL: jdbc:mysql://59.6.99.131:3306/QH_KSLAB?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\nCSV  경로: s3a://bigdata/kmon/csv\nParquet 경로: s3a://bigdata/kmon/parquet\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774254374798_1883489708",
+      "id": "paragraph_1773908351271_337055939",
+      "dateCreated": "2026-03-23 08:26:14.798",
+      "dateStarted": "2026-03-23 18:37:58.191",
+      "dateFinished": "2026-03-23 18:37:58.414",
+      "status": "FINISHED"
+    },
+    {
+      "title": "[v12] Parquet-\u003eCSV (kmon)",
+      "text": "%spark_high.pyspark\nS3_PATH_PARQ \u003d \"s3a://bigdata/kmon/parquet\"\nS3_PATH_CSV  \u003d \"s3a://bigdata/kmon/csv\"\nparq_df \u003d spark.read.parquet(S3_PATH_PARQ)\nprint(\"Parquet 파티션: \" + str(parq_df.rdd.getNumPartitions()))\nparq_df.write.mode(\"overwrite\").option(\"header\",\"true\").option(\"encoding\",\"UTF-8\").option(\"compression\",\"gzip\").csv(S3_PATH_CSV)\nprint(\"CSV 완료 -\u003e \" + S3_PATH_CSV)\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-23 22:11:16.112",
+      "progress": 100,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Parquet 파티션: 88\nCSV 완료 -\u003e s3a://bigdata/kmon/csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d5"
+            }
+          ],
+          "interpreterSettingId": "spark_high"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774272290279_1234897215",
+      "id": "paragraph_1774272290279_1234897215",
+      "dateCreated": "2026-03-23 13:24:50.279",
+      "dateStarted": "2026-03-23 19:31:44.880",
+      "dateFinished": "2026-03-23 19:34:27.195",
+      "status": "FINISHED"
+    },
+    {
+      "title": "[v12] 검증 (kmon 1억건)",
+      "text": "%spark_high.pyspark\nS3_PATH_PARQ \u003d \"s3a://bigdata/kmon/parquet\"\nS3_PATH_CSV  \u003d \"s3a://bigdata/kmon/csv\"\nparq_df \u003d spark.read.parquet(S3_PATH_PARQ)\ncsv_df  \u003d spark.read.option(\"header\",\"true\").csv(S3_PATH_CSV)\nparq_count \u003d parq_df.count()\ncsv_count  \u003d csv_df.count()\nhadoop_conf \u003d spark._jsc.hadoopConfiguration()\nfs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(spark._jvm.java.net.URI(\"s3a://bigdata\"), hadoop_conf)\ndef s3_gb(path):\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(path)\n    return round(fs.getContentSummary(p).getLength() / 1024**3, 2)\nprint(\"\u003d\" * 60)\nprint(\"   최종 검증 (kmon, 1억건)\")\nprint(\"\u003d\" * 60)\nprint(\"Parquet | 건수: \" + str(parq_count) + \" | \" + str(s3_gb(S3_PATH_PARQ)) + \" GB\")\nprint(\"CSV     | 건수: \" + str(csv_count)  + \" | \" + str(s3_gb(S3_PATH_CSV))  + \" GB\")\nprint(\"\u003d\" * 60)\nif parq_count \u003d\u003d csv_count:\n    print(\"OK: \" + str(parq_count) + \"건 일치\")\nelse:\n    print(\"NG 불일치: Parquet\u003d\" + str(parq_count) + \" CSV\u003d\" + str(csv_count))\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-23 22:11:18.984",
+      "progress": 98,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n   최종 검증 (kmon, 1억건)\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nParquet | 건수: 145358960 | 8.65 GB\nCSV     | 건수: 145358960 | 6.73 GB\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nOK: 145358960건 일치\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d12"
+            }
+          ],
+          "interpreterSettingId": "spark_high"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774272291431_75989532",
+      "id": "paragraph_1774272291431_75989532",
+      "dateCreated": "2026-03-23 13:24:51.431",
+      "dateStarted": "2026-03-23 20:01:45.130",
+      "dateFinished": "2026-03-23 20:01:57.885",
+      "status": "FINISHED"
+    },
+    {
+      "title": "[v13] MySQL-\u003eParquet 1억건 (indate predicates 병렬읽기)",
+      "text": "%spark_high.pyspark\n\n# [v13] MySQL-\u003eParquet 1억건 (indate weekly predicates 병렬 읽기)\n# OOM 해결: repartition 없이 MySQL에서 58개 JDBC connection으로 병렬 읽기\n# indate 인덱스(BTREE standalone) 활용 -\u003e 각 파티션 약 200만건\n\nS3_PATH_PARQ \u003d \"s3a://bigdata/kmon/parquet\"\n\nJDBC_URL_V13 \u003d (\n    \"jdbc:mysql://\" + MYSQL_HOST + \":\" + MYSQL_PORT + \"/\" + MYSQL_DB\n    + \"?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\"\n)\n\nprops \u003d {\n    \"user\":     MYSQL_USER,\n    \"password\": MYSQL_PASSWORD,\n    \"driver\":   \"com.mysql.cj.jdbc.Driver\",\n    \"fetchsize\": \"10000\",\n}\n\npredicates \u003d [\n    \"indate \u003e\u003d \u00272024-09-01\u0027 AND indate \u003c \u00272024-09-08\u0027\",\n    \"indate \u003e\u003d \u00272024-09-08\u0027 AND indate \u003c \u00272024-09-15\u0027\",\n    \"indate \u003e\u003d \u00272024-09-15\u0027 AND indate \u003c \u00272024-09-22\u0027\",\n    \"indate \u003e\u003d \u00272024-09-22\u0027 AND indate \u003c \u00272024-09-29\u0027\",\n    \"indate \u003e\u003d \u00272024-09-29\u0027 AND indate \u003c \u00272024-10-06\u0027\",\n    \"indate \u003e\u003d \u00272024-10-06\u0027 AND indate \u003c \u00272024-10-13\u0027\",\n    \"indate \u003e\u003d \u00272024-10-13\u0027 AND indate \u003c \u00272024-10-20\u0027\",\n    \"indate \u003e\u003d \u00272024-10-20\u0027 AND indate \u003c \u00272024-10-27\u0027\",\n    \"indate \u003e\u003d \u00272024-10-27\u0027 AND indate \u003c \u00272024-11-03\u0027\",\n    \"indate \u003e\u003d \u00272024-11-03\u0027 AND indate \u003c \u00272024-11-10\u0027\",\n    \"indate \u003e\u003d \u00272024-11-10\u0027 AND indate \u003c \u00272024-11-17\u0027\",\n    \"indate \u003e\u003d \u00272024-11-17\u0027 AND indate \u003c \u00272024-11-24\u0027\",\n    \"indate \u003e\u003d \u00272024-11-24\u0027 AND indate \u003c \u00272024-12-01\u0027\",\n    \"indate \u003e\u003d \u00272024-12-01\u0027 AND indate \u003c \u00272024-12-08\u0027\",\n    \"indate \u003e\u003d \u00272024-12-08\u0027 AND indate \u003c \u00272024-12-15\u0027\",\n    \"indate \u003e\u003d \u00272024-12-15\u0027 AND indate \u003c \u00272024-12-22\u0027\",\n    \"indate \u003e\u003d \u00272024-12-22\u0027 AND indate \u003c \u00272024-12-29\u0027\",\n    \"indate \u003e\u003d \u00272024-12-29\u0027 AND indate \u003c \u00272025-01-05\u0027\",\n    \"indate \u003e\u003d \u00272025-01-05\u0027 AND indate \u003c \u00272025-01-12\u0027\",\n    \"indate \u003e\u003d \u00272025-01-12\u0027 AND indate \u003c \u00272025-01-19\u0027\",\n    \"indate \u003e\u003d \u00272025-01-19\u0027 AND indate \u003c \u00272025-01-26\u0027\",\n    \"indate \u003e\u003d \u00272025-01-26\u0027 AND indate \u003c \u00272025-02-02\u0027\",\n    \"indate \u003e\u003d \u00272025-02-02\u0027 AND indate \u003c \u00272025-02-09\u0027\",\n    \"indate \u003e\u003d \u00272025-02-09\u0027 AND indate \u003c \u00272025-02-16\u0027\",\n    \"indate \u003e\u003d \u00272025-02-16\u0027 AND indate \u003c \u00272025-02-23\u0027\",\n    \"indate \u003e\u003d \u00272025-02-23\u0027 AND indate \u003c \u00272025-03-02\u0027\",\n    \"indate \u003e\u003d \u00272025-03-02\u0027 AND indate \u003c \u00272025-03-09\u0027\",\n    \"indate \u003e\u003d \u00272025-03-09\u0027 AND indate \u003c \u00272025-03-16\u0027\",\n    \"indate \u003e\u003d \u00272025-03-16\u0027 AND indate \u003c \u00272025-03-23\u0027\",\n    \"indate \u003e\u003d \u00272025-03-23\u0027 AND indate \u003c \u00272025-03-30\u0027\",\n    \"indate \u003e\u003d \u00272025-03-30\u0027 AND indate \u003c \u00272025-04-06\u0027\",\n    \"indate \u003e\u003d \u00272025-04-06\u0027 AND indate \u003c \u00272025-04-13\u0027\",\n    \"indate \u003e\u003d \u00272025-04-13\u0027 AND indate \u003c \u00272025-04-20\u0027\",\n    \"indate \u003e\u003d \u00272025-04-20\u0027 AND indate \u003c \u00272025-04-27\u0027\",\n    \"indate \u003e\u003d \u00272025-04-27\u0027 AND indate \u003c \u00272025-05-04\u0027\",\n    \"indate \u003e\u003d \u00272025-05-04\u0027 AND indate \u003c \u00272025-05-11\u0027\",\n    \"indate \u003e\u003d \u00272025-05-11\u0027 AND indate \u003c \u00272025-05-18\u0027\",\n    \"indate \u003e\u003d \u00272025-05-18\u0027 AND indate \u003c \u00272025-05-25\u0027\",\n    \"indate \u003e\u003d \u00272025-05-25\u0027 AND indate \u003c \u00272025-06-01\u0027\",\n    \"indate \u003e\u003d \u00272025-06-01\u0027 AND indate \u003c \u00272025-06-08\u0027\",\n    \"indate \u003e\u003d \u00272025-06-08\u0027 AND indate \u003c \u00272025-06-15\u0027\",\n    \"indate \u003e\u003d \u00272025-06-15\u0027 AND indate \u003c \u00272025-06-22\u0027\",\n    \"indate \u003e\u003d \u00272025-06-22\u0027 AND indate \u003c \u00272025-06-29\u0027\",\n    \"indate \u003e\u003d \u00272025-06-29\u0027 AND indate \u003c \u00272025-07-06\u0027\",\n    \"indate \u003e\u003d \u00272025-07-06\u0027 AND indate \u003c \u00272025-07-13\u0027\",\n    \"indate \u003e\u003d \u00272025-07-13\u0027 AND indate \u003c \u00272025-07-20\u0027\",\n    \"indate \u003e\u003d \u00272025-07-20\u0027 AND indate \u003c \u00272025-07-27\u0027\",\n    \"indate \u003e\u003d \u00272025-07-27\u0027 AND indate \u003c \u00272025-08-03\u0027\",\n    \"indate \u003e\u003d \u00272025-08-03\u0027 AND indate \u003c \u00272025-08-10\u0027\",\n    \"indate \u003e\u003d \u00272025-08-10\u0027 AND indate \u003c \u00272025-08-17\u0027\",\n    \"indate \u003e\u003d \u00272025-08-17\u0027 AND indate \u003c \u00272025-08-24\u0027\",\n    \"indate \u003e\u003d \u00272025-08-24\u0027 AND indate \u003c \u00272025-08-31\u0027\",\n    \"indate \u003e\u003d \u00272025-08-31\u0027 AND indate \u003c \u00272025-09-07\u0027\",\n    \"indate \u003e\u003d \u00272025-09-07\u0027 AND indate \u003c \u00272025-09-14\u0027\",\n    \"indate \u003e\u003d \u00272025-09-14\u0027 AND indate \u003c \u00272025-09-21\u0027\",\n    \"indate \u003e\u003d \u00272025-09-21\u0027 AND indate \u003c \u00272025-09-28\u0027\",\n    \"indate \u003e\u003d \u00272025-09-28\u0027 AND indate \u003c \u00272025-10-04\u0027\",\n    \"indate IS NULL\",\n]\n\nprint(\"predicates 수: \" + str(len(predicates)))\nprint(\"MySQL 1억건 병렬 읽기 시작 (indate 인덱스)...\")\ndf \u003d spark.read.jdbc(\n    url\u003dJDBC_URL_V13,\n    table\u003d\"kmon\",\n    predicates\u003dpredicates,\n    properties\u003dprops\n)\n\nprint(\"Spark 파티션 수: \" + str(df.rdd.getNumPartitions()))\nprint(\"Parquet 저장 시작 -\u003e \" + S3_PATH_PARQ)\ndf.write.mode(\"overwrite\")     .option(\"compression\", \"snappy\")     .option(\"maxRecordsPerFile\", \"2000000\")     .parquet(S3_PATH_PARQ)\n\nparq \u003d spark.read.parquet(S3_PATH_PARQ)\nsaved \u003d parq.count()\nprint(\"저장 건수: \" + str(saved))\nprint(\"저장 컬럼: \" + str(len(parq.columns)))\nprint(\"완료 -\u003e \" + S3_PATH_PARQ)\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-23 22:11:22.684",
+      "progress": 90,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "predicates 수: 58\nMySQL 1억건 병렬 읽기 시작 (indate 인덱스)...\nSpark 파티션 수: 58\nParquet 저장 시작 -\u003e s3a://bigdata/kmon/parquet\n저장 건수: 145358960\n저장 컬럼: 74\n완료 -\u003e s3a://bigdata/kmon/parquet\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mmdh2eja-zisblg.local.zeppelin-project.org/jobs/job?id\u003d3"
+            }
+          ],
+          "interpreterSettingId": "spark_high"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774283674150_397678710",
+      "id": "paragraph_1774283674150_397678710",
+      "dateCreated": "2026-03-23 16:34:34.151",
+      "dateStarted": "2026-03-23 18:38:05.357",
+      "dateFinished": "2026-03-23 19:22:23.592",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "kmon_limit10m",
+  "id": "2MMDH2EJA",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
