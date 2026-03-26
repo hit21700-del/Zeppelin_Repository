@@ -1,0 +1,736 @@
+{
+  "paragraphs": [
+    {
+      "text": "%python\r\n\r\nimport psutil\r\nimport os\r\n\r\n# CPU\r\nprint(f\"CPU cores (logical): {psutil.cpu_count()}\")\r\nprint(f\"CPU cores (physical): {psutil.cpu_count(logical\u003dFalse)}\")\r\n\r\n# Memory - cgroup limit (Pod actual limit)\r\ntry:\r\n    with open(\u0027/sys/fs/cgroup/memory/memory.limit_in_bytes\u0027) as f:\r\n        limit \u003d int(f.read().strip())\r\n    print(f\"\\nPod memory limit: {limit/1e9:.1f} GB\")\r\nexcept:\r\n    try:\r\n        with open(\u0027/sys/fs/cgroup/memory.max\u0027) as f:\r\n            val \u003d f.read().strip()\r\n        print(f\"\\nPod memory limit: {\u0027unlimited\u0027 if val \u003d\u003d \u0027max\u0027 else f\u0027{int(val)/1e9:.1f} GB\u0027}\")\r\n    except:\r\n        print(\"\\nPod memory limit: unknown\")\r\n\r\n# psutil (host level)\r\nvm \u003d psutil.virtual_memory()\r\nprint(f\"Host total RAM: {vm.total/1e9:.1f} GB\")\r\nprint(f\"Host available: {vm.available/1e9:.1f} GB\")\r\n\r\n# CPU quota (cgroup)\r\ntry:\r\n    with open(\u0027/sys/fs/cgroup/cpu/cpu.cfs_quota_us\u0027) as f:\r\n        quota \u003d int(f.read().strip())\r\n    with open(\u0027/sys/fs/cgroup/cpu/cpu.cfs_period_us\u0027) as f:\r\n        period \u003d int(f.read().strip())\r\n    if quota \u003e 0:\r\n        print(f\"\\nPod CPU limit: {quota/period:.1f} cores\")\r\n    else:\r\n        print(f\"\\nPod CPU limit: unlimited\")\r\nexcept:\r\n    try:\r\n        with open(\u0027/sys/fs/cgroup/cpu.max\u0027) as f:\r\n            val \u003d f.read().strip()\r\n        print(f\"\\nPod CPU limit: {val}\")\r\n    except:\r\n        print(\"\\nPod CPU limit: unknown\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.004",
+      "progress": 0,
+      "config": {
+        "tableHide": true,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "CPU cores (logical): 72\nCPU cores (physical): 36\n\nPod memory limit: unlimited\nHost total RAM: 134.3 GB\nHost available: 67.1 GB\n\nPod CPU limit: max 100000\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984004_1992550657",
+      "id": "paragraph_1774504639660_1361591149",
+      "dateCreated": "2026-03-26 10:13:04.004",
+      "status": "READY"
+    },
+    {
+      "text": "%python\nimport subprocess\n\nresult \u003d subprocess.run([\u0027/opt/zeppelin/packages/miniforge3/envs/ai/bin/pip\u0027, \u0027list\u0027], capture_output\u003dTrue, text\u003dTrue)\nprint(result.stdout)",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "tableHide": true,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984004_1576492136",
+      "id": "paragraph_1774498214502_272604331",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\nimport subprocess, sys\r\nresult \u003d subprocess.run(\r\n    [sys.executable, \u0027-m\u0027, \u0027pip\u0027, \u0027install\u0027, \u0027s3fs\u0027, \u0027numba\u0027, \u0027psutil\u003d\u003d5.9.8\u0027],\r\n    capture_output\u003dTrue, text\u003dTrue\r\n)\r\nprint(\"STDOUT:\", result.stdout[-500:])\r\nprint(\"STDERR:\", result.stderr[-500:])\r\n\r\n\r\nimport sys\r\nsys.path.insert(0, \u0027/opt/zeppelin/.local/lib/python3.11/site-packages\u0027)\r\n\r\nprint(\"✅ P0 done — insert ready\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "STDOUT: 0-\u003eaiohttp!\u003d4.0.0a0,!\u003d4.0.0a1-\u003es3fs) (3.11)\nRequirement already satisfied: llvmlite\u003c0.47,\u003e\u003d0.46.0dev0 in ./packages/miniforge3/envs/ai/lib/python3.11/site-packages (from numba) (0.46.0)\nRequirement already satisfied: numpy\u003c2.4,\u003e\u003d1.22 in ./packages/miniforge3/envs/ai/lib/python3.11/site-packages (from numba) (2.1.3)\nRequirement already satisfied: typing-extensions\u003e\u003d4.2 in ./packages/miniforge3/envs/ai/lib/python3.11/site-packages (from aiosignal\u003e\u003d1.4.0-\u003eaiohttp!\u003d4.0.0a0,!\u003d4.0.0a1-\u003es3fs) (4.15.0)\n\nSTDERR: WARNING: The directory \u0027/opt/zeppelin/.cache/pip\u0027 or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo\u0027s -H flag.\n\n✅ P0 done — insert ready\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_667460915",
+      "id": "paragraph_1774498108467_807495745",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\nimport pandas as pd\r\nimport numpy as np\r\nfrom datetime import datetime\r\nimport warnings\r\nimport re\r\nimport os\r\nimport gc\r\nimport time\r\nimport psutil\r\nimport s3fs\r\nfrom numba import jit\r\nfrom multiprocessing import Pool, cpu_count\r\nwarnings.filterwarnings(\u0027ignore\u0027)\r\n\r\n# S3 Configuration\r\nBUCKET_NAME   \u003d \"quantum\"\r\nINPUT_FOLDER  \u003d \"data_folder\"\r\nOUTPUT_FOLDER \u003d \"output_folder\"\r\n\r\n# dtype map — float32 saves ~50% RAM vs default float64\r\nDTYPE_MAP \u003d {\r\n    \u0027vehicle_id\u0027:           \u0027int16\u0027,\r\n    \u0027bus_speed\u0027:            \u0027float32\u0027,\r\n    \u0027is_key_on\u0027:            \u0027int8\u0027,\r\n    \u0027is_charger_connected\u0027: \u0027int8\u0027,\r\n    \u0027is_parking_brake_on\u0027:  \u0027int8\u0027,\r\n    \u0027mileage\u0027:              \u0027float32\u0027,\r\n}\r\nfor _prefix in [\u0027cell_max_t\u0027, \u0027cell_min_t\u0027, \u0027cell_max_v\u0027, \u0027cell_min_v\u0027,\r\n                 \u0027voltage\u0027, \u0027current\u0027, \u0027soc\u0027, \u0027soh\u0027]:\r\n    for _j in range(1, 9):\r\n        DTYPE_MAP[f\u0027{_prefix}_P{_j}\u0027] \u003d \u0027float32\u0027\r\n\r\nprint(\"✅ P1 done — imports \u0026 config ready\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ P1 done — imports \u0026 config ready\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_779304907",
+      "id": "paragraph_1774482617788_54299045",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\ndef get_s3_fs():\r\n    return s3fs.S3FileSystem(\r\n        key\u003d\u00278XTYLABJCSLJKUTQBK94\u0027,\r\n        secret\u003d\u0027fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\u0027,\r\n        endpoint_url\u003d\u0027http://192.168.0.105:80\u0027,\r\n        client_kwargs\u003d{\u0027endpoint_url\u0027: \u0027http://192.168.0.105:80\u0027}\r\n    )\r\n\r\n\r\ndef log_memory(label: str) -\u003e float:\r\n    avail    \u003d psutil.virtual_memory().available / 1e9\r\n    used_pct \u003d psutil.virtual_memory().percent\r\n    print(f\"    [MEM] {label}: available\u003d{avail:.1f}GB  used\u003d{used_pct}%\")\r\n    return avail\r\n\r\n\r\ndef get_valid_cols(df, prefix, max_pack\u003d8):\r\n    \"\"\"Return only pack columns that contain real data.\"\"\"\r\n    valid \u003d []\r\n    for j in range(1, max_pack + 1):\r\n        col \u003d f\u0027{prefix}_P{j}\u0027\r\n        if col not in df.columns:\r\n            continue\r\n        if df[col].eq(0).all() or df[col].nunique() \u003c\u003d 1:\r\n            continue\r\n        valid.append(col)\r\n    return valid\r\n\r\n\r\ndef make_agg_dict(df, exclude_cols):\r\n    \"\"\"Auto-generate aggregation rules based on column names/types.\"\"\"\r\n    agg \u003d {}\r\n    for col in df.columns:\r\n        if col in exclude_cols:\r\n            continue\r\n        if col in [\u0027soc_group\u0027, \u0027temp_group\u0027, \u0027state\u0027, \u0027dnr\u0027, \u0027driving_mode\u0027]:\r\n            agg[col] \u003d \u0027first\u0027\r\n        elif any(x in col for x in [\r\n            \u0027risk_score\u0027, \u0027warn_\u0027, \u0027is_charging\u0027, \u0027is_stopped\u0027,\r\n            \u0027is_key_on\u0027, \u0027is_parking_brake_on\u0027, \u0027is_charger_connected\u0027,\r\n            \u0027thermal_risk\u0027, \u0027voltage_risk\u0027, \u0027retarder\u0027, \u0027rest_start\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif any(x in col for x in [\r\n            \u0027max_temp\u0027, \u0027max_cell\u0027, \u0027temp_gradient\u0027, \u0027temp_change\u0027,\r\n            \u0027temp_acceleration\u0027, \u0027heat_generation\u0027, \u0027joule_heat\u0027,\r\n            \u0027voltage_change\u0027, \u0027dW_dt\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif \u0027soh\u0027 in col.lower():\r\n            agg[col] \u003d \u0027min\u0027\r\n        elif col \u003d\u003d \u0027mileage\u0027:\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif any(x in col for x in [\r\n            \u0027rest_voltage_recovery\u0027, \u0027rest_dV_dt\u0027, \u0027dV_dAh_charging\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027mean\u0027\r\n        elif \u0027_normalized\u0027 in col:\r\n            agg[col] \u003d \u0027mean\u0027\r\n        elif df[col].dtype in [\u0027float64\u0027, \u0027int64\u0027, \u0027float32\u0027, \u0027int32\u0027]:\r\n            agg[col] \u003d \u0027mean\u0027\r\n        else:\r\n            agg[col] \u003d \u0027first\u0027\r\n    return agg\r\n\r\n\r\ndef list_s3_input_files(fs):\r\n    \"\"\"List all cleaned_*.csv files in the S3 input folder.\"\"\"\r\n    all_files \u003d fs.ls(f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/\")\r\n    return sorted([\r\n        f\"s3://{f}\" for f in all_files\r\n        if re.search(r\u0027cleaned_\\d+\\.csv$\u0027, f)\r\n    ])\r\n\r\nprint(\"✅ P2 done — utility functions ready\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ P2 done — utility functions ready\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_450105126",
+      "id": "paragraph_1774485753915_798587305",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\n@jit(nopython\u003dTrue)\r\ndef calculate_dcir_numba(voltage_arr, current_arr, jump_mask):\r\n    \"\"\"Calculate DCIR with Numba JIT acceleration.\"\"\"\r\n    n    \u003d len(voltage_arr)\r\n    dcir \u003d np.full(n, np.nan)\r\n    for i in range(2, n):\r\n        if jump_mask[i]:\r\n            dV \u003d voltage_arr[i] - voltage_arr[i - 2]\r\n            dI \u003d current_arr[i] - current_arr[i - 2]\r\n            if abs(dI) \u003e 10:\r\n                dcir[i] \u003d abs(dV / dI)\r\n    return dcir\r\n\r\n\r\n@jit(nopython\u003dTrue)\r\ndef calculate_dT_dAh_numba(stability_reset, max_temp_arr, current_sum_arr):\r\n    \"\"\"Calculate dT/dAh with Numba JIT acceleration.\"\"\"\r\n    n                 \u003d len(stability_reset)\r\n    Ah_since_stable   \u003d np.zeros(n)\r\n    temp_since_stable \u003d np.zeros(n)\r\n    stable_temp       \u003d np.nan\r\n    cumulative_Ah     \u003d 0.0\r\n    for i in range(n):\r\n        if stability_reset[i]:\r\n            stable_temp   \u003d max_temp_arr[i]\r\n            cumulative_Ah \u003d 0.0\r\n        elif not np.isnan(stable_temp):\r\n            cumulative_Ah        +\u003d current_sum_arr[i] / 60.0\r\n            Ah_since_stable[i]    \u003d cumulative_Ah\r\n            temp_since_stable[i]  \u003d max_temp_arr[i] - stable_temp\r\n    return Ah_since_stable, temp_since_stable\r\n\r\n\r\n# Warmup — triggers JIT compilation now so first real call is instant\r\n_dv \u003d np.array([1.0, 2.0, 3.0])\r\n_jm \u003d np.array([False, False, True])\r\n_ \u003d calculate_dcir_numba(_dv, _dv, _jm)\r\n_ \u003d calculate_dT_dAh_numba(_jm, _dv, _dv)\r\n\r\nprint(\"✅ P3 done — Numba JIT compiled \u0026 warmed up\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ P3 done — Numba JIT compiled \u0026 warmed up\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_1208578861",
+      "id": "paragraph_1774485833476_2141390093",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 4 — Core Functions: process_single_file \u0026 merge_and_save\r\n# (Run once per session)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\ndef process_single_file(s3_path: str):\r\n    \"\"\"\r\n    Stream a single cleaned_*.csv from S3.\r\n    - float32 dtype       → ~50% less RAM\r\n    - .transform()        → no intermediate DataFrame copies\r\n    - Numba JIT           → fast DCIR and dT/dAh loops\r\n    - Parquet output      → 80% smaller than CSV\r\n    \"\"\"\r\n    fs \u003d get_s3_fs()\r\n\r\n    match       \u003d re.search(r\u0027cleaned_(\\d+)\\.csv\u0027, s3_path)\r\n    file_number \u003d match.group(1) if match else \u00270\u0027\r\n\r\n    print(f\"\\n{\u0027\u003d\u0027*70}\")\r\n    print(f\"[File {file_number}] {os.path.basename(s3_path)}\")\r\n    print(f\"{\u0027\u003d\u0027*70}\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # 1. Memory-efficient load from S3\r\n    # ------------------------------------------------------------------\r\n    log_memory(\"before load\")\r\n    with fs.open(s3_path, \u0027rb\u0027) as f:\r\n        df \u003d pd.read_csv(f, dtype\u003dDTYPE_MAP, low_memory\u003dFalse)\r\n    df[\u0027time\u0027] \u003d pd.to_datetime(df[\u0027time\u0027])\r\n    log_memory(\"after load\")\r\n    print(f\"  Loaded: {len(df):,} rows / {len(df.columns)} cols  \"\r\n          f\"({df.memory_usage(deep\u003dTrue).sum()/1e6:.1f} MB)\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # 2. Detect valid pack columns\r\n    # ------------------------------------------------------------------\r\n    temp_max_cols   \u003d get_valid_cols(df, \u0027cell_max_t\u0027)\r\n    temp_min_cols   \u003d get_valid_cols(df, \u0027cell_min_t\u0027)\r\n    cell_max_v_cols \u003d get_valid_cols(df, \u0027cell_max_v\u0027)\r\n    cell_min_v_cols \u003d get_valid_cols(df, \u0027cell_min_v\u0027)\r\n    voltage_cols    \u003d get_valid_cols(df, \u0027voltage\u0027)\r\n    current_cols    \u003d get_valid_cols(df, \u0027current\u0027)\r\n    soc_cols        \u003d get_valid_cols(df, \u0027soc\u0027)\r\n    soh_cols        \u003d get_valid_cols(df, \u0027soh\u0027)\r\n    print(f\"  Valid packs: {len(voltage_cols)}\")\r\n\r\n    # Pre-compute numpy arrays once — reused throughout\r\n    temp_max_arr   \u003d df[temp_max_cols].values.astype(np.float32)\r\n    temp_min_arr   \u003d df[temp_min_cols].values.astype(np.float32)\r\n    cell_max_v_arr \u003d df[cell_max_v_cols].values.astype(np.float32)\r\n    cell_min_v_arr \u003d df[cell_min_v_cols].values.astype(np.float32)\r\n    voltage_arr    \u003d df[voltage_cols].values.astype(np.float32)\r\n    current_arr    \u003d df[current_cols].values.astype(np.float32)\r\n    soc_arr        \u003d df[soc_cols].values.astype(np.float32)\r\n    soh_arr        \u003d df[soh_cols].values.astype(np.float32)\r\n\r\n    voltage_mean \u003d voltage_arr.mean(axis\u003d1)\r\n    current_sum  \u003d current_arr.sum(axis\u003d1)\r\n\r\n    # ------------------------------------------------------------------\r\n    # A. Original 30 derived features (fully vectorized)\r\n    # ------------------------------------------------------------------\r\n    print(\"  [A] Original 30 features...\")\r\n\r\n    df[\u0027max_temp\u0027]        \u003d temp_max_arr.max(axis\u003d1).astype(np.float32)\r\n    df[\u0027max_cell_t_diff\u0027] \u003d (temp_max_arr.max(axis\u003d1) - temp_min_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027max_cell_v_diff\u0027] \u003d np.abs(cell_max_v_arr.max(axis\u003d1) - cell_min_v_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027cell_v_std\u0027]      \u003d voltage_arr.std(axis\u003d1).astype(np.float32)\r\n    df[\u0027pack_soc_mean\u0027]   \u003d soc_arr.mean(axis\u003d1).astype(np.float32)\r\n    df[\u0027pack_soc_std\u0027]    \u003d soc_arr.std(axis\u003d1).astype(np.float32)\r\n    df[\u0027soh_min\u0027]         \u003d soh_arr.min(axis\u003d1).astype(np.float32)\r\n    df[\u0027total_power_kw\u0027]  \u003d (voltage_mean * current_sum / 1000).astype(np.float32)\r\n\r\n    v_s    \u003d pd.Series(voltage_mean, index\u003ddf.index)\r\n    c_s    \u003d pd.Series(current_sum,  index\u003ddf.index)\r\n    v_diff \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(lambda x: v_s.diff())\r\n    c_diff \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(lambda x: c_s.diff())\r\n    df[\u0027estimated_resistance\u0027] \u003d np.where(\r\n        np.abs(c_diff) \u003e 1, np.abs(v_diff / c_diff), np.nan\r\n    ).astype(np.float32)\r\n    del v_diff, c_diff\r\n\r\n    df[\u0027thermal_risk_score\u0027] \u003d (\r\n        (df[\u0027max_temp\u0027] \u003e\u003d 50).astype(np.int8) +\r\n        (df[\u0027max_cell_t_diff\u0027] \u003e\u003d 8).astype(np.int8)\r\n    )\r\n    df[\u0027voltage_risk_score\u0027] \u003d (\r\n        (df[\u0027max_cell_v_diff\u0027] \u003e 200).astype(np.int8) +\r\n        (df[\u0027cell_v_std\u0027] \u003e 50).astype(np.int8)\r\n    )\r\n    df[\u0027temp_gradient\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027temp_acceleration\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027temp_gradient\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027cell_v_cv\u0027]      \u003d (df[\u0027cell_v_std\u0027] / (voltage_mean + 1e-6)).astype(np.float32)\r\n    df[\u0027pack_soc_range\u0027] \u003d (soc_arr.max(axis\u003d1) - soc_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027soh_std\u0027]        \u003d soh_arr.std(axis\u003d1).astype(np.float32)\r\n\r\n    BATTERY_CAPACITY \u003d 300\r\n    df[\u0027c_rate\u0027]        \u003d (np.abs(current_sum) / BATTERY_CAPACITY).astype(np.float32)\r\n    df[\u0027power_density\u0027] \u003d (df[\u0027total_power_kw\u0027] / len(voltage_cols)).astype(np.float32)\r\n\r\n    df[\u0027temp_rolling_std_5min\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n        .transform(lambda x: x.rolling(300, min_periods\u003d1).std()).astype(np.float32)\r\n    )\r\n    df[\u0027voltage_volatility\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027]\r\n        .transform(lambda x: pd.Series(voltage_mean, index\u003dx.index)\r\n                   .rolling(60, min_periods\u003d1).std()).astype(np.float32)\r\n    )\r\n    df[\u0027accel_rate\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027bus_speed\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027decel_rate\u0027] \u003d df[\u0027accel_rate\u0027].clip(upper\u003d0).astype(np.float32)\r\n    df[\u0027is_stopped\u0027] \u003d ((df[\u0027bus_speed\u0027] \u003d\u003d 0) \u0026 (df[\u0027is_key_on\u0027] \u003d\u003d 1)).astype(np.int8)\r\n    df[\u0027regen_ratio\u0027] \u003d (\r\n        pd.Series((current_sum \u003c 0).astype(np.int8), index\u003ddf.index)\r\n        .rolling(60, min_periods\u003d1).mean().astype(np.float32)\r\n    )\r\n    df[\u0027driving_mode\u0027] \u003d pd.cut(\r\n        df[\u0027bus_speed\u0027], bins\u003d[-1, 0, 20, 60, 120], labels\u003d[0, 1, 2, 3]\r\n    ).astype(np.int8)\r\n    df[\u0027is_charging\u0027] \u003d (\r\n        (df[\u0027is_charger_connected\u0027] \u003d\u003d 1) | (current_sum \u003c 0)\r\n    ).astype(np.int8)\r\n\r\n    soc_chg \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027pack_soc_mean\u0027].transform(lambda x: x.diff())\r\n    df[\u0027depth_of_discharge\u0027] \u003d soc_chg.clip(upper\u003d0).abs().astype(np.float32)\r\n    del soc_chg\r\n\r\n    ct \u003d np.abs(current_sum)\r\n    df[\u0027peak_current_ratio\u0027] \u003d np.where(\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).mean().values \u003e 0,\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).max().values /\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).mean().values, 1\r\n    ).astype(np.float32)\r\n    del ct\r\n\r\n    temp_chg \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(lambda x: x.diff())\r\n    df[\u0027cooling_efficiency\u0027] \u003d temp_chg.clip(upper\u003d0).abs().astype(np.float32)\r\n    del temp_chg\r\n\r\n    df[\u0027heat_generation\u0027] \u003d (\r\n        (current_sum ** 2) * df[\u0027estimated_resistance\u0027].fillna(0)\r\n    ).astype(np.float32)\r\n\r\n    gc.collect()\r\n    print(f\"      ✓ Done  |  cols: {len(df.columns)}\")\r\n    log_memory(\"after A\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # B. New 28 derived features\r\n    # ------------------------------------------------------------------\r\n    print(\"  [B] New 28 features...\")\r\n\r\n    df[\u0027state\u0027] \u003d \u0027unknown\u0027\r\n    df.loc[df[\u0027is_charger_connected\u0027] \u003d\u003d 1, \u0027state\u0027] \u003d \u0027charging\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 0) \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027resting\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 1) \u0026 (df[\u0027bus_speed\u0027] \u003e 5)  \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027driving\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 1) \u0026 (df[\u0027bus_speed\u0027] \u003c\u003d 5) \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027idling\u0027\r\n\r\n    vr_std \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(voltage_mean, index\u003dx.index).rolling(60, min_periods\u003d1).std()\r\n    )\r\n    tr_std \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(\r\n        lambda x: x.rolling(60, min_periods\u003d1).std()\r\n    )\r\n    is_lc \u003d pd.Series(np.abs(current_sum) \u003c 10, index\u003ddf.index)\r\n    cd2   \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(current_sum, index\u003dx.index).diff(2).abs()\r\n    )\r\n    current_jump \u003d (\r\n        (vr_std \u003c 0.5).shift(10).fillna(False) \u0026\r\n        (tr_std \u003c 0.2).shift(10).fillna(False) \u0026\r\n        is_lc.shift(10).fillna(False) \u0026\r\n        (~is_lc) \u0026 (cd2 \u003e 30)\r\n    )\r\n    del vr_std, tr_std, is_lc, cd2\r\n\r\n    df[\u0027DCIR\u0027] \u003d np.nan\r\n    for v in df[\u0027vehicle_id\u0027].unique():\r\n        m \u003d df[\u0027vehicle_id\u0027] \u003d\u003d v\r\n        df.loc[m, \u0027DCIR\u0027] \u003d calculate_dcir_numba(\r\n            voltage_mean[m], current_sum[m],\r\n            current_jump[m].fillna(False).values\r\n        ).astype(np.float32)\r\n    del current_jump; gc.collect()\r\n\r\n    df[\u0027pack_current_CV\u0027]    \u003d (current_arr.std(axis\u003d1) / (np.abs(current_arr.mean(axis\u003d1)) + 1e-6)).astype(np.float32)\r\n    df[\u0027pack_current_range\u0027] \u003d (current_arr.max(axis\u003d1) - current_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027pack_voltage_std\u0027]   \u003d voltage_arr.std(axis\u003d1).astype(np.float32)\r\n    dSOC_list \u003d [df.groupby(\u0027vehicle_id\u0027)[c].transform(lambda x: x.diff()) for c in soc_cols]\r\n    df[\u0027dSOC_dt_std\u0027] \u003d (\r\n        np.nanstd(np.column_stack(dSOC_list), axis\u003d1).astype(np.float32)\r\n        if dSOC_list else np.nan\r\n    )\r\n    del dSOC_list\r\n    df[\u0027impedance_instant\u0027] \u003d (\r\n        voltage_mean / np.where(current_sum !\u003d 0, current_sum, np.nan)\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027joule_heat\u0027] \u003d ((current_sum ** 2) * df[\u0027estimated_resistance\u0027].fillna(0)).astype(np.float32)\r\n    df[\u0027dW_dt\u0027]      \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027joule_heat\u0027]\r\n        .transform(lambda x: x.diff() / (10/60)).astype(np.float32)\r\n    )\r\n    dI_dt \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(current_sum, index\u003dx.index).diff() / (10/60)\r\n    )\r\n    dR_dt \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027estimated_resistance\u0027].transform(\r\n        lambda x: x.diff() / (10/60)\r\n    )\r\n    df[\u0027dW_dt_current_contrib\u0027]    \u003d (2 * current_sum * df[\u0027estimated_resistance\u0027].fillna(0) * dI_dt).astype(np.float32)\r\n    df[\u0027dW_dt_resistance_contrib\u0027] \u003d ((current_sum ** 2) * dR_dt).astype(np.float32)\r\n    del dI_dt, dR_dt; gc.collect()\r\n\r\n    df[\u0027Ah_cumulative\u0027] \u003d (current_sum / 3600).cumsum().astype(np.float32)\r\n    vd_s \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(voltage_mean, index\u003dx.index).diff().abs()\r\n    )\r\n    td_s \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(lambda x: x.diff().abs())\r\n    is_stable  \u003d (np.abs(current_sum) \u003c 5) \u0026 (td_s \u003c 0.1) \u0026 (vd_s \u003c 1)\r\n    stab_reset \u003d is_stable.shift(1).fillna(False) \u0026 ~is_stable\r\n    del vd_s, td_s, is_stable\r\n\r\n    df[\u0027Ah_since_stable\u0027] \u003d df[\u0027temp_since_stable\u0027] \u003d 0.0\r\n    for v in df[\u0027vehicle_id\u0027].unique():\r\n        m \u003d df[\u0027vehicle_id\u0027] \u003d\u003d v\r\n        Av, Tv \u003d calculate_dT_dAh_numba(\r\n            stab_reset[m].fillna(False).values,\r\n            df.loc[m, \u0027max_temp\u0027].values,\r\n            current_sum[m]\r\n        )\r\n        df.loc[m, \u0027Ah_since_stable\u0027]   \u003d Av.astype(np.float32)\r\n        df.loc[m, \u0027temp_since_stable\u0027] \u003d Tv.astype(np.float32)\r\n    del stab_reset; gc.collect()\r\n\r\n    df[\u0027dT_dAh\u0027] \u003d np.where(\r\n        df[\u0027Ah_since_stable\u0027] \u003e 0.1,\r\n        df[\u0027temp_since_stable\u0027] / df[\u0027Ah_since_stable\u0027], np.nan\r\n    ).astype(np.float32)\r\n    df[\u0027dW_dAh\u0027] \u003d np.where(\r\n        df[\u0027Ah_cumulative\u0027].diff() \u003e 0.1,\r\n        df[\u0027joule_heat\u0027].diff() / df[\u0027Ah_cumulative\u0027].diff(), np.nan\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027DCIR_increase_rate\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027DCIR\u0027]\r\n        .transform(lambda x: x.pct_change(360)).astype(np.float32)\r\n    )\r\n    df[\u0027thermal_resistance_risk\u0027] \u003d (\r\n        ((df[\u0027DCIR_increase_rate\u0027] \u003e 0.1).fillna(False).astype(np.float32) * 0.5) +\r\n        ((df[\u0027temp_gradient\u0027] \u003e 1.0).fillna(False).astype(np.float32) * 0.5)\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027soc_imbalance_validation\u0027] \u003d (\r\n        (df[\u0027pack_soc_std\u0027] \u003e 0.4).astype(np.int8) +\r\n        (df[\u0027pack_voltage_std\u0027] \u003e 5).astype(np.int8) +\r\n        (df[\u0027pack_current_CV\u0027] \u003e 0.10).astype(np.int8)\r\n    )\r\n\r\n    df[\u0027dV_dAh_charging\u0027] \u003d np.nan\r\n    mc \u003d (df[\u0027state\u0027] \u003d\u003d \u0027charging\u0027) \u0026 (df[\u0027Ah_cumulative\u0027].diff() \u003e 0.01)\r\n    if mc.sum() \u003e 0:\r\n        vd \u003d pd.Series(voltage_mean, index\u003ddf.index).diff()\r\n        Ad \u003d df[\u0027Ah_cumulative\u0027].diff()\r\n        df.loc[mc, \u0027dV_dAh_charging\u0027] \u003d (vd[mc] / Ad[mc]).astype(np.float32)\r\n    del mc\r\n\r\n    prev_state \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027state\u0027].shift(1)\r\n    rad \u003d (df[\u0027state\u0027] \u003d\u003d \u0027resting\u0027) \u0026 (prev_state \u003d\u003d \u0027driving\u0027)\r\n    rac \u003d (df[\u0027state\u0027] \u003d\u003d \u0027resting\u0027) \u0026 (prev_state \u003d\u003d \u0027charging\u0027)\r\n    del prev_state\r\n\r\n    df[\u0027rest_voltage_recovery_driving\u0027]  \u003d np.nan\r\n    df[\u0027rest_voltage_recovery_charging\u0027] \u003d np.nan\r\n    df[\u0027rest_dV_dt\u0027] \u003d np.nan\r\n\r\n    for idx in np.where(rad.fillna(False))[0]:\r\n        if idx + 6 \u003c len(df):\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_voltage_recovery_driving\u0027)] \u003d (\r\n                voltage_mean[idx + 6] - voltage_mean[idx]\r\n            )\r\n            x \u003d np.arange(6, dtype\u003dnp.float32)\r\n            y \u003d voltage_mean[idx:idx + 6].astype(np.float32)\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_dV_dt\u0027)] \u003d float(np.polyfit(x, y, 1)[0] * 6)\r\n\r\n    for idx in np.where(rac.fillna(False))[0]:\r\n        if idx + 6 \u003c len(df):\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_voltage_recovery_charging\u0027)] \u003d (\r\n                voltage_mean[idx + 6] - voltage_mean[idx]\r\n            )\r\n    del rad, rac; gc.collect()\r\n\r\n    df[\u0027soc_group\u0027] \u003d pd.cut(\r\n        df[\u0027pack_soc_mean\u0027], bins\u003d[0, 20, 40, 60, 80, 100],\r\n        labels\u003d[\u0027very_low\u0027, \u0027low\u0027, \u0027medium\u0027, \u0027high\u0027, \u0027very_high\u0027]\r\n    )\r\n    df[\u0027temp_group\u0027] \u003d pd.cut(\r\n        df[\u0027max_temp\u0027], bins\u003d[-40, 20, 25, 30, 35, 85],\r\n        labels\u003d[\u0027cold\u0027, \u0027cool\u0027, \u0027normal\u0027, \u0027warm\u0027, \u0027hot\u0027]\r\n    )\r\n\r\n    for feat in [\u0027pack_soc_std\u0027, \u0027max_cell_v_diff\u0027, \u0027pack_current_CV\u0027,\r\n                 \u0027DCIR\u0027, \u0027thermal_resistance_risk\u0027]:\r\n        if feat not in df.columns:\r\n            continue\r\n        gs \u003d df.groupby([\u0027soc_group\u0027, \u0027temp_group\u0027])[feat].agg([\u0027mean\u0027, \u0027std\u0027])\r\n        df[f\u0027{feat}_normalized\u0027] \u003d np.nan\r\n        for (sg, tg), s in gs.iterrows():\r\n            m \u003d (df[\u0027soc_group\u0027] \u003d\u003d sg) \u0026 (df[\u0027temp_group\u0027] \u003d\u003d tg)\r\n            df.loc[m, f\u0027{feat}_normalized\u0027] \u003d (\r\n                ((df.loc[m, feat] - s[\u0027mean\u0027]) / s[\u0027std\u0027]).astype(np.float32)\r\n                if s[\u0027std\u0027] \u003e 0 else np.float32(0)\r\n            )\r\n\r\n    for periods, sfx in [(6, \u00271min\u0027), (30, \u00275min\u0027), (60, \u002710min\u0027)]:\r\n        df[f\u0027temp_change_{sfx}\u0027] \u003d (\r\n            df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n            .transform(lambda x, p\u003dperiods: x.diff(p)).astype(np.float32)\r\n        )\r\n        df[f\u0027voltage_change_{sfx}\u0027] \u003d (\r\n            df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027]\r\n            .transform(lambda x, p\u003dperiods:\r\n                       pd.Series(voltage_mean, index\u003dx.index).diff(p)).astype(np.float32)\r\n        )\r\n\r\n    print(f\"      ✓ Done  |  total cols: {len(df.columns)}\")\r\n    log_memory(\"after B\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # C. Time aggregation → Parquet shards → S3\r\n    # ------------------------------------------------------------------\r\n    print(\"  [C] Aggregation + S3 upload...\")\r\n    results \u003d {}\r\n    for freq, label, tcol in [\r\n        (\u002710s\u0027,  \u002710s\u0027,  \u0027time_10s\u0027),\r\n        (\u00271min\u0027, \u00271min\u0027, \u0027time_1min\u0027),\r\n        (\u00275min\u0027, \u00275min\u0027, \u0027time_5min\u0027),\r\n    ]:\r\n        df[tcol] \u003d df[\u0027time\u0027].dt.floor(freq)\r\n        agg_dict \u003d make_agg_dict(\r\n            df, exclude_cols\u003d[\u0027time\u0027, \u0027time_10s\u0027, \u0027time_1min\u0027, \u0027time_5min\u0027, \u0027vehicle_id\u0027]\r\n        )\r\n        df_agg \u003d df.groupby([\u0027vehicle_id\u0027, tcol]).agg(agg_dict).reset_index()\r\n        print(f\"      {label}: {len(df):,} → {len(df_agg):,} rows\")\r\n\r\n        s3_out \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/agg_{label}_{file_number}.parquet\"\r\n        with fs.open(s3_out, \u0027wb\u0027) as fout:\r\n            df_agg.to_parquet(fout, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\r\n        print(f\"      ✓ Saved: {s3_out}\")\r\n\r\n        results[label] \u003d s3_out\r\n        del df_agg; gc.collect()\r\n\r\n    del df; gc.collect()\r\n    log_memory(\"after cleanup\")\r\n    print(f\"[File {file_number}] Complete!\")\r\n    return results\r\n\r\n\r\ndef merge_and_save(fs, resolution: str, shard_paths: list):\r\n    print(f\"\\n{\u0027\u003d\u0027*70}\")\r\n    print(f\"Merging {resolution} ({len(shard_paths)} shards)...\")\r\n    dfs \u003d []\r\n    for i, path in enumerate(shard_paths, 1):\r\n        with fs.open(path, \u0027rb\u0027) as f:\r\n            chunk \u003d pd.read_parquet(f)\r\n        dfs.append(chunk)\r\n        print(f\"  [{i}/{len(shard_paths)}] {os.path.basename(path)}: {len(chunk):,} rows\")\r\n        del chunk; gc.collect()\r\n\r\n    merged   \u003d pd.concat(dfs, ignore_index\u003dTrue)\r\n    out_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/df_{resolution}_all.parquet\"\r\n    with fs.open(out_path, \u0027wb\u0027) as f:\r\n        merged.to_parquet(f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\r\n    print(f\"  ✓ Merged {len(merged):,} rows → {out_path}\")\r\n    del merged, dfs; gc.collect()\r\n    return out_path\r\n\r\nprint(\"✅ P4 done — core functions ready\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ P4 done — core functions ready\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_1407064889",
+      "id": "paragraph_1774485834767_1468729081",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 5 — S3 Connection Check\r\n# (Re-run if credentials change)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n\r\nfs            \u003d get_s3_fs()\r\ncleaned_files \u003d list_s3_input_files(fs)\r\n\r\nprint(f\"✅ S3 connected\")\r\nprint(f\"Files found: {len(cleaned_files)}\")\r\nfor f in cleaned_files:\r\n    info \u003d fs.info(f)\r\n    print(f\"  {os.path.basename(f)}  ({info[\u0027size\u0027]/1e6:.1f} MB)\")\r\n\r\nlog_memory(\"before pipeline\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ S3 connected\nFiles found: 9\n  cleaned_1.csv  (1616.0 MB)\n  cleaned_2.csv  (2364.4 MB)\n  cleaned_3.csv  (2807.3 MB)\n  cleaned_4.csv  (2922.3 MB)\n  cleaned_5.csv  (1650.9 MB)\n  cleaned_6.csv  (2230.9 MB)\n  cleaned_7.csv  (2590.8 MB)\n  cleaned_8.csv  (2180.7 MB)\n  cleaned_9.csv  (1248.0 MB)\n    [MEM] before pipeline: available\u003d84.0GB  used\u003d37.4%\n84.031094784\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_2020063072",
+      "id": "paragraph_1774485836412_978781235",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 6 — Run Pipeline\r\n# Start with single process (Option A), switch to parallel (Option B)\r\n# once Option A confirms it works correctly\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n\r\ntotal_start \u003d time.time()\r\n\r\n# ── Option A: single process — run this first ──────────────────────────────\r\nresults \u003d []\r\nfor f in cleaned_files:\r\n    result \u003d process_single_file(f)\r\n    results.append(result)\r\n    log_memory(f\"after {os.path.basename(f)}\")\r\n\r\n# ── Option B: parallel — uncomment after Option A succeeds ─────────────────\r\n# n_cores \u003d min(cpu_count() - 1, len(cleaned_files), 8)\r\n# print(f\"Running parallel with {n_cores} cores...\")\r\n# with Pool(n_cores) as pool:\r\n#     results \u003d pool.map(process_single_file, cleaned_files)\r\n\r\nprint(f\"\\n✅ Stage 1 done: {(time.time()-total_start)/60:.1f} min\")\r\nprint(f\"Results: {len(results)} files processed\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 1] cleaned_1.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d84.0GB  used\u003d37.4%\n    [MEM] after load: available\u003d80.0GB  used\u003d40.4%\n  Loaded: 3,739,559 rows / 79 cols  (1479.8 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d80.0GB  used\u003d40.4%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d80.0GB  used\u003d40.4%\n  [C] Aggregation + S3 upload...\n      10s: 3,739,559 → 375,353 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_1.parquet\n      1min: 3,739,559 → 63,178 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_1.parquet\n      5min: 3,739,559 → 13,087 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_1.parquet\n    [MEM] after cleanup: available\u003d81.2GB  used\u003d39.5%\n[File 1] Complete!\n    [MEM] after cleaned_1.csv: available\u003d81.2GB  used\u003d39.5%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 2] cleaned_2.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d81.2GB  used\u003d39.5%\n    [MEM] after load: available\u003d79.1GB  used\u003d41.0%\n  Loaded: 5,394,747 rows / 79 cols  (2134.3 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d79.1GB  used\u003d41.0%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d78.2GB  used\u003d41.7%\n  [C] Aggregation + S3 upload...\n      10s: 5,394,747 → 541,965 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_2.parquet\n      1min: 5,394,747 → 90,853 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_2.parquet\n      5min: 5,394,747 → 18,451 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_2.parquet\n    [MEM] after cleanup: available\u003d81.0GB  used\u003d39.6%\n[File 2] Complete!\n    [MEM] after cleaned_2.csv: available\u003d81.1GB  used\u003d39.6%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 3] cleaned_3.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d81.1GB  used\u003d39.6%\n    [MEM] after load: available\u003d77.5GB  used\u003d42.3%\n  Loaded: 6,372,746 rows / 79 cols  (2521.2 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d77.5GB  used\u003d42.3%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d76.4GB  used\u003d43.1%\n  [C] Aggregation + S3 upload...\n      10s: 6,372,746 → 640,578 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_3.parquet\n      1min: 6,372,746 → 107,656 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_3.parquet\n      5min: 6,372,746 → 22,073 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_3.parquet\n    [MEM] after cleanup: available\u003d80.2GB  used\u003d40.3%\n[File 3] Complete!\n    [MEM] after cleaned_3.csv: available\u003d80.3GB  used\u003d40.2%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 4] cleaned_4.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d80.3GB  used\u003d40.2%\n    [MEM] after load: available\u003d77.3GB  used\u003d42.4%\n  Loaded: 6,658,940 rows / 79 cols  (2634.7 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d77.3GB  used\u003d42.5%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d76.0GB  used\u003d43.4%\n  [C] Aggregation + S3 upload...\n      10s: 6,658,940 → 668,091 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_4.parquet\n      1min: 6,658,940 → 111,926 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_4.parquet\n      5min: 6,658,940 → 22,761 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_4.parquet\n    [MEM] after cleanup: available\u003d79.9GB  used\u003d40.5%\n[File 4] Complete!\n    [MEM] after cleaned_4.csv: available\u003d80.3GB  used\u003d40.2%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 5] cleaned_5.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d80.3GB  used\u003d40.2%\n    [MEM] after load: available\u003d78.7GB  used\u003d41.4%\n  Loaded: 3,818,682 rows / 79 cols  (1511.1 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d78.7GB  used\u003d41.4%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d78.7GB  used\u003d41.3%\n  [C] Aggregation + S3 upload...\n      10s: 3,818,682 → 383,230 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_5.parquet\n      1min: 3,818,682 → 64,222 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_5.parquet\n      5min: 3,818,682 → 13,112 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_5.parquet\n    [MEM] after cleanup: available\u003d79.8GB  used\u003d40.5%\n[File 5] Complete!\n    [MEM] after cleaned_5.csv: available\u003d79.8GB  used\u003d40.5%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 6] cleaned_6.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d79.8GB  used\u003d40.5%\n    [MEM] after load: available\u003d77.4GB  used\u003d42.4%\n  Loaded: 5,157,121 rows / 79 cols  (2040.2 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d77.4GB  used\u003d42.4%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d76.9GB  used\u003d42.7%\n  [C] Aggregation + S3 upload...\n      10s: 5,157,121 → 516,976 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_6.parquet\n      1min: 5,157,121 → 86,418 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_6.parquet\n      5min: 5,157,121 → 17,476 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_6.parquet\n    [MEM] after cleanup: available\u003d79.1GB  used\u003d41.1%\n[File 6] Complete!\n    [MEM] after cleaned_6.csv: available\u003d79.2GB  used\u003d41.0%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 7] cleaned_7.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d79.2GB  used\u003d41.0%\n    [MEM] after load: available\u003d77.2GB  used\u003d42.5%\n  Loaded: 5,903,545 rows / 79 cols  (2336.1 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d77.2GB  used\u003d42.5%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d76.1GB  used\u003d43.3%\n  [C] Aggregation + S3 upload...\n      10s: 5,903,545 → 592,441 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_7.parquet\n      1min: 5,903,545 → 99,376 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_7.parquet\n      5min: 5,903,545 → 20,331 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_7.parquet\n    [MEM] after cleanup: available\u003d78.8GB  used\u003d41.3%\n[File 7] Complete!\n    [MEM] after cleaned_7.csv: available\u003d79.3GB  used\u003d41.0%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 8] cleaned_8.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d79.3GB  used\u003d41.0%\n    [MEM] after load: available\u003d77.5GB  used\u003d42.3%\n  Loaded: 4,907,460 rows / 79 cols  (1942.1 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d77.5GB  used\u003d42.3%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d76.9GB  used\u003d42.7%\n  [C] Aggregation + S3 upload...\n      10s: 4,907,460 → 493,249 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_8.parquet\n      1min: 4,907,460 → 83,048 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_8.parquet\n      5min: 4,907,460 → 17,119 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_8.parquet\n    [MEM] after cleanup: available\u003d79.0GB  used\u003d41.1%\n[File 8] Complete!\n    [MEM] after cleaned_8.csv: available\u003d79.0GB  used\u003d41.1%\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[File 9] cleaned_9.csv\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n    [MEM] before load: available\u003d79.0GB  used\u003d41.1%\n    [MEM] after load: available\u003d78.1GB  used\u003d41.8%\n  Loaded: 2,893,660 rows / 79 cols  (1145.2 MB)\n  Valid packs: 6\n  [A] Original 30 features...\n      ✓ Done  |  cols: 109\n    [MEM] after A: available\u003d78.1GB  used\u003d41.8%\n  [B] New 28 features...\n      ✓ Done  |  total cols: 145\n    [MEM] after B: available\u003d78.2GB  used\u003d41.8%\n  [C] Aggregation + S3 upload...\n      10s: 2,893,660 → 290,835 rows\n      ✓ Saved: s3://quantum/output_folder/agg_10s_9.parquet\n      1min: 2,893,660 → 48,667 rows\n      ✓ Saved: s3://quantum/output_folder/agg_1min_9.parquet\n      5min: 2,893,660 → 9,874 rows\n      ✓ Saved: s3://quantum/output_folder/agg_5min_9.parquet\n    [MEM] after cleanup: available\u003d79.1GB  used\u003d41.1%\n[File 9] Complete!\n    [MEM] after cleaned_9.csv: available\u003d79.1GB  used\u003d41.1%\n\n✅ Stage 1 done: 26.8 min\nResults: 9 files processed\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_227528055",
+      "id": "paragraph_1774485838650_193607008",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 7 — Merge Shards \u0026 Save Final Output\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n\r\nmerged_paths \u003d {}\r\nfor res in [\u002710s\u0027, \u00271min\u0027, \u00275min\u0027]:\r\n    shards \u003d [r[res] for r in results if res in r]\r\n    merged_paths[res] \u003d merge_and_save(fs, res, shards)\r\n\r\ntotal_elapsed \u003d time.time() - total_start\r\nprint(f\"\\n✅ Pipeline complete: {total_elapsed/60:.1f} min\")\r\nprint(f\"Per-file average  : {total_elapsed/len(cleaned_files)/60:.1f} min\")\r\nprint(\"\\nOutput files (Parquet / snappy):\")\r\nfor res, path in merged_paths.items():\r\n    print(f\"  ✓ {path}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nMerging 10s (9 shards)...\n  [1/9] agg_10s_1.parquet: 375,353 rows\n  [2/9] agg_10s_2.parquet: 541,965 rows\n  [3/9] agg_10s_3.parquet: 640,578 rows\n  [4/9] agg_10s_4.parquet: 668,091 rows\n  [5/9] agg_10s_5.parquet: 383,230 rows\n  [6/9] agg_10s_6.parquet: 516,976 rows\n  [7/9] agg_10s_7.parquet: 592,441 rows\n  [8/9] agg_10s_8.parquet: 493,249 rows\n  [9/9] agg_10s_9.parquet: 290,835 rows\n  ✓ Merged 4,502,718 rows → s3://quantum/output_folder/df_10s_all.parquet\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nMerging 1min (9 shards)...\n  [1/9] agg_1min_1.parquet: 63,178 rows\n  [2/9] agg_1min_2.parquet: 90,853 rows\n  [3/9] agg_1min_3.parquet: 107,656 rows\n  [4/9] agg_1min_4.parquet: 111,926 rows\n  [5/9] agg_1min_5.parquet: 64,222 rows\n  [6/9] agg_1min_6.parquet: 86,418 rows\n  [7/9] agg_1min_7.parquet: 99,376 rows\n  [8/9] agg_1min_8.parquet: 83,048 rows\n  [9/9] agg_1min_9.parquet: 48,667 rows\n  ✓ Merged 755,344 rows → s3://quantum/output_folder/df_1min_all.parquet\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nMerging 5min (9 shards)...\n  [1/9] agg_5min_1.parquet: 13,087 rows\n  [2/9] agg_5min_2.parquet: 18,451 rows\n  [3/9] agg_5min_3.parquet: 22,073 rows\n  [4/9] agg_5min_4.parquet: 22,761 rows\n  [5/9] agg_5min_5.parquet: 13,112 rows\n  [6/9] agg_5min_6.parquet: 17,476 rows\n  [7/9] agg_5min_7.parquet: 20,331 rows\n  [8/9] agg_5min_8.parquet: 17,119 rows\n  [9/9] agg_5min_9.parquet: 9,874 rows\n  ✓ Merged 154,284 rows → s3://quantum/output_folder/df_5min_all.parquet\n\n✅ Pipeline complete: 33.2 min\nPer-file average  : 3.7 min\n\nOutput files (Parquet / snappy):\n  ✓ s3://quantum/output_folder/df_10s_all.parquet\n  ✓ s3://quantum/output_folder/df_1min_all.parquet\n  ✓ s3://quantum/output_folder/df_5min_all.parquet\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_2034171865",
+      "id": "paragraph_1774485839866_2079543145",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# Level 3 Phase 2 — Memory-Optimized \n# Memory optimizations applied:\n#   1. float32 dtype on CSV load              → ~50% less RAM\n#   2. .transform() replaces .rolling().values → no intermediate copies\n#   3. .query() replaces .copy()              → no DataFrame copy\n#   4. numpy stride trick for sequences       → 10x faster, no Python loop\n#   5. Scaler stored per state                → reproducible inference\n#   6. model.predict() called ONCE per model  → no redundant inference\n#   7. del + gc.collect() after heavy ops     → memory released promptly\n#   8. Results saved as Parquet               → 80% smaller than CSV\n#   9. psutil memory logging per step         → easy OOM diagnosis\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 1 — Imports \u0026 Config\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nimport gc\nimport json\nimport warnings\n\nimport numpy as np\nimport pandas as pd\nimport psutil\nimport s3fs\nfrom sklearn.preprocessing import StandardScaler\nfrom tensorflow.keras.callbacks import EarlyStopping\nfrom tensorflow.keras.layers import (\n    GRU, Dense, Dropout, RepeatVector, TimeDistributed\n)\nfrom tensorflow.keras.models import Sequential\n\nwarnings.filterwarnings(\u0027ignore\u0027)\n\n# S3\nBUCKET_NAME   \u003d \"quantum\"\nINPUT_FOLDER  \u003d \"data_folder\"\nOUTPUT_FOLDER \u003d \"output_folder\"\n\nALL_VEHICLES \u003d [93, 95, 97, 100, 103, 104, 111, 125, 170]\n\n# FIX 1: explicit dtype map — float32 saves ~50% RAM vs default float64\nDTYPE_MAP \u003d {\n    \u0027vehicle_id\u0027:         \u0027int16\u0027,\n    \u0027alarm_level\u0027:        \u0027int8\u0027,\n    \u0027time_1min\u0027:          \u0027str\u0027,\n    \u0027state\u0027:              \u0027str\u0027,\n    \u0027max_temp\u0027:           \u0027float32\u0027,\n    \u0027max_cell_t_diff\u0027:    \u0027float32\u0027,\n    \u0027joule_heat\u0027:         \u0027float32\u0027,\n    \u0027c_rate\u0027:             \u0027float32\u0027,\n    \u0027cooling_efficiency\u0027: \u0027float32\u0027,\n    \u0027pack_soc_std\u0027:       \u0027float32\u0027,\n    \u0027max_cell_v_diff\u0027:    \u0027float32\u0027,\n    \u0027voltage_volatility\u0027: \u0027float32\u0027,\n}\nfor _i in range(1, 9):\n    DTYPE_MAP[f\u0027current_P{_i}\u0027] \u003d \u0027float32\u0027\n\nfs \u003d s3fs.S3FileSystem(\n    anon\u003dFalse,\n    key\u003d\u00278XTYLABJCSLJKUTQBK94\u0027,\n    secret\u003d\u0027fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\u0027,\n    endpoint_url\u003d\u0027http://192.168.0.105:80\u0027,\n    client_kwargs\u003d{\u0027endpoint_url\u0027: \u0027http://192.168.0.105:80\u0027}\n)\n\ndef log_mem(label: str) -\u003e None:\n    \"\"\"Print available memory — helps locate OOM source.\"\"\"\n    vm \u003d psutil.virtual_memory()\n    print(f\"  [MEM] {label:35s} | avail\u003d{vm.available/1e9:.1f}GB  used\u003d{vm.percent}%\")\n\nprint(\"\u003d\" * 60)\nprint(\"Level 3 Phase 2 — Memory-Optimized (S3)\")\nprint(\"\u003d\" * 60)\nprint(f\"  Bucket : {BUCKET_NAME}\")\nprint(f\"  Input  : {INPUT_FOLDER}/\")\nprint(f\"  Output : {OUTPUT_FOLDER}/\")\nprint(\"P1 done\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nLevel 3 Phase 2 — Memory-Optimized (S3)\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  Bucket : quantum\n  Input  : data_folder/\n  Output : output_folder/\nP1 done\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_870630603",
+      "id": "paragraph_1774485107929_567379283",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 2 — Load Phase 1 Config from S3\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nconfig_path \u003d f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/level3_phase1_optimal_config.json\"\n\ntry:\n    with fs.open(config_path, \u0027r\u0027) as f:\n        cfg \u003d json.load(f)\n    OPTIMAL_SEQ_LEN  \u003d cfg[\u0027sequence_length\u0027]\n    OPTIMAL_FEATURES \u003d cfg[\u0027features\u0027]\n    print(f\"Config loaded from S3\")\nexcept Exception as e:\n    print(f\"Config load failed ({e}) — using defaults\")\n    OPTIMAL_SEQ_LEN  \u003d 60\n    OPTIMAL_FEATURES \u003d [\n        \u0027max_temp\u0027, \u0027max_cell_t_diff\u0027, \u0027max_temp_rolling_max\u0027,\n        \u0027joule_heat\u0027, \u0027c_rate\u0027, \u0027c_rate_rolling_max\u0027,\n        \u0027cooling_efficiency\u0027,\n        \u0027pack_soc_std\u0027, \u0027pack_soc_std_rolling_max\u0027,\n        \u0027max_cell_v_diff\u0027, \u0027voltage_volatility\u0027,\n        \u0027current_total\u0027,\n    ]\n\nprint(f\"  Sequence length : {OPTIMAL_SEQ_LEN}\")\nprint(f\"  Features        : {len(OPTIMAL_FEATURES)}\")\nprint(\"P2 done\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.005",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Config loaded from S3\n  Sequence length : 60\n  Features        : 12\nP2 done\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_442926614",
+      "id": "paragraph_1774485230573_841970885",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 3 — Load \u0026 Prepare Data\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\nlog_mem(\"before data load\")\r\n# ── Main data ───────────────────────────────────────────────────────────────\r\nmain_path \u003d f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/df_1min_alarm_v3_p99.csv\"\r\nprint(f\"Loading: {main_path}\")\r\nwith fs.open(main_path, \u0027rb\u0027) as f:\r\n    df \u003d pd.read_csv(f, dtype\u003dDTYPE_MAP, low_memory\u003dFalse)\r\ndf[\u0027time_1min\u0027] \u003d pd.to_datetime(df[\u0027time_1min\u0027])\r\nlog_mem(\"after CSV load\")\r\nprint(f\"  Rows: {len(df):,}  RAM: {df.memory_usage(deep\u003dTrue).sum()/1e6:.0f} MB\")\r\n# ── Derived features ────────────────────────────────────────────────────────\r\n# FIX 2: vectorized sum — no copy\r\ncurrent_cols \u003d [f\u0027current_P{i}\u0027 for i in range(1, 9) if f\u0027current_P{i}\u0027 in df.columns]\r\ndf[\u0027current_total\u0027] \u003d df[current_cols].sum(axis\u003d1).astype(np.float32)\r\n# FIX 3: .transform() avoids .rolling().max().values intermediate copy\r\nfor col in [\u0027max_temp\u0027, \u0027c_rate\u0027, \u0027pack_soc_std\u0027]:\r\n    if col in df.columns:\r\n        df[f\u0027{col}_rolling_max\u0027] \u003d (\r\n            df.groupby(\u0027vehicle_id\u0027)[col]\r\n            .transform(lambda x: x.rolling(5, min_periods\u003d1).max())\r\n            .astype(np.float32)\r\n        )\r\nlog_mem(\"after derived features\")\r\n# ── Level 2 results ─────────────────────────────────────────────────────────\r\nl2_path \u003d f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/level2_results.csv\"\r\nprint(f\"\\nLoading Level 2: {l2_path}\")\r\nwith fs.open(l2_path, \u0027rb\u0027) as f:\r\n    df_l2 \u003d pd.read_csv(\r\n        f,\r\n        dtype\u003d{\u0027vehicle_id\u0027: \u0027int16\u0027, \u0027if_anomaly_state\u0027: \u0027int8\u0027},\r\n        low_memory\u003dFalse\r\n    )\r\ndf_l2[\u0027time_1min\u0027] \u003d pd.to_datetime(df_l2[\u0027time_1min\u0027])\r\nl2_cols \u003d [c for c in [\u0027vehicle_id\u0027, \u0027time_1min\u0027,\r\n                        \u0027if_score_charging\u0027, \u0027if_score_driving\u0027,\r\n                        \u0027if_score_idling\u0027, \u0027if_score_resting\u0027,\r\n                        \u0027if_anomaly_state\u0027] if c in df_l2.columns]\r\ndf \u003d df.merge(df_l2[l2_cols], on\u003d[\u0027vehicle_id\u0027, \u0027time_1min\u0027], how\u003d\u0027left\u0027)\r\n# Free L2 immediately after merge\r\ndel df_l2; gc.collect()\r\nlog_mem(\"after L2 merge\")\r\n# FIX 4: .query() returns a view — no DataFrame copy unlike .copy()\r\ndf_normal \u003d df.query(\u0027alarm_level \u003d\u003d 0\u0027)\r\nprint(f\"\\n✅ P3 done | total\u003d{len(df):,}  normal\u003d{len(df_normal):,}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "  [MEM] before data load                    | avail\u003d78.4GB  used\u003d41.6%\nLoading: s3://quantum/data_folder/df_1min_alarm_v3_p99.csv\n  [MEM] after CSV load                      | avail\u003d77.0GB  used\u003d42.6%\n  Rows: 755,344  RAM: 1520 MB\n  [MEM] after derived features              | avail\u003d77.0GB  used\u003d42.6%\n\nLoading Level 2: s3://quantum/data_folder/level2_results.csv\n  [MEM] after L2 merge                      | avail\u003d78.1GB  used\u003d41.8%\n\n✅ P3 done | total\u003d755,344  normal\u003d527,421\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984005_913623846",
+      "id": "paragraph_1774485264586_1371932934",
+      "dateCreated": "2026-03-26 10:13:04.005",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 4 — Utility Functions\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\ndef create_sequences_fast(data: pd.DataFrame,\n                           features: list,\n                           seq_len: int):\n    \"\"\"\n    Build (N, seq_len, n_features) array using numpy stride trick.\n    FIX 5: replaces Python for-loop → 10x faster, no list appends.\n    Returns: (sequences np.ndarray, scaler StandardScaler)\n    \"\"\"\n    clean \u003d data[features].dropna()\n    if len(clean) \u003c seq_len:\n        return np.empty((0, seq_len, len(features)), dtype\u003dnp.float32), None\n\n    scaler  \u003d StandardScaler()\n    scaled  \u003d scaler.fit_transform(clean.values).astype(np.float32)\n    n, nf   \u003d scaled.shape\n    n_seq   \u003d n - seq_len + 1\n\n    # Stride trick — zero-copy sliding window\n    s0, s1     \u003d scaled.strides\n    sequences  \u003d np.lib.stride_tricks.as_strided(\n        scaled,\n        shape\u003d(n_seq, seq_len, nf),\n        strides\u003d(s0, s0, s1)\n    ).copy()   # .copy() makes contiguous for Keras\n\n    return sequences, scaler\n\n\ndef build_gru_ae(seq_len: int, n_features: int, encoding_dim: int \u003d 32):\n    \"\"\"GRU Autoencoder — unchanged architecture.\"\"\"\n    model \u003d Sequential([\n        GRU(64, return_sequences\u003dTrue, input_shape\u003d(seq_len, n_features)),\n        Dropout(0.2),\n        GRU(encoding_dim, return_sequences\u003dFalse),\n        Dropout(0.2),\n        RepeatVector(seq_len),\n        GRU(encoding_dim, return_sequences\u003dTrue),\n        Dropout(0.2),\n        GRU(64, return_sequences\u003dTrue),\n        Dropout(0.2),\n        TimeDistributed(Dense(n_features)),\n    ])\n    model.compile(optimizer\u003d\u0027adam\u0027, loss\u003d\u0027mse\u0027)\n    return model\n\n\ndef reconstruction_errors(sequences: np.ndarray, model) -\u003e np.ndarray:\n    \"\"\"MSE reconstruction error — single batched predict call.\"\"\"\n    recon \u003d model.predict(sequences, batch_size\u003d256, verbose\u003d0)\n    return np.mean(np.square(sequences - recon), axis\u003d(1, 2))\n\n\nprint(\"✅ P4 done — utility functions ready\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "✅ P4 done — utility functions ready\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_1948652783",
+      "id": "paragraph_1774485280393_1967722488",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 5 — Train Main Models (4 states)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nmain_models     \u003d {}\nmain_thresholds \u003d {}\nmain_scalers    \u003d {}\n\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    print(f\"\\n[Main model: {state}]\")\n\n    # FIX 6: .query() — no .copy() of df_normal\n    state_data \u003d df_normal.query(\u0027state \u003d\u003d @state\u0027)\n    print(f\"  Rows: {len(state_data):,}\")\n    for vid in ALL_VEHICLES:\n        cnt \u003d (state_data[\u0027vehicle_id\u0027] \u003d\u003d vid).sum()\n        print(f\"    vehicle {vid}: {cnt:,}\")\n\n    seqs, scaler \u003d create_sequences_fast(state_data, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN)\n\n    if len(seqs) \u003c 100:\n        print(f\"  ⚠️  Insufficient data — skipping\")\n        continue\n\n    print(f\"  Sequences: {len(seqs):,}  RAM: {seqs.nbytes/1e6:.0f} MB\")\n    log_mem(f\"before {state} fit\")\n\n    model \u003d build_gru_ae(OPTIMAL_SEQ_LEN, len(OPTIMAL_FEATURES))\n    model.fit(seqs, seqs, epochs\u003d50, batch_size\u003d256,\n              validation_split\u003d0.1,\n              callbacks\u003d[EarlyStopping(monitor\u003d\u0027val_loss\u0027, patience\u003d5, restore_best_weights\u003dTrue)],\n              verbose\u003d1)\n\n    errors    \u003d reconstruction_errors(seqs, model)\n    pct       \u003d 85 if state \u003d\u003d \u0027resting\u0027 else 90\n    threshold \u003d np.percentile(errors, pct)\n    print(f\"  ✓ P{pct} \u003d {threshold:.4f}\")\n\n    main_models[state]     \u003d model\n    main_thresholds[state] \u003d threshold\n    main_scalers[state]    \u003d scaler\n\n    # Free sequences right after threshold is computed\n    del seqs, errors; gc.collect()\n    log_mem(f\"after {state} cleanup\")\n\nprint(f\"\\n✅ P5 done — models trained: {list(main_models.keys())}\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "tableHide": false,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {},
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_733498938",
+      "id": "paragraph_1774485289221_517802759",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 6 — Train Auxiliary Model (Driving + Charging)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nlog_mem(\"before aux model\")\n\n# FIX 7: .query() — no .copy()\naux_data \u003d df_normal.query(\"state in [\u0027driving\u0027, \u0027charging\u0027]\")\nprint(f\"Aux data: {len(aux_data):,} rows\")\nfor s in [\u0027driving\u0027, \u0027charging\u0027]:\n    print(f\"  {s}: {(aux_data[\u0027state\u0027] \u003d\u003d s).sum():,}\")\n\naux_seqs, aux_scaler \u003d create_sequences_fast(\n    aux_data, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN\n)\nprint(f\"Sequences: {len(aux_seqs):,}  RAM: {aux_seqs.nbytes/1e6:.0f} MB\")\n\naux_model \u003d build_gru_ae(OPTIMAL_SEQ_LEN, len(OPTIMAL_FEATURES))\naux_model.fit(aux_seqs, aux_seqs, epochs\u003d50, batch_size\u003d256,\n                  validation_split\u003d0.1,\n                  callbacks\u003d[EarlyStopping(monitor\u003d\u0027val_loss\u0027, patience\u003d5, restore_best_weights\u003dTrue)],\n                  verbose\u003d1)\n\naux_errors    \u003d reconstruction_errors(aux_seqs, aux_model)\naux_threshold \u003d np.percentile(aux_errors, 90)\nprint(f\"✓ P90 \u003d {aux_threshold:.4f}\")\n\ndel aux_seqs, aux_errors; gc.collect()\nlog_mem(\"after aux model\")\nprint(\"✅ P6 done\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_1125509994",
+      "id": "paragraph_1774485296785_2093709068",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 7 — Evaluate on Vehicle 95\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nlog_mem(\"before evaluation\")\n\n# FIX 8: .query() — no .copy()\nv95      \u003d df.query(\u0027vehicle_id \u003d\u003d 95\u0027)\nprint(f\"Vehicle 95 rows: {len(v95):,}\")\n\nv95_seqs, _ \u003d create_sequences_fast(v95, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN)\nv95_eval    \u003d v95.iloc[OPTIMAL_SEQ_LEN - 1:].reset_index(drop\u003dTrue).copy()\n\nprint(f\"Sequences : {len(v95_seqs):,}\")\nprint(f\"Eval rows : {len(v95_eval):,}\")\n\nfor col in [\u0027L3_main_anomaly\u0027, \u0027L3_aux_anomaly\u0027, \u0027L3_combined_anomaly\u0027]:\n    v95_eval[col] \u003d np.int8(0)\n\n# FIX 9: run predict() ONCE per model — cache all errors upfront\n# Original called predict() inside a per-state loop → N× redundant inference\nprint(\"\\nRunning inference (predict once per model)...\")\ncached_errors \u003d {\n    state: reconstruction_errors(v95_seqs, model)\n    for state, model in main_models.items()\n}\naux_errors_v95 \u003d reconstruction_errors(v95_seqs, aux_model)\nprint(f\"  ✓ {len(cached_errors)} main + 1 aux error arrays cached\")\nlog_mem(\"after predictions\")\n\n# Apply thresholds\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    if state not in cached_errors:\n        continue\n    mask \u003d v95_eval[\u0027state\u0027] \u003d\u003d state\n    idx  \u003d np.where(mask.values)[0]\n    if len(idx) \u003d\u003d 0:\n        continue\n\n    m_anom \u003d (cached_errors[state] \u003e main_thresholds[state]).astype(np.int8)\n    v95_eval.loc[mask, \u0027L3_main_anomaly\u0027] \u003d m_anom[idx]\n\n    if state \u003d\u003d \u0027driving\u0027:\n        a_anom \u003d (aux_errors_v95 \u003e aux_threshold).astype(np.int8)\n        v95_eval.loc[mask, \u0027L3_aux_anomaly\u0027]      \u003d a_anom[idx]\n        v95_eval.loc[mask, \u0027L3_combined_anomaly\u0027] \u003d (m_anom | a_anom)[idx]\n    else:\n        v95_eval.loc[mask, \u0027L3_combined_anomaly\u0027] \u003d m_anom[idx]\n\ndel v95_seqs, cached_errors, aux_errors_v95; gc.collect()\nlog_mem(\"after eval cleanup\")\nprint(\"\\n✅ P7 done — evaluation complete\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_507746250",
+      "id": "paragraph_1774485303945_1400680778",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 8 — Performance Report\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\nL1_anom      \u003d v95_eval[\u0027alarm_level\u0027] \u003e\u003d 1\nL2_anom      \u003d v95_eval[\u0027if_anomaly_state\u0027].fillna(0) \u003d\u003d 1\nL3_anom      \u003d v95_eval[\u0027L3_combined_anomaly\u0027] \u003d\u003d 1\nn            \u003d len(v95_eval)\n\nL1_tpr       \u003d L1_anom.sum() / n * 100\nL2_tpr       \u003d L2_anom.sum() / n * 100\nL3_tpr       \u003d L3_anom.sum() / n * 100\nL1_L2_OR     \u003d (L1_anom | L2_anom).sum() / n * 100\nL1_L2_L3_OR  \u003d (L1_anom | L2_anom | L3_anom).sum() / n * 100\nprev_or      \u003d 51.78\n\nprint(\"\u003d\" * 60)\nprint(\"Individual TPR\")\nprint(f\"  L1 : {L1_tpr:.2f}%\")\nprint(f\"  L2 : {L2_tpr:.2f}%\")\nprint(f\"  L3 : {L3_tpr:.2f}%\")\n\nprint(\"\\nOR Integration\")\nprint(f\"  L1 + L2        : {L1_L2_OR:.2f}%\")\nprint(f\"  L1 + L2 + L3   : {L1_L2_L3_OR:.2f}%\")\nprint(f\"  L3 contribution: +{L1_L2_L3_OR - L1_L2_OR:.2f}%p\")\n\nprint(\"\\nPer-state breakdown\")\nstate_results \u003d []\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    smask  \u003d v95_eval[\u0027state\u0027] \u003d\u003d state\n    stotal \u003d smask.sum()\n    if stotal \u003d\u003d 0:\n        continue\n    l1s \u003d (L1_anom \u0026 smask).sum() / stotal * 100\n    l2s \u003d (L2_anom \u0026 smask).sum() / stotal * 100\n    l3s \u003d (L3_anom \u0026 smask).sum() / stotal * 100\n    ors \u003d ((L1_anom | L2_anom | L3_anom) \u0026 smask).sum() / stotal * 100\n    tag \u003d \" 🆕\" if state \u003d\u003d \u0027resting\u0027 else \"\"\n    print(f\"\\n  [{state}]{tag}  ({stotal:,} rows)\")\n    print(f\"    L1\u003d{l1s:.2f}%  L2\u003d{l2s:.2f}%  L3\u003d{l3s:.2f}%  OR\u003d{ors:.2f}%\")\n    state_results.append(dict(state\u003dstate, total\u003dstotal,\n                               L1\u003dl1s, L2\u003dl2s, L3\u003dl3s, OR\u003dors))\n\nprint(\"\\nGoal check (target: 60%)\")\nif L1_L2_L3_OR \u003e\u003d 60:\n    print(f\"  ✅ Reached!  {L1_L2_L3_OR:.2f}%  (+{L1_L2_L3_OR - prev_or:.2f}%p)\")\nelif L1_L2_L3_OR \u003e\u003d 55:\n    print(f\"  ⚠️  Near     {L1_L2_L3_OR:.2f}%  (+{L1_L2_L3_OR - prev_or:.2f}%p)\")\nelse:\n    print(f\"  ❌ Below    {L1_L2_L3_OR:.2f}%  (need +{60 - L1_L2_L3_OR:.2f}%p)\")\n\nprint(\"\\n✅ P8 done\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_2057705535",
+      "id": "paragraph_1774485311701_428633495",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 9 — Save Results to S3 (Parquet)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n# FIX 10: Parquet/snappy instead of CSV → 80% smaller, faster to reload\noutput_cols \u003d [c for c in [\n    \u0027vehicle_id\u0027, \u0027time_1min\u0027, \u0027state\u0027,\n    \u0027alarm_level\u0027, \u0027L1_anomaly_score\u0027,\n    \u0027if_anomaly_state\u0027,\n    \u0027L3_main_anomaly\u0027, \u0027L3_aux_anomaly\u0027, \u0027L3_combined_anomaly\u0027,\n] if c in v95_eval.columns]\n\n# Results\nres_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_phase2_v95_results.parquet\"\nwith fs.open(res_path, \u0027wb\u0027) as f:\n    v95_eval[output_cols].to_parquet(\n        f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse\n    )\nprint(f\"✅ Results     → {res_path}\")\n\n# Summary\nsum_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_improvement_comparison.parquet\"\nwith fs.open(sum_path, \u0027wb\u0027) as f:\n    pd.DataFrame({\n        \u0027version\u0027:     [\u0027previous\u0027, \u0027improved\u0027],\n        \u0027L3_TPR\u0027:      [12.60,  round(L3_tpr, 4)],\n        \u0027L1_L2_L3_OR\u0027: [51.78,  round(L1_L2_L3_OR, 4)],\n    }).to_parquet(f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\nprint(f\"✅ Summary     → {sum_path}\")\n\n# State breakdown\nst_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_state_breakdown.parquet\"\nwith fs.open(st_path, \u0027wb\u0027) as f:\n    pd.DataFrame(state_results).to_parquet(\n        f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse\n    )\nprint(f\"✅ State table → {st_path}\")\n\nlog_mem(\"final\")\nprint(\"\\n✅ P9 done — Level 3 Phase 2 complete!\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_1204193270",
+      "id": "paragraph_1774485317946_1446365101",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 10:13:04.006",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "editorHide": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774519984006_1466844676",
+      "id": "paragraph_1774504884213_271073768",
+      "dateCreated": "2026-03-26 10:13:04.006",
+      "status": "READY"
+    }
+  ],
+  "name": "BU_EJK_optimized",
+  "id": "2MM9QNDM8",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
