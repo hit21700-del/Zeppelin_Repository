@@ -1,0 +1,145 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark.pyspark\nprint(\"TEST\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-31 05:31:17.269",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774935074216_1913905289",
+      "id": "paragraph_1774935074216_1913905289",
+      "dateCreated": "2026-03-31 05:31:14.216",
+      "status": "READY"
+    },
+    {
+      "text": "%spark.pyspark\nprint(\"TEST\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-04 02:03:32.534",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "TEST\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1770772725273_388440178",
+      "id": "paragraph_1770772725273_388440178",
+      "dateCreated": "2026-02-11 01:18:45.273",
+      "dateStarted": "2026-03-04 02:03:32.537",
+      "dateFinished": "2026-03-04 02:03:32.814",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\r\nimport tensorflow as tf\r\n\r\n# 1. 사용 가능한 디바이스 목록 확인\r\nprint(tf.config.list_physical_devices())\r\n\r\n# 2. GPU 감지 여부\r\nprint(\"GPU 목록:\", tf.config.list_physical_devices(\u0027GPU\u0027))\r\nprint(\"CPU 목록:\", tf.config.list_physical_devices(\u0027CPU\u0027))\r\n\r\n# 3. 실제 연산이 어디서 실행되는지 확인\r\ntf.debugging.set_log_device_placement(True)\r\na \u003d tf.constant([[1.0, 2.0]])\r\nb \u003d tf.constant([[3.0], [4.0]])\r\nc \u003d tf.matmul(a, b)\r\nprint(c)",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-30 06:29:56.489",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[PhysicalDevice(name\u003d\u0027/physical_device:CPU:0\u0027, device_type\u003d\u0027CPU\u0027)]\nGPU 목록: []\nCPU 목록: [PhysicalDevice(name\u003d\u0027/physical_device:CPU:0\u0027, device_type\u003d\u0027CPU\u0027)]\ntf.Tensor([[11.]], shape\u003d(1, 1), dtype\u003dfloat32)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1770772739918_903062705",
+      "id": "paragraph_1770772739918_903062705",
+      "dateCreated": "2026-02-11 01:18:59.918",
+      "dateStarted": "2026-03-30 06:29:56.493",
+      "dateFinished": "2026-03-30 06:30:22.012",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-26 00:52:45.645",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774486365644_1518047627",
+      "id": "paragraph_1774486365644_1518047627",
+      "dateCreated": "2026-03-26 00:52:45.644",
+      "status": "READY"
+    }
+  ],
+  "name": "TEST",
+  "id": "2MGZ4VJDE",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
