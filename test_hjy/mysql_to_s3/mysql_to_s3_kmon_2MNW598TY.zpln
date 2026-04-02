@@ -906,7 +906,7 @@
       "status": "READY"
     }
   ],
-  "name": "mysql_to_s3",
+  "name": "mysql_to_s3_kmon",
   "id": "2MNW598TY",
   "defaultInterpreterGroup": "spark",
   "version": "0.11.2",
@@ -916,7 +916,5 @@
   "config": {
     "isZeppelinNotebookCronEnable": false
   },
-  "info": {
-    "isRunning": false
-  }
+  "info": {}
 }
