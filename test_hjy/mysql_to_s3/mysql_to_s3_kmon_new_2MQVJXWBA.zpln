@@ -1,0 +1,262 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark.pyspark\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# MySQL -\u003e S3(Ceph) 마이그레이션 설정 (kmon_new)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\nMYSQL_HOST     \u003d \"59.6.99.131\"\r\nMYSQL_PORT     \u003d \"3306\"\r\nMYSQL_DB       \u003d \"QH_KSLAB\"\r\nMYSQL_TABLE    \u003d \"kmon_new\"\r\nMYSQL_USER     \u003d \"qh\"\r\nMYSQL_PASSWORD \u003d \"qh1234!\"\r\nS3_ENDPOINT    \u003d \"http://192.168.0.105:80\"\r\nS3_BUCKET      \u003d \"bigdata\"\r\nS3_BASE_PATH   \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/parquet\"\r\nS3_CHECKPOINT  \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/checkpoint/completed.txt\"\r\nJDBC_URL \u003d (\r\n    f\"jdbc:mysql://{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\r\n    f\"?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\"\r\n)\r\nprint(\"설정 완료\")\r\nprint(f\"JDBC URL   : {JDBC_URL}\")\r\nprint(f\"저장 경로   : {S3_BASE_PATH}\")\r\nprint(f\"체크포인트  : {S3_CHECKPOINT}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-01 08:36:05.882",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "설정 완료\nJDBC URL   : jdbc:mysql://59.6.99.131:3306/QH_KSLAB?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\n저장 경로   : s3a://bigdata/kmon_new/parquet\n체크포인트  : s3a://bigdata/kmon_new/checkpoint/completed.txt\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775030760621_904537528",
+      "id": "paragraph_1775030760621_904537528",
+      "dateCreated": "2026-04-01 08:06:00.621",
+      "dateStarted": "2026-04-01 08:36:05.886",
+      "dateFinished": "2026-04-01 08:36:05.988",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nimport time\r\n\r\n# ── 단말기 목록 (MySQL count 기준) ─────────────────────────\r\nDEVICE_LIST \u003d [\r\n    \"01229848911\",\r\n    \"01229608897\",\r\n    \"01229258900\",\r\n    \"01222292205\",\r\n]\r\n\r\nprops \u003d {\r\n    \"user\":      MYSQL_USER,\r\n    \"password\":  MYSQL_PASSWORD,\r\n    \"driver\":    \"com.mysql.cj.jdbc.Driver\",\r\n    \"fetchsize\": \"10000\",\r\n}\r\n\r\nCHECKPOINT \u003d S3_CHECKPOINT\r\n\r\n# ── 체크포인트: Hadoop API ──────────────────────────────────\r\nhadoop_conf \u003d spark._jsc.hadoopConfiguration()\r\nfs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    spark._jvm.java.net.URI(f\"s3a://{S3_BUCKET}\"), hadoop_conf\r\n)\r\n\r\ndef checkpoint_load():\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(CHECKPOINT)\r\n    if not fs.exists(p):\r\n        return set()\r\n    stream \u003d fs.open(p)\r\n    reader \u003d spark._jvm.java.io.BufferedReader(\r\n        spark._jvm.java.io.InputStreamReader(stream)\r\n    )\r\n    completed \u003d set()\r\n    line \u003d reader.readLine()\r\n    while line is not None:\r\n        if line.strip():\r\n            completed.add(line.strip())\r\n        line \u003d reader.readLine()\r\n    reader.close()\r\n    return completed\r\n\r\ndef checkpoint_save(dev_id, completed):\r\n    completed.add(dev_id)\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(CHECKPOINT)\r\n    stream \u003d fs.create(p, True)\r\n    writer \u003d spark._jvm.java.io.PrintWriter(\r\n        spark._jvm.java.io.OutputStreamWriter(stream, \"UTF-8\")\r\n    )\r\n    for d in sorted(completed):\r\n        writer.println(d)\r\n    writer.close()\r\n\r\n# ── 체크포인트 로드 ─────────────────────────────────────────\r\ncompleted \u003d checkpoint_load()\r\nif completed:\r\n    print(f\"체크포인트 로드: 완료된 단말기 {len(completed)}개 → 건너뜀\")\r\nelse:\r\n    print(\"체크포인트 없음 → 처음부터 시작\")\r\n\r\nresults \u003d []\r\n\r\n# ── 단말기별 순차 처리 ──────────────────────────────────────\r\nprint(f\"\\n[총 {len(DEVICE_LIST)}개 단말기 처리 시작]\")\r\nfor dev_id in DEVICE_LIST:\r\n    if dev_id in completed:\r\n        print(f\"[SKIP]  {dev_id}\")\r\n        results.append((dev_id, -1, 0, \"SKIP\"))\r\n        continue\r\n\r\n    t0 \u003d time.time()\r\n    print(f\"[START] {dev_id}\")\r\n\r\n    try:\r\n        df \u003d spark.read.jdbc(\r\n            url\u003dJDBC_URL,\r\n            table\u003dMYSQL_TABLE,\r\n            predicates\u003d[f\"id \u003d \u0027{dev_id}\u0027\"],\r\n            properties\u003dprops\r\n        )\r\n        out_path \u003d f\"{S3_BASE_PATH}/id\u003d{dev_id}\"\r\n        df.write \\\r\n            .mode(\"overwrite\") \\\r\n            .option(\"compression\", \"snappy\") \\\r\n            .option(\"maxRecordsPerFile\", \"2000000\") \\\r\n            .parquet(out_path)\r\n\r\n        saved \u003d spark.read.parquet(out_path).count()\r\n        elapsed \u003d round(time.time() - t0, 1)\r\n\r\n        checkpoint_save(dev_id, completed)\r\n\r\n        print(f\"[OK]    {dev_id} | {saved:,}건 | {elapsed}s\")\r\n        results.append((dev_id, saved, elapsed, \"OK\"))\r\n\r\n    except Exception as e:\r\n        elapsed \u003d round(time.time() - t0, 1)\r\n        print(f\"[FAIL]  {dev_id} | {elapsed}s | {e}\")\r\n        results.append((dev_id, -1, elapsed, \"FAIL\"))\r\n\r\n    finally:\r\n        try:\r\n            df.unpersist()\r\n        except:\r\n            pass\r\n        spark.catalog.clearCache()\r\n\r\n# ── 최종 요약 ───────────────────────────────────────────────\r\nprint(\"\\n\" + \"\u003d\" * 60)\r\nprint(\"최종 결과 요약\")\r\nprint(\"\u003d\" * 60)\r\ntotal_cnt \u003d 0\r\nfail_list \u003d []\r\nfor dev_id, cnt, elapsed, status in results:\r\n    if status \u003d\u003d \"SKIP\":\r\n        print(f\"  [SKIP]  {dev_id}\")\r\n    elif status \u003d\u003d \"OK\":\r\n        print(f\"  [OK]    {dev_id} | {cnt:\u003e10,}건 | {elapsed}s\")\r\n        total_cnt +\u003d cnt\r\n    else:\r\n        print(f\"  [FAIL]  {dev_id} | {elapsed}s\")\r\n        fail_list.append(dev_id)\r\nprint(\"\u003d\" * 60)\r\nprint(f\"  이번 실행 저장 건수: {total_cnt:,}건\")\r\nif fail_list:\r\n    print(f\"  실패 단말기 ({len(fail_list)}개): {fail_list}\")\r\nelse:\r\n    print(\"  실패 없음\")\r\nprint(\"\u003d\" * 60)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-01 08:36:07.287",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "체크포인트 없음 → 처음부터 시작\n\n[총 4개 단말기 처리 시작]\n[START] 01229848911\n[OK]    01229848911 | 3,891,104건 | 142.9s\n[START] 01229608897\n[OK]    01229608897 | 146,936건 | 25.9s\n[START] 01229258900\n[OK]    01229258900 | 1,077,800건 | 53.2s\n[START] 01222292205\n[OK]    01222292205 | 72,224건 | 23.4s\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n최종 결과 요약\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  [OK]    01229848911 |  3,891,104건 | 142.9s\n  [OK]    01229608897 |    146,936건 | 25.9s\n  [OK]    01229258900 |  1,077,800건 | 53.2s\n  [OK]    01222292205 |     72,224건 | 23.4s\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  이번 실행 저장 건수: 5,188,064건\n  실패 없음\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d15"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775030768087_1486341557",
+      "id": "paragraph_1775030768087_1486341557",
+      "dateCreated": "2026-04-01 08:06:08.088",
+      "dateStarted": "2026-04-01 08:36:07.290",
+      "dateFinished": "2026-04-01 08:40:13.092",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# 저장 결과 검증 - kmon_new 단말기별 건수 확인\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n\r\nmysql_counts \u003d {\r\n    \"01229848911\": 3891104,\r\n    \"01229608897\":  146936,\r\n    \"01229258900\": 1077800,\r\n    \"01222292205\":   72224,\r\n}\r\n\r\nhadoop_conf \u003d spark._jsc.hadoopConfiguration()\r\nfs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    spark._jvm.java.net.URI(\"s3a://bigdata\"), hadoop_conf\r\n)\r\n\r\ndef s3_exists(path):\r\n    return fs.exists(spark._jvm.org.apache.hadoop.fs.Path(path))\r\n\r\nprint(\"\u003d\" * 70)\r\nprint(f\"  {\u0027단말기ID\u0027:20s} {\u0027MySQL\u0027:\u003e12s} {\u0027Parquet\u0027:\u003e12s} {\u0027상태\u0027:\u003e6s}\")\r\nprint(\"\u003d\" * 70)\r\n\r\ntotal_mysql \u003d 0\r\ntotal_parq  \u003d 0\r\nfail_list   \u003d []\r\nmissing_list \u003d []\r\n\r\nfor dev_id, mysql_cnt in mysql_counts.items():\r\n    path \u003d f\"{S3_BASE_PATH}/id\u003d{dev_id}\"\r\n    total_mysql +\u003d mysql_cnt\r\n\r\n    if not s3_exists(path):\r\n        print(f\"  {dev_id:20s} {mysql_cnt:\u003e12,} {\u0027\u0027:\u003e12s}  MISSING\")\r\n        missing_list.append(dev_id)\r\n        continue\r\n\r\n    parq_cnt \u003d spark.read.parquet(path).count()\r\n    total_parq +\u003d parq_cnt\r\n    status \u003d \"OK\" if parq_cnt \u003d\u003d mysql_cnt else \"NG\"\r\n    if status \u003d\u003d \"NG\":\r\n        fail_list.append(dev_id)\r\n    print(f\"  {dev_id:20s} {mysql_cnt:\u003e12,} {parq_cnt:\u003e12,}  {status}\")\r\n\r\nprint(\"\u003d\" * 70)\r\nprint(f\"  {\u0027합계\u0027:20s} {total_mysql:\u003e12,} {total_parq:\u003e12,}\")\r\nprint(\"\u003d\" * 70)\r\nif fail_list:\r\n    print(f\"  건수 불일치: {fail_list}\")\r\nif missing_list:\r\n    print(f\"  저장 누락:   {missing_list}\")\r\nif not fail_list and not missing_list:\r\n    print(\"  전체 검증 OK\")\r\nprint(\"\u003d\" * 70)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-01 08:58:53.956",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  단말기ID                       MySQL      Parquet     상태\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  01229848911             3,891,104    3,891,104  OK\n  01229608897               146,936      146,936  OK\n  01229258900             1,077,800    1,077,800  OK\n  01222292205                72,224       72,224  OK\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  합계                      5,188,064    5,188,064\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  전체 검증 OK\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d25"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d26"
+            },
+            {
+              "jobUrl": "//4040-spark-2mqvjxwba-jpxtec.local.zeppelin-project.org/jobs/job?id\u003d27"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775030776343_634900730",
+      "id": "paragraph_1775030776343_634900730",
+      "dateCreated": "2026-04-01 08:06:16.343",
+      "dateStarted": "2026-04-01 08:58:53.960",
+      "dateFinished": "2026-04-01 08:58:56.947",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-01 08:58:53.959",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775033933959_336183396",
+      "id": "paragraph_1775033933959_336183396",
+      "dateCreated": "2026-04-01 08:58:53.959",
+      "status": "READY"
+    }
+  ],
+  "name": "mysql_to_s3_kmon_new",
+  "id": "2MQVJXWBA",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false
+  }
+}
