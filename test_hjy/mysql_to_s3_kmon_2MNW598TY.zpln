@@ -1,0 +1,922 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark.pyspark\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# MySQL -\u003e S3(Ceph) 마이그레이션 설정\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\nMYSQL_HOST     \u003d \"59.6.99.131\"\r\nMYSQL_PORT     \u003d \"3306\"\r\nMYSQL_DB       \u003d \"QH_KSLAB\"\r\nMYSQL_TABLE    \u003d \"kmon\"\r\nMYSQL_USER     \u003d \"qh\"\r\nMYSQL_PASSWORD \u003d \"qh1234!\"\r\nS3_ENDPOINT    \u003d \"http://192.168.0.105:80\"\r\nS3_BUCKET      \u003d \"bigdata\"\r\nS3_BASE_PATH   \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/parquet\"\r\nS3_CHECKPOINT  \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/checkpoint\"\r\n\r\nJDBC_URL \u003d (\r\n    f\"jdbc:mysql://{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DB}\"\r\n    f\"?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\"\r\n)\r\n\r\nprint(\"설정 완료\")\r\nprint(f\"JDBC URL   : {JDBC_URL}\")\r\nprint(f\"저장 경로   : {S3_BASE_PATH}\")\r\nprint(f\"체크포인트  : {S3_CHECKPOINT}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 01:22:28.393",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "설정 완료\nJDBC URL   : jdbc:mysql://59.6.99.131:3306/QH_KSLAB?useSSL\u003dfalse\u0026allowPublicKeyRetrieval\u003dtrue\n저장 경로   : s3a://bigdata/kmon/parquet\n체크포인트  : s3a://bigdata/kmon/checkpoint\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774505120880_1997867735",
+      "id": "paragraph_1774505120880_1997867735",
+      "dateCreated": "2026-03-26 06:05:20.880",
+      "dateStarted": "2026-03-27 01:22:28.425",
+      "dateFinished": "2026-03-27 01:23:55.807",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\n\r\nimport time\r\nfrom datetime import datetime, timedelta\r\n\r\n# ── predicates 생성 함수 ────────────────────────────────────\r\ndef generate_predicates(dev_id, start_str, end_str):\r\n    preds \u003d []\r\n    end \u003d datetime.strptime(end_str, \"%Y-%m-%d\") + timedelta(days\u003d1)\r\n    cur \u003d datetime.strptime(start_str, \"%Y-%m-%d\")\r\n    yearly_end \u003d datetime(2022, 1, 1)\r\n\r\n    while cur \u003c yearly_end and cur \u003c end:\r\n        nxt \u003d datetime(cur.year + 1, 1, 1)\r\n        nxt \u003d min(nxt, yearly_end, end)\r\n        preds.append(\r\n            f\"id \u003d \u0027{dev_id}\u0027 AND c_date \u003e\u003d \u0027{cur.strftime(\u0027%Y-%m-%d\u0027)}\u0027 \"\r\n            f\"AND c_date \u003c \u0027{nxt.strftime(\u0027%Y-%m-%d\u0027)}\u0027\"\r\n        )\r\n        cur \u003d nxt\r\n\r\n    while cur \u003c end:\r\n        nxt \u003d cur + timedelta(weeks\u003d1)\r\n        nxt \u003d min(nxt, end)\r\n        preds.append(\r\n            f\"id \u003d \u0027{dev_id}\u0027 AND c_date \u003e\u003d \u0027{cur.strftime(\u0027%Y-%m-%d\u0027)}\u0027 \"\r\n            f\"AND c_date \u003c \u0027{nxt.strftime(\u0027%Y-%m-%d\u0027)}\u0027\"\r\n        )\r\n        cur \u003d nxt\r\n\r\n    # 범위 밖 데이터 포함 (1970년대 등 이상값 포함)\r\n    preds.append(f\"id \u003d \u0027{dev_id}\u0027 AND c_date \u003c \u0027{start_str}\u0027\")\r\n    preds.append(f\"id \u003d \u0027{dev_id}\u0027 AND c_date IS NULL\")\r\n    return preds\r\n\r\n# ── 단말기별 min/max c_date ─────────────────────────────────\r\nDEVICE_DATE_RANGES \u003d [\r\n    (\"01229168898\", \"2022-11-28\", \"2025-06-30\"),\r\n    (\"01229198901\", \"2022-11-28\", \"2025-07-01\"),\r\n    (\"01229208905\", \"2000-01-01\", \"2000-01-01\"),\r\n    (\"01229219366\", \"2000-01-01\", \"2024-02-19\"),\r\n    (\"01229238905\", \"2022-11-08\", \"2023-05-17\"),\r\n    (\"01229258900\", \"2000-01-01\", \"2025-01-05\"),\r\n    (\"01229268895\", \"2022-11-28\", \"2025-06-30\"),\r\n    (\"01229279367\", \"2022-11-09\", \"2024-02-18\"),\r\n    (\"01229298900\", \"1999-12-11\", \"2025-07-01\"),\r\n    (\"01229408898\", \"2000-01-01\", \"2000-01-01\"),\r\n    (\"01229428953\", \"2000-01-31\", \"2023-07-04\"),\r\n    (\"01229438897\", \"1999-12-04\", \"2025-10-02\"),\r\n    (\"01229438903\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229438904\", \"2022-11-10\", \"2025-07-01\"),\r\n    (\"01229438905\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229459372\", \"2000-01-01\", \"2022-12-09\"),\r\n    (\"01229508904\", \"1999-12-01\", \"2023-02-22\"),\r\n    (\"01229518902\", \"1999-11-30\", \"2025-03-03\"),\r\n    (\"01229518904\", \"1999-01-01\", \"2025-07-01\"),  # 1973 이상값 → c_date \u003c \u00271999-01-01\u0027 로 포함\r\n    (\"01229518905\", \"1999-12-01\", \"2023-02-22\"),\r\n    (\"01229528904\", \"1999-11-30\", \"2023-11-22\"),\r\n    (\"01229528905\", \"2022-11-08\", \"2023-11-30\"),\r\n    (\"01229559364\", \"2022-11-08\", \"2024-02-19\"),\r\n    (\"01229608897\", \"1999-01-01\", \"2024-08-29\"),  # 1970 이상값 → c_date \u003c \u00271999-01-01\u0027 로 포함\r\n    (\"01229618901\", \"1999-12-07\", \"2025-07-01\"),\r\n    (\"01229628897\", \"1999-01-01\", \"2024-08-16\"),  # 1970 이상값 → c_date \u003c \u00271999-01-01\u0027 로 포함\r\n    (\"01229638933\", \"2022-11-07\", \"2023-01-11\"),\r\n    (\"01229668904\", \"2022-11-09\", \"2023-10-19\"),\r\n    (\"01229808904\", \"2000-01-01\", \"2000-01-01\"),\r\n    (\"01229828903\", \"1999-01-01\", \"2023-10-19\"),  # 1973 이상값 → c_date \u003c \u00271999-01-01\u0027 로 포함\r\n    (\"01229828961\", \"2000-03-01\", \"2023-06-07\"),\r\n    (\"01229838902\", \"2022-11-07\", \"2025-07-01\"),\r\n    (\"01229838910\", \"2022-11-09\", \"2022-12-19\"),\r\n    (\"01229838915\", \"1999-11-30\", \"2025-03-12\"),\r\n    (\"01229838918\", \"2000-01-01\", \"2023-02-21\"),\r\n    (\"01229838969\", \"2022-11-10\", \"2023-12-18\"),\r\n    (\"01229848907\", \"2000-01-01\", \"2000-01-01\"),\r\n    (\"01229848911\", \"1999-11-30\", \"2024-08-30\"),\r\n    (\"01229848920\", \"1999-11-30\", \"2025-03-13\"),\r\n    (\"01229848956\", \"2022-11-09\", \"2023-03-09\"),\r\n    (\"01229848978\", \"1999-12-01\", \"2024-11-16\"),\r\n    (\"01229848988\", \"2000-01-01\", \"2023-02-10\"),\r\n    (\"01229858910\", \"1999-12-01\", \"2025-07-01\"),\r\n    (\"01229858987\", \"1999-01-01\", \"2022-10-29\"),  # 1973 이상값 → c_date \u003c \u00271999-01-01\u0027 로 포함\r\n    (\"01229859021\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229868912\", \"2022-11-17\", \"2025-07-01\"),\r\n    (\"01229868966\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229888910\", \"2022-11-07\", \"2023-08-03\"),\r\n    (\"01229888959\", \"2000-03-05\", \"2025-07-01\"),\r\n    (\"01229889022\", \"2000-01-01\", \"2025-07-01\"),\r\n    (\"01229898903\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229898910\", \"2022-11-11\", \"2023-03-29\"),\r\n    (\"01229898913\", \"1999-12-01\", \"2023-06-07\"),\r\n    (\"01229898935\", \"2022-11-07\", \"2025-05-07\"),\r\n    (\"01229898943\", \"2022-11-09\", \"2025-07-01\"),\r\n    (\"01229898971\", \"1999-12-16\", \"2023-06-07\"),\r\n    (\"01229898996\", \"1999-12-01\", \"2025-06-25\"),\r\n    (\"01229938960\", \"2022-11-08\", \"2024-06-25\"),\r\n    (\"01229948937\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229948960\", \"1999-12-10\", \"2025-06-30\"),\r\n    (\"01229948961\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229958960\", \"2022-11-09\", \"2023-03-02\"),\r\n    (\"01229958961\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229958978\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229968960\", \"1999-12-01\", \"2024-12-05\"),\r\n    (\"01229968961\", \"1999-12-22\", \"2023-10-18\"),\r\n    (\"01229968962\", \"1999-11-30\", \"2025-07-01\"),\r\n    (\"01229968965\", \"2000-01-01\", \"2023-06-07\"),\r\n    (\"01229968996\", \"1999-11-30\", \"2025-07-29\"),\r\n    (\"01229978913\", \"2000-01-01\", \"2023-12-22\"),\r\n    (\"01229978961\", \"1999-11-30\", \"2025-07-01\"),\r\n]\r\n\r\nprops \u003d {\r\n    \"user\":     MYSQL_USER,\r\n    \"password\": MYSQL_PASSWORD,\r\n    \"driver\":   \"com.mysql.cj.jdbc.Driver\",\r\n    \"fetchsize\": \"10000\",\r\n}\r\n\r\nBASE_PATH  \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/parquet\"\r\nCHECKPOINT \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/checkpoint/completed.txt\"\r\n\r\n# ── 체크포인트: Hadoop API 사용 ─────────────────────────────\r\nhadoop_conf \u003d spark._jsc.hadoopConfiguration()\r\nfs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    spark._jvm.java.net.URI(f\"s3a://{S3_BUCKET}\"), hadoop_conf\r\n)\r\n\r\ndef checkpoint_load():\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(CHECKPOINT)\r\n    if not fs.exists(p):\r\n        return set()\r\n    stream \u003d fs.open(p)\r\n    reader \u003d spark._jvm.java.io.BufferedReader(\r\n        spark._jvm.java.io.InputStreamReader(stream)\r\n    )\r\n    completed \u003d set()\r\n    line \u003d reader.readLine()\r\n    while line is not None:\r\n        if line.strip():\r\n            completed.add(line.strip())\r\n        line \u003d reader.readLine()\r\n    reader.close()\r\n    return completed\r\n\r\ndef checkpoint_save(dev_id, completed):\r\n    completed.add(dev_id)\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(CHECKPOINT)\r\n    stream \u003d fs.create(p, True)  # True \u003d overwrite\r\n    writer \u003d spark._jvm.java.io.PrintWriter(\r\n        spark._jvm.java.io.OutputStreamWriter(stream, \"UTF-8\")\r\n    )\r\n    for d in sorted(completed):\r\n        writer.println(d)\r\n    writer.close()\r\n\r\n# ── 체크포인트 로드 ─────────────────────────────────────────\r\ncompleted \u003d checkpoint_load()\r\nif completed:\r\n    print(f\"체크포인트 로드: 완료된 단말기 {len(completed)}개 → 건너뜀\")\r\nelse:\r\n    print(\"체크포인트 없음 → 처음부터 시작\")\r\n\r\n# ── 재처리 대상: NG 단말기는 강제 재처리 ───────────────────\r\nNG_IDS \u003d {\r\n    \"01229518904\", \"01229828903\",\r\n    \"01229608897\", \"01229628897\", \"01229858987\"\r\n}\r\nfor ng in NG_IDS:\r\n    completed.discard(ng)\r\n    print(f\"[재처리] {ng}\")\r\n\r\nresults \u003d []\r\n\r\n# ── 단말기별 순차 처리 ──────────────────────────────────────\r\nprint(f\"\\n[총 {len(DEVICE_DATE_RANGES)}개 단말기 처리 시작]\")\r\nfor dev_id, min_d, max_d in DEVICE_DATE_RANGES:\r\n    if dev_id in completed:\r\n        print(f\"[SKIP]  {dev_id}\")\r\n        results.append((dev_id, -1, 0, \"SKIP\"))\r\n        continue\r\n\r\n    t0 \u003d time.time()\r\n    preds \u003d generate_predicates(dev_id, min_d, max_d)\r\n    print(f\"[START] {dev_id} | predicates: {len(preds)}개\")\r\n\r\n    try:\r\n        df \u003d spark.read.jdbc(\r\n            url\u003dJDBC_URL,\r\n            table\u003dMYSQL_TABLE,\r\n            predicates\u003dpreds,\r\n            properties\u003dprops\r\n        )\r\n        out_path \u003d f\"{BASE_PATH}/id\u003d{dev_id}\"\r\n        df.write \\\r\n            .mode(\"overwrite\") \\\r\n            .option(\"compression\", \"snappy\") \\\r\n            .option(\"maxRecordsPerFile\", \"2000000\") \\\r\n            .parquet(out_path)\r\n\r\n        saved \u003d spark.read.parquet(out_path).count()\r\n        elapsed \u003d round(time.time() - t0, 1)\r\n\r\n        checkpoint_save(dev_id, completed)\r\n\r\n        print(f\"[OK]    {dev_id} | {saved:,}건 | {elapsed}s\")\r\n        results.append((dev_id, saved, elapsed, \"OK\"))\r\n\r\n    except Exception as e:\r\n        elapsed \u003d round(time.time() - t0, 1)\r\n        print(f\"[FAIL]  {dev_id} | {elapsed}s | {e}\")\r\n        results.append((dev_id, -1, elapsed, \"FAIL\"))\r\n\r\n    finally:\r\n        try:\r\n            df.unpersist()\r\n        except:\r\n            pass\r\n        spark.catalog.clearCache()\r\n\r\n# ── 최종 요약 ───────────────────────────────────────────────\r\nprint(\"\\n\" + \"\u003d\" * 60)\r\nprint(\"최종 결과 요약\")\r\nprint(\"\u003d\" * 60)\r\ntotal_cnt \u003d 0\r\nfail_list \u003d []\r\nfor dev_id, cnt, elapsed, status in results:\r\n    if status \u003d\u003d \"SKIP\":\r\n        print(f\"  [SKIP]  {dev_id:20s}\")\r\n    elif status \u003d\u003d \"OK\":\r\n        print(f\"  [OK]    {dev_id:20s} | {cnt:\u003e12,}건 | {elapsed}s\")\r\n        total_cnt +\u003d cnt\r\n    else:\r\n        print(f\"  [FAIL]  {dev_id:20s} | {elapsed}s\")\r\n        fail_list.append(dev_id)\r\nprint(\"\u003d\" * 60)\r\nprint(f\"  이번 실행 저장 건수: {total_cnt:,}건\")\r\nif fail_list:\r\n    print(f\"  실패 단말기 ({len(fail_list)}개): {fail_list}\")\r\nelse:\r\n    print(\"  실패 없음\")\r\nprint(\"\u003d\" * 60)",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 01:23:55.888",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "체크포인트 없음 → 처음부터 시작\n[재처리] 01229608897\n[재처리] 01229828903\n[재처리] 01229518904\n[재처리] 01229628897\n[재처리] 01229858987\n\n[총 71개 단말기 처리 시작]\n[START] 01229168898 | predicates: 138개\nERROR:root:KeyboardInterrupt while sending command.\nTraceback (most recent call last):\n  File \"/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py\", line 1038, in send_command\n    response \u003d connection.send_command(command)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py\", line 1217, in send_command\n    answer \u003d smart_decode(self.stream.readline()[:-1])\n                          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/socket.py\", line 718, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/spark/python/pyspark/context.py\", line 382, in signal_handler\n    raise KeyboardInterrupt()\nKeyboardInterrupt\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 197:             .parquet(out_path)\r\nTraceback (most recent call last):\n  File \"/tmp/python4408811858050093114/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 197, in \u003cmodule\u003e\n  File \"/spark/python/pyspark/sql/readwriter.py\", line 1721, in parquet\n    self._jwrite.parquet(path)\n  File \"/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py\", line 1321, in __call__\n    answer \u003d self.gateway_client.send_command(command)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py\", line 1038, in send_command\n    response \u003d connection.send_command(command)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py\", line 1217, in send_command\n    answer \u003d smart_decode(self.stream.readline()[:-1])\n                          ^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/socket.py\", line 718, in readinto\n    return self._sock.recv_into(b)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/spark/python/pyspark/context.py\", line 382, in signal_handler\n    raise KeyboardInterrupt()\nKeyboardInterrupt\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d0"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774505478297_951230849",
+      "id": "paragraph_1774505478297_951230849",
+      "dateCreated": "2026-03-26 06:11:18.297",
+      "dateStarted": "2026-03-27 01:23:55.902",
+      "dateFinished": "2026-03-27 01:25:27.959",
+      "status": "ABORT"
+    },
+    {
+      "text": "%spark.pyspark\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# 저장 결과 검증 - 단말기별 건수 확인\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n\r\nall_ids \u003d [\r\n    \"01229438897\", \"01229438903\", \"01229898903\", \"01229948961\",\r\n    \"01229438905\", \"01229848920\", \"01229898943\", \"01229898996\",\r\n    \"01229838915\", \"01229898935\", \"01229948960\", \"01229968960\",\r\n    \"01229888959\", \"01229858910\", \"01229958961\", \"01229848978\",\r\n    \"01229618901\", \"01229518904\", \"01229828903\", \"01229868966\",\r\n    \"01229978961\", \"01229968996\", \"01229978913\", \"01229528905\",\r\n    \"01229208905\", \"01229838969\", \"01229668904\", \"01229868912\",\r\n    \"01229528904\", \"01229968965\", \"01229938960\", \"01229559364\",\r\n    \"01229219366\", \"01229238905\", \"01229258900\", \"01229518905\",\r\n    \"01229828961\", \"01229848911\", \"01229859021\", \"01229958978\",\r\n    \"01229968961\", \"01229438904\", \"01229508904\", \"01229838902\",\r\n    \"01229838918\", \"01229848956\", \"01229888910\", \"01229889022\",\r\n    \"01229898971\", \"01229948937\", \"01229898913\", \"01229268895\",\r\n    \"01229298900\", \"01229168898\", \"01229198901\", \"01229848988\",\r\n    \"01229838910\", \"01229518902\", \"01229638933\", \"01229428953\",\r\n    \"01229958960\", \"01229968962\", \"01229279367\", \"01229898910\",\r\n    \"01229408898\", \"01229459372\", \"01229608897\", \"01229628897\",\r\n    \"01229808904\", \"01229848907\", \"01229858987\",\r\n]\r\n\r\n# MySQL 기준 건수 (단말기별 count 결과)\r\nmysql_counts \u003d {\r\n    \"01229438897\": 41256568, \"01229438903\": 36924332,\r\n    \"01229898903\": 33928264, \"01229948961\": 30350616,\r\n    \"01229438905\": 29862260, \"01229848920\": 29338412,\r\n    \"01229898943\": 28689768, \"01229898996\": 25044148,\r\n    \"01229838915\": 24741344, \"01229898935\": 24523332,\r\n    \"01229948960\": 22266864, \"01229968960\": 21961192,\r\n    \"01229888959\": 20952468, \"01229858910\": 19920968,\r\n    \"01229958961\": 18358016, \"01229848978\": 17453080,\r\n    \"01229618901\": 17738868, \"01229518904\": 15824592,\r\n    \"01229828903\": 14142776, \"01229868966\": 14726188,\r\n    \"01229978961\": 14007708, \"01229968996\": 12607708,\r\n    \"01229978913\": 11362652, \"01229528905\": 11611348,\r\n    \"01229208905\": 11532460, \"01229838969\": 10947552,\r\n    \"01229668904\": 10906792, \"01229868912\":  8148632,\r\n    \"01229528904\":  8124956, \"01229968965\":  7686676,\r\n    \"01229938960\":  7485424, \"01229559364\":  7509400,\r\n    \"01229219366\":  4444680, \"01229238905\":  5561764,\r\n    \"01229258900\":  3935116, \"01229518905\":  4562236,\r\n    \"01229828961\":  5651848, \"01229848911\":  5005496,\r\n    \"01229859021\":  5931472, \"01229958978\":  5774216,\r\n    \"01229968961\":  5927116, \"01229438904\":  3185048,\r\n    \"01229508904\":  3003884, \"01229838902\":  3665248,\r\n    \"01229838918\":  4319636, \"01229848956\":  3246228,\r\n    \"01229888910\":  3257456, \"01229889022\":  3231640,\r\n    \"01229898971\":  3281588, \"01229948937\":  4531744,\r\n    \"01229898913\":  4558392, \"01229268895\":  2590936,\r\n    \"01229298900\":  2205252, \"01229168898\":  2771208,\r\n    \"01229198901\":  2276744, \"01229848988\":   683000,\r\n    \"01229838910\":   650688, \"01229518902\":  1501328,\r\n    \"01229638933\":   795972, \"01229428953\":   861340,\r\n    \"01229958960\":  2212956, \"01229968962\":  2360620,\r\n    \"01229279367\":  1612768, \"01229898910\":  1595044,\r\n    \"01229408898\":      108, \"01229459372\":    26594,\r\n    \"01229608897\":      448, \"01229628897\":   116424,\r\n    \"01229808904\":       64, \"01229848907\":       64,\r\n    \"01229858987\":    65600,\r\n}\r\n\r\nhadoop_conf \u003d spark._jsc.hadoopConfiguration()\r\nfs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    spark._jvm.java.net.URI(\"s3a://bigdata\"), hadoop_conf\r\n)\r\n\r\ndef s3_exists(path):\r\n    return fs.exists(spark._jvm.org.apache.hadoop.fs.Path(path))\r\n\r\nprint(\"\u003d\" * 70)\r\nprint(f\"  {\u0027단말기ID\u0027:20s} {\u0027MySQL\u0027:\u003e12s} {\u0027Parquet\u0027:\u003e12s} {\u0027상태\u0027:\u003e6s}\")\r\nprint(\"\u003d\" * 70)\r\n\r\ntotal_mysql  \u003d 0\r\ntotal_parq   \u003d 0\r\nfail_list    \u003d []\r\nmissing_list \u003d []\r\n\r\nfor dev_id in all_ids:\r\n    path \u003d f\"{S3_BASE_PATH}/id\u003d{dev_id}\"\r\n    mysql_cnt \u003d mysql_counts.get(dev_id, 0)\r\n    total_mysql +\u003d mysql_cnt\r\n\r\n    if not s3_exists(path):\r\n        print(f\"  {dev_id:20s} {mysql_cnt:\u003e12,} {\u0027\u0027:\u003e12s}  MISSING\")\r\n        missing_list.append(dev_id)\r\n        continue\r\n\r\n    parq_cnt \u003d spark.read.parquet(path).count()\r\n    total_parq +\u003d parq_cnt\r\n    status \u003d \"OK\" if parq_cnt \u003d\u003d mysql_cnt else \"NG\"\r\n    if status \u003d\u003d \"NG\":\r\n        fail_list.append(dev_id)\r\n    print(f\"  {dev_id:20s} {mysql_cnt:\u003e12,} {parq_cnt:\u003e12,}  {status}\")\r\n\r\nprint(\"\u003d\" * 70)\r\nprint(f\"  {\u0027합계\u0027:20s} {total_mysql:\u003e12,} {total_parq:\u003e12,}\")\r\nprint(\"\u003d\" * 70)\r\nif fail_list:\r\n    print(f\"  건수 불일치: {fail_list}\")\r\nif missing_list:\r\n    print(f\"  저장 누락:   {missing_list}\")\r\nif not fail_list and not missing_list:\r\n    print(\"  전체 검증 OK\")\r\nprint(\"\u003d\" * 70)",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 01:33:07.301",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  단말기ID                       MySQL      Parquet     상태\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  01229438897            41,256,568   41,256,568  OK\n  01229438903            36,924,332   36,924,332  OK\n  01229898903            33,928,264   33,928,264  OK\n  01229948961            30,350,616   30,350,616  OK\n  01229438905            29,862,260   29,862,260  OK\n  01229848920            29,338,412   29,338,412  OK\n  01229898943            28,689,768   28,689,768  OK\n  01229898996            25,044,148   25,044,148  OK\n  01229838915            24,741,344   24,741,344  OK\n  01229898935            24,523,332   24,523,332  OK\n  01229948960            22,266,864   22,266,864  OK\n  01229968960            21,961,192   21,961,192  OK\n  01229888959            20,952,468   20,952,468  OK\n  01229858910            19,920,968   19,920,968  OK\n  01229958961            18,358,016   18,358,016  OK\n  01229848978            17,453,080   17,453,080  OK\n  01229618901            17,738,868   17,738,868  OK\n  01229518904            15,824,592   15,824,592  OK\n  01229828903            14,142,776   14,142,776  OK\n  01229868966            14,726,188   14,726,188  OK\n  01229978961            14,007,708   14,007,708  OK\n  01229968996            12,607,708   12,607,708  OK\n  01229978913            11,362,652   11,362,652  OK\n  01229528905            11,611,348   11,611,348  OK\n  01229208905            11,532,460   11,532,460  OK\n  01229838969            10,947,552   10,947,552  OK\n  01229668904            10,906,792   10,906,792  OK\n  01229868912             8,148,632    8,148,632  OK\n  01229528904             8,124,956    8,124,956  OK\n  01229968965             7,686,676    7,686,676  OK\n  01229938960             7,485,424    7,485,424  OK\n  01229559364             7,509,400    7,509,400  OK\n  01229219366             4,444,680    4,444,680  OK\n  01229238905             5,561,764    5,561,764  OK\n  01229258900             3,935,116    3,935,116  OK\n  01229518905             4,562,236    4,562,236  OK\n  01229828961             5,651,848    5,651,848  OK\n  01229848911             5,005,496    5,005,496  OK\n  01229859021             5,931,472    5,931,472  OK\n  01229958978             5,774,216    5,774,216  OK\n  01229968961             5,927,116    5,927,116  OK\n  01229438904             3,185,048    3,185,048  OK\n  01229508904             3,003,884    3,003,884  OK\n  01229838902             3,665,248    3,665,248  OK\n  01229838918             4,319,636    4,319,636  OK\n  01229848956             3,246,228    3,246,228  OK\n  01229888910             3,257,456    3,257,456  OK\n  01229889022             3,231,640    3,231,640  OK\n  01229898971             3,281,588    3,281,588  OK\n  01229948937             4,531,744    4,531,744  OK\n  01229898913             4,558,392    4,558,392  OK\n  01229268895             2,590,936    2,590,936  OK\n  01229298900             2,205,252    2,205,252  OK\n  01229168898             2,771,208    2,771,208  OK\n  01229198901             2,276,744    2,276,744  OK\n  01229848988               683,000      683,000  OK\n  01229838910               650,688      650,688  OK\n  01229518902             1,501,328    1,501,328  OK\n  01229638933               795,972      795,972  OK\n  01229428953               861,340      861,340  OK\n  01229958960             2,212,956    2,212,956  OK\n  01229968962             2,360,620    2,360,620  OK\n  01229279367             1,612,768    1,612,768  OK\n  01229898910             1,595,044    1,595,044  OK\n  01229408898                   108          108  OK\n  01229459372                26,594       26,594  OK\n  01229608897                   448          448  OK\n  01229628897               116,424      116,424  OK\n  01229808904                    64           64  OK\n  01229848907                    64           64  OK\n  01229858987                65,600       65,600  OK\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  합계                    715,337,330  715,337,330\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n  전체 검증 OK\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d229"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d230"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d231"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d232"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d233"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d234"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d235"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d236"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d237"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d238"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d239"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d240"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d241"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d242"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d243"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d244"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d245"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d246"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d247"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d248"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d249"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d250"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d251"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d252"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d253"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d254"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d255"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d256"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d257"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d258"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d259"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d260"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d261"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d262"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d263"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d264"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d265"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d266"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d267"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d268"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d269"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d270"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d271"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d272"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d273"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d274"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d275"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d276"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d277"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d278"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d279"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d280"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d281"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d282"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d283"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d284"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d285"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d286"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d287"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d288"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d289"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d290"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d291"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d292"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d293"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d294"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d295"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d296"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d297"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d298"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d299"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d300"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d301"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d302"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d303"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d304"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d305"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d306"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d307"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d308"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d309"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d310"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d311"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d312"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d313"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d314"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d315"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d316"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d317"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d318"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d319"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d320"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d321"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d322"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d323"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d324"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d325"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d326"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d327"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d328"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d329"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d330"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d331"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d332"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d333"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d334"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d335"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d336"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d337"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d338"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d339"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d340"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d341"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d342"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d343"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d344"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d345"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d346"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d347"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d348"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d349"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d350"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d351"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d352"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d353"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d354"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d355"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d356"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d357"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d358"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d359"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d360"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d361"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d362"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d363"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d364"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d365"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d366"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d367"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d368"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d369"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d370"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d371"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d372"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d373"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d374"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d375"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d376"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d377"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d378"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d379"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d380"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d381"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d382"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d383"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d384"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d385"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d386"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d387"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d388"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d389"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d390"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d391"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d392"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d393"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d394"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d395"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d396"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d397"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d398"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d399"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d400"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d401"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d402"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d403"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d404"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d405"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d406"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d407"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d408"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d409"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d410"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d411"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d412"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d413"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d414"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d415"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d416"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d417"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d418"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d419"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d420"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d421"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d422"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d423"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d424"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d425"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d426"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d427"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d428"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d429"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d430"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d431"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d432"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d433"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d434"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d435"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d436"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d437"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d438"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d439"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d440"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d441"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774505490372_1204991435",
+      "id": "paragraph_1774505490372_1204991435",
+      "dateCreated": "2026-03-26 06:11:30.372",
+      "dateStarted": "2026-03-27 01:33:07.319",
+      "dateFinished": "2026-03-27 01:35:01.812",
+      "status": "FINISHED"
+    },
+    {
+      "title": "특정날짜 기준으로 특정 단말기의 누락이 명확할때 사용",
+      "text": "#%spark.pyspark\nimport time\n\nprops \u003d {\n    \"user\":     MYSQL_USER,\n    \"password\": MYSQL_PASSWORD,\n    \"driver\":   \"com.mysql.cj.jdbc.Driver\",\n    \"fetchsize\": \"10000\",\n}\n\nBASE_PATH \u003d f\"s3a://{S3_BUCKET}/{MYSQL_TABLE}/parquet\"\n\n# 1999-01-01 이전 데이터가 누락된 5개 단말기\ntarget_ids \u003d [\n    \"01229518904\",\n    \"01229828903\",\n    \"01229608897\",\n    \"01229628897\",\n    \"01229858987\",\n]\n\nfor dev_id in target_ids:\n    t0 \u003d time.time()\n    print(f\"[START] {dev_id}\")\n    try:\n        df \u003d spark.read.jdbc(\n            url\u003dJDBC_URL,\n            table\u003dMYSQL_TABLE,\n            predicates\u003d[f\"id \u003d \u0027{dev_id}\u0027 AND c_date \u003c \u00271999-01-01\u0027\"],\n            properties\u003dprops\n        )\n        cnt \u003d df.count()\n        print(f\"  읽기 건수: {cnt:,}건\")\n\n        if cnt \u003e 0:\n            out_path \u003d f\"{BASE_PATH}/id\u003d{dev_id}\"\n            # 기존 데이터에 append\n            df.write \\\n                .mode(\"append\") \\\n                .option(\"compression\", \"snappy\") \\\n                .option(\"maxRecordsPerFile\", \"2000000\") \\\n                .parquet(out_path)\n\n        elapsed \u003d round(time.time() - t0, 1)\n        print(f\"[OK]    {dev_id} | {cnt:,}건 append | {elapsed}s\")\n\n    except Exception as e:\n        elapsed \u003d round(time.time() - t0, 1)\n        print(f\"[FAIL]  {dev_id} | {elapsed}s | {e}\")\n\n    finally:\n        try:\n            df.unpersist()\n        except:\n            pass\n        spark.catalog.clearCache()\n\nprint(\"\\n완료. 검증 paragraph를 실행해 건수를 확인하세요.\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 01:35:58.075",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[START] 01229518904\n  읽기 건수: 83,350건\n[OK]    01229518904 | 83,350건 append | 6.4s\n[START] 01229828903\n  읽기 건수: 80,414건\n[OK]    01229828903 | 80,414건 append | 5.5s\n[START] 01229608897\n  읽기 건수: 256건\n[OK]    01229608897 | 256건 append | 2.6s\n[START] 01229628897\n  읽기 건수: 2,342건\n[OK]    01229628897 | 2,342건 append | 2.4s\n[START] 01229858987\n  읽기 건수: 110건\n[OK]    01229858987 | 110건 append | 2.3s\n\n완료. 검증 paragraph를 실행해 건수를 확인하세요.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d214"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d215"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d216"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d217"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d218"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d219"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d220"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d221"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d222"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d223"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d224"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d225"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d226"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d227"
+            },
+            {
+              "jobUrl": "//4040-spark-2mnw598ty-trdsop.local.zeppelin-project.org/jobs/job?id\u003d228"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774574734028_1617553251",
+      "id": "paragraph_1774574734028_1617553251",
+      "dateCreated": "2026-03-27 01:25:34.028",
+      "dateStarted": "2026-03-27 01:32:40.591",
+      "dateFinished": "2026-03-27 01:32:59.905",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 01:32:40.591",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774575160591_134943537",
+      "id": "paragraph_1774575160591_134943537",
+      "dateCreated": "2026-03-27 01:32:40.591",
+      "status": "READY"
+    }
+  ],
+  "name": "mysql_to_s3",
+  "id": "2MNW598TY",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false
+  }
+}
