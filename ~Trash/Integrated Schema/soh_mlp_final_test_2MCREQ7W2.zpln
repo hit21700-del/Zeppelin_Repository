@@ -1,0 +1,409 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_user.pyspark\nfrom pyspark.sql import SparkSession,DataFrame\nfrom pyspark.sql.types import StructType\nimport sys\nimport os\nsys.path.append(\"/home/kadap/QH/SOH_Model\")\n\n\n\"\"\"\nsoh forecst uing MLP algorithm_v4 (model version. v4.0)\n- accum_dod, mileage 회귀모델을 통해 초기 dod도출(보정)\n- 3개의 변수로 capacity 예측 후, temp, c-rate 소거법 적용으로 dod_effect 도출\n- dod effect,max_capacity로 capaciy_decomposed 도출 \n\"\"\"\n\n# 라이브러리 임포트\nimport torch\nimport torch.nn as nn\nimport torch.optim as optim\nimport pandas as pd\nimport numpy as np\nfrom kslab_soh_config import PRESOH_IO_CONFIG, MLP_IO_CONFIG, DB_QUERY_FROM_SOH_CAPA\nfrom kslab_soh_utils import setup_spark_session, load_data_from_csv, load_data_from_db, save_results_to_csv, save_results_to_db,load_data_from_parquet\nfrom pyspark.sql import Window, SparkSession\nfrom pyspark.sql.functions import lag, when, lit, col, avg, stddev, corr, sum, first, round as pyspark_round, cast, lead, max as pyspark_max, min as pyspark_min,date_format\nfrom pyspark.sql.types import IntegerType\nfrom sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score\nimport matplotlib.pyplot as plt\nimport os\nfrom sklearn.model_selection import train_test_split\nimport torch.utils.data as data_utils\nimport logging\nimport shutil\nfrom datetime import datetime\nfrom pyspark.sql import functions as F\n\n# ─────────────────────\n# 모델 저장 경로 설정 (config 기반)\n# ─────────────────────\nMODEL_CFG \u003d MLP_IO_CONFIG.get(\u0027model\u0027, {})\n\n# config 기반 경로 사용 (기본값 사용하지 않음)\nLOCAL_MODEL_DIR \u003d MODEL_CFG.get(\u0027local_base_dir\u0027)  # /home/kadap/QH/SOH_Model/models/discharge/mlp_model/\nHDFS_MODEL_DIR  \u003d MODEL_CFG.get(\u0027hdfs_base_dir\u0027)   # hdfs:///QH/SOH_Model/discharge/models/\nVERSION_BY_DATE \u003d MODEL_CFG.get(\u0027version_by_date\u0027, False)   # 날짜는 파일명에만 포함\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:22:33.754",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764557978671_577943162",
+      "id": "paragraph_1764557978671_577943162",
+      "dateCreated": "2025-12-01 11:59:38.671",
+      "dateStarted": "2025-12-01 14:22:33.759",
+      "dateFinished": "2025-12-01 14:23:23.515",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n# 로깅 설정\nlogging.basicConfig(\n    level\u003dlogging.INFO,\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\n)\nlogger \u003d logging.getLogger(__name__)\n\n\"\"\"\nkslab_soh_mlp.py (full-batch 버전)\n- 입력  : soh_capa 전체 (parquet)\n- 출력  : soh_mlp 전체 (parquet, overwrite)\n- 연산로직(MLP, cal_total_dod, process_single_id_data)은 기존 코드 그대로 사용\n\"\"\"\n\n# 로깅 설정\nlogging.basicConfig(\n    level\u003dlogging.INFO,\n    format\u003d\u0027%(asctime)s - %(levelname)s - %(message)s\u0027\n)\nlogger \u003d logging.getLogger(\"mlp\")\nlogging.getLogger(\"py4j\").setLevel(logging.ERROR)\n\nprint(\"Logger initialized\")\n\n\n# Random seed 설정 함수 (기존 유지)\ndef set_random_seed(seed\u003d42):\n    \"\"\"\n    재현성을 위한 random seed 설정\n    \"\"\"\n    torch.manual_seed(seed)\n    torch.cuda.manual_seed_all(seed)\n    np.random.seed(seed)\n    torch.backends.cudnn.deterministic \u003d True\n    torch.backends.cudnn.benchmark \u003d False\n\n\n# MLP Model Class (기존 유지)\nclass MLP(nn.Module):\n\n    def __init__(self, input_size\u003d3, hidden_size\u003d6, output_size\u003d1):\n        super(MLP, self).__init__()\n        self.fc1 \u003d nn.Linear(input_size, hidden_size)\n        self.fc2 \u003d nn.Linear(hidden_size, output_size)\n        self.sigmoid \u003d nn.Sigmoid()\n\n    def forward(self, x):\n        x \u003d self.sigmoid(self.fc1(x))\n        x \u003d self.sigmoid(self.fc2(x))\n        return x\n\n\n# 모델 학습 및 검증 (기존 연산 로직 유지)\ndef train_model_with_validation(model, X_train, Y_train, X_val, Y_val, model_save_path,\n                               normalization_params, model_type\u003d\u0027MLP\u0027, **kwargs):\n\n    # 기본 하이퍼파라미터 설정\n    default_params \u003d {\n        \u0027learning_rate\u0027: 0.1,\n        \u0027batch_size\u0027: 1,\n        \u0027patience\u0027: 50,\n        \u0027max_epochs\u0027: 20000,\n        \u0027optimizer\u0027: \u0027SGD\u0027,\n        \u0027loss_function\u0027: \u0027MSE\u0027,\n        \u0027random_seed\u0027: 42\n    }\n\n    # 파라미터 업데이트\n    for key, value in kwargs.items():\n        default_params[key] \u003d value\n\n    # Random seed 설정\n    set_random_seed(default_params[\u0027random_seed\u0027])\n\n    # 데이터 로더 생성\n    train_dataset \u003d data_utils.TensorDataset(torch.tensor(X_train), torch.tensor(Y_train))\n    val_dataset \u003d data_utils.TensorDataset(torch.tensor(X_val), torch.tensor(Y_val))\n    train_loader \u003d data_utils.DataLoader(train_dataset, batch_size\u003ddefault_params[\u0027batch_size\u0027], shuffle\u003dTrue)\n    val_loader \u003d data_utils.DataLoader(val_dataset, batch_size\u003ddefault_params[\u0027batch_size\u0027], shuffle\u003dFalse)\n\n    # 옵티마이저 설정\n    criterion \u003d nn.MSELoss()\n    if default_params[\u0027optimizer\u0027] \u003d\u003d \u0027Adam\u0027:\n        optimizer \u003d optim.Adam(model.parameters(), lr\u003ddefault_params[\u0027learning_rate\u0027])\n    elif default_params[\u0027optimizer\u0027] \u003d\u003d \u0027SGD\u0027:\n        optimizer \u003d optim.SGD(model.parameters(), lr\u003ddefault_params[\u0027learning_rate\u0027])\n    else:\n        optimizer \u003d optim.Adam(model.parameters(), lr\u003ddefault_params[\u0027learning_rate\u0027])\n\n    # Early Stopping\n    patience \u003d default_params[\u0027patience\u0027]\n    best_val_loss \u003d float(\u0027inf\u0027)\n    patience_counter \u003d 0\n    best_state \u003d None\n\n    # 최대 epoch 조정 (기존 로직 유지)\n    if len(X_train) \u003c 10:\n        max_epochs \u003d 1000 if 1000 \u003c default_params[\u0027max_epochs\u0027] else default_params[\u0027max_epochs\u0027]\n    elif len(X_train) \u003e 32:\n        max_epochs \u003d default_params[\u0027max_epochs\u0027]\n    else:\n        max_epochs \u003d 20000\n\n    # 학습 루프\n    for epoch in range(max_epochs):\n        # 학습 단계\n        model.train()\n        for xb, yb in train_loader:\n            optimizer.zero_grad()\n            output \u003d model(xb)\n            loss \u003d criterion(output, yb)\n            loss.backward()\n            optimizer.step()\n\n        # 검증 단계\n        model.eval()\n        val_losses \u003d []\n        with torch.no_grad():\n            for xb, yb in val_loader:\n                output \u003d model(xb)\n                val_loss \u003d criterion(output, yb)\n                val_losses.append(val_loss.item())\n\n        avg_val_loss \u003d np.mean(val_losses)\n\n        # Early Stopping 체크\n        if avg_val_loss \u003c best_val_loss:\n            best_val_loss \u003d avg_val_loss\n            best_state \u003d model.state_dict()\n            patience_counter \u003d 0\n        else:\n            patience_counter +\u003d 1\n\n        if patience_counter \u003e\u003d patience:\n            break\n\n    # 최적 모델 복원\n    if best_state is not None:\n        model.load_state_dict(best_state)\n\n    # 성능 평가\n    model.eval()\n    val_predictions \u003d []\n    val_targets \u003d []\n    with torch.no_grad():\n        for xb, yb in val_loader:\n            output \u003d model(xb)\n            val_predictions.extend(output.numpy().flatten())\n            val_targets.extend(yb.numpy().flatten())\n\n    # 정확도 지표 계산\n    val_mse \u003d mean_squared_error(val_targets, val_predictions)\n    val_mae \u003d mean_absolute_error(val_targets, val_predictions)\n    val_r2 \u003d r2_score(val_targets, val_predictions)\n\n    training_info \u003d {\n        \u0027model_type\u0027: model_type,\n        \u0027epochs\u0027: epoch + 1,\n        \u0027learning_rate\u0027: default_params[\u0027learning_rate\u0027],\n        \u0027optimizer\u0027: default_params[\u0027optimizer\u0027],\n        \u0027loss_function\u0027: default_params[\u0027loss_function\u0027],\n        \u0027early_stopping_patience\u0027: patience,\n        \u0027batch_size\u0027: default_params[\u0027batch_size\u0027]\n    }\n\n    validation_metrics \u003d {\n        \u0027mse\u0027: val_mse,\n        \u0027mae\u0027: val_mae,\n        \u0027r2\u0027: val_r2\n    }\n\n    # 모델 저장 (기존 로직 유지)\n    try:\n        model_info \u003d {\n            \u0027model_state_dict\u0027: model.state_dict(),\n            \u0027model_architecture\u0027: {\n                \u0027input_size\u0027: X_train.shape[1],\n                \u0027hidden_size\u0027: 6,\n                \u0027output_size\u0027: 1\n            },\n            \u0027normalization_params\u0027: normalization_params,\n            \u0027training_info\u0027: training_info,\n            \u0027validation_metrics\u0027: validation_metrics\n        }\n        torch.save(model_info, model_save_path)\n        print(f\"Model trained and saved successfully to: {model_save_path}\")\n    except Exception as e:\n        pass\n\n    return model, training_info, validation_metrics\n\n\n# 모델 성능 평가 (기존 유지)\ndef evaluate_model_performance_v2(model, X, Y, normalization_params, actual_values):\n\n    model.eval()\n    with torch.no_grad():\n        pred \u003d model(torch.tensor(X)).numpy().flatten()\n        pred_real \u003d pred * (normalization_params[\u0027capa_max\u0027] - normalization_params[\u0027capa_min\u0027]) + normalization_params[\u0027capa_min\u0027]\n\n    mse \u003d mean_squared_error(actual_values, pred_real)\n    mae \u003d mean_absolute_error(actual_values, pred_real)\n    r2 \u003d r2_score(actual_values, pred_real)\n    rmse \u003d np.sqrt(mse)\n    mape \u003d np.mean(np.abs((actual_values - pred_real) / actual_values)) * 100\n\n    mean_actual \u003d np.mean(actual_values)\n    rmse_percentage \u003d (rmse / mean_actual) * 100\n\n    accuracy_score \u003d np.maximum(0.0, 100.0 - rmse_percentage)\n    accuracy_rmse_100 \u003d accuracy_score\n\n    performance_metrics \u003d {\n        \u0027mse\u0027: mse,\n        \u0027mae\u0027: mae,\n        \u0027r2\u0027: r2,\n        \u0027rmse\u0027: rmse,\n        \u0027mape\u0027: mape,\n        \u0027predictions\u0027: pred_real,\n        \u0027rmse_percentage\u0027: rmse_percentage,\n        \u0027accuracy_rmse_100\u0027: accuracy_rmse_100\n    }\n\n    return performance_metrics\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:23:23.546",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Logger initialized\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764557995366_1451887315",
+      "id": "paragraph_1764557995366_1451887315",
+      "dateCreated": "2025-12-01 11:59:55.366",
+      "dateStarted": "2025-12-01 14:23:23.552",
+      "dateFinished": "2025-12-01 14:23:23.615",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\n\r\n# 단일 deviceId 데이터 전처리 및 모델 저장/버전관리\r\ndef process_single_id_data(data_id, device_id, model_type\u003d\u0027MLP\u0027, **model_params):\r\n\r\n    # 1) day_of_soh 기준 정렬\r\n    data_id \u003d data_id.sort_values(\u0027day_of_soh\u0027).reset_index(drop\u003dTrue)\r\n\r\n    # 2) IQR 기반 이상치 마스크 (원래 로직 그대로)\r\n    def iqr_mask(x, k\u003d3.0):\r\n        x \u003d np.asarray(x, dtype\u003dfloat)\r\n        x_len \u003d int(len(x))\r\n\r\n        finite \u003d np.isfinite(x)\r\n        x_ok \u003d x[finite]\r\n        if x_ok.size \u003c 4:\r\n            return finite\r\n        q1, q3 \u003d np.percentile(x_ok, [25, 75])\r\n        iqr \u003d q3 - q1\r\n        lo, hi \u003d q1 - k * iqr, q3 + k * iqr\r\n        m \u003d finite \u0026 (x \u003e\u003d lo) \u0026 (x \u003c\u003d hi)\r\n        m_sum \u003d int(m.sum())\r\n        threshold_1 \u003d 10\r\n        threshold_2 \u003d int(0.2 * x_len)\r\n        threshold \u003d threshold_1 if threshold_1 \u003e threshold_2 else threshold_2\r\n        if m_sum \u003c threshold:\r\n            return finite\r\n        return m\r\n\r\n    ec_vals \u003d data_id[\"energy_capacity\"].values.astype(float)\r\n\r\n    if len(ec_vals) \u003c 10:\r\n        keep_mask_sorted \u003d np.isfinite(ec_vals)\r\n    else:\r\n        keep_mask_sorted \u003d iqr_mask(ec_vals, k\u003d3.0)\r\n        if not keep_mask_sorted.any():\r\n            keep_mask_sorted \u003d np.isfinite(ec_vals)\r\n\r\n    data_id[\"keep_mask\"] \u003d keep_mask_sorted\r\n\r\n    # 3) 정규화 파라미터 계산 (원래 로직 그대로)\r\n    df_filt \u003d data_id[keep_mask_sorted].copy()\r\n    n_filt \u003d len(df_filt)\r\n\r\n    if n_filt \u003e\u003d 10:\r\n        split_idx \u003d int(n_filt * 0.8)\r\n    else:\r\n        split_idx \u003d 0\r\n\r\n    df_fit \u003d df_filt.iloc[:split_idx] if split_idx \u003e 0 else df_filt\r\n\r\n    eps \u003d 1e-9\r\n\r\n    def fit_z(x):\r\n        x \u003d np.asarray(x, float)\r\n        mu \u003d float(np.mean(x)) if x.size else 0.0\r\n        sd \u003d float(np.std(x)) + eps\r\n        return mu, sd\r\n\r\n    # Z-score 파라미터\r\n    t_mu, t_sd \u003d fit_z(df_fit[\"avg_bms_temp\"].values)\r\n    c_mu, c_sd \u003d fit_z(df_fit[\"discharge_rate\"].values)\r\n    d_mu, d_sd \u003d fit_z(df_fit[\"accum_dod\"].values)\r\n\r\n    # 4) 정규화 적용\r\n    data_id[\"temp_norm\"]  \u003d (data_id[\"avg_bms_temp\"].values.astype(float)   - t_mu) / t_sd\r\n    data_id[\"crate_norm\"] \u003d (data_id[\"discharge_rate\"].values.astype(float) - c_mu) / c_sd\r\n    data_id[\"dod_norm\"]   \u003d (data_id[\"accum_dod\"].values.astype(float)      - d_mu) / d_sd\r\n\r\n    df_filt[\"temp_norm\"]  \u003d (df_filt[\"avg_bms_temp\"].values.astype(float)   - t_mu) / t_sd\r\n    df_filt[\"crate_norm\"] \u003d (df_filt[\"discharge_rate\"].values.astype(float) - c_mu) / c_sd\r\n    df_filt[\"dod_norm\"]   \u003d (df_filt[\"accum_dod\"].values.astype(float)      - d_mu) / d_sd\r\n\r\n    # 5) 용량 정규화\r\n    capa_min \u003d float(np.min(df_fit[\"energy_capacity\"].values)) if len(df_fit) else float(np.min(ec_vals))\r\n    capa_max \u003d float(np.max(df_fit[\"energy_capacity\"].values)) if len(df_fit) else float(np.max(ec_vals))\r\n    capa_den \u003d (capa_max - capa_min) + eps\r\n    data_id[\"capacity_norm\"] \u003d (data_id[\"energy_capacity\"].values.astype(float) - capa_min) / capa_den\r\n    df_filt[\"capacity_norm\"] \u003d (df_filt[\"energy_capacity\"].values.astype(float) - capa_min) / capa_den\r\n\r\n    normalization_params \u003d {\r\n        \u0027temp_mu\u0027: t_mu,  \u0027temp_sd\u0027: t_sd,\r\n        \u0027crate_mu\u0027: c_mu, \u0027crate_sd\u0027: c_sd,\r\n        \u0027dod_mu\u0027: d_mu,   \u0027dod_sd\u0027: d_sd,\r\n        \u0027capa_min\u0027: capa_min, \u0027capa_max\u0027: capa_max\r\n    }\r\n\r\n    # 6) 학습/검증 세트 구성\r\n    X_filt \u003d df_filt[[\"temp_norm\", \"crate_norm\", \"dod_norm\"]].values.astype(np.float32)\r\n    Y_filt \u003d df_filt[\"capacity_norm\"].values.reshape(-1, 1).astype(np.float32)\r\n\r\n    if n_filt \u003c 10:\r\n        X_train, Y_train \u003d X_filt, Y_filt\r\n        X_val, Y_val     \u003d X_filt, Y_filt\r\n    else:\r\n        X_train, Y_train \u003d X_filt[:split_idx],  Y_filt[:split_idx]\r\n        X_val,   Y_val   \u003d X_filt[split_idx:],  Y_filt[split_idx:]\r\n\r\n    X_all \u003d data_id[[\"temp_norm\", \"crate_norm\", \"dod_norm\"]].values.astype(np.float32)\r\n\r\n    # 7) Random seed 설정\r\n    seed \u003d model_params.get(\u0027random_seed\u0027, 42)\r\n    set_random_seed(seed)\r\n\r\n    # 8) 모델 초기화\r\n    model \u003d MLP(input_size\u003d3, hidden_size\u003d6, output_size\u003d1)\r\n    device_id_str \u003d str(device_id).zfill(11)\r\n\r\n    # 9) 로컬 모델 저장 경로 (deviceId 폴더링)\r\n    #    /home/kadap/QH/SOH_Model/models/discharge/{deviceId}/\r\n    local_device_dir \u003d os.path.join(LOCAL_MODEL_DIR, device_id_str)\r\n    os.makedirs(local_device_dir, exist_ok\u003dTrue)\r\n\r\n    # 최신 버전 파일 이름 (항상 이 경로에 latest를 유지)\r\n    model_filename_latest \u003d f\"{model_type.lower()}_model_dch_v4_{device_id_str}.pth\"\r\n    model_save_path \u003d os.path.join(local_device_dir, model_filename_latest)\r\n\r\n    # 9-1) 기존 모델 존재 여부 확인 후, 있으면 로드 / 없으면 학습 플래그 ON\r\n    if os.path.exists(model_save_path):\r\n        try:\r\n            model_info \u003d torch.load(model_save_path, weights_only\u003dFalse)\r\n            model.load_state_dict(model_info[\u0027model_state_dict\u0027])\r\n            train_model_flag \u003d False\r\n            logger.info(\r\n                f\"deviceId {device_id_str}: 저장된 모델을 로드하여 사용합니다. \"\r\n                f\"(경로: {model_save_path})\"\r\n            )\r\n        except Exception as e:\r\n            train_model_flag \u003d True\r\n            logger.warning(\r\n                f\"deviceId {device_id_str}: 저장된 모델 로드 실패, 새로 학습합니다. \"\r\n                f\"(오류: {str(e)})\"\r\n            )\r\n    else:\r\n        train_model_flag \u003d True\r\n        logger.info(\r\n            f\"deviceId {device_id_str}: 저장된 모델이 없어 새로 학습합니다. \"\r\n            f\"(경로: {model_save_path})\"\r\n        )\r\n\r\n    # 10) 모델 학습 (필요한 경우에만)\r\n    if train_model_flag:\r\n        logger.info(f\"deviceId {device_id_str}: 모델 학습을 시작합니다.\")\r\n        model, training_info, validation_metrics \u003d train_model_with_validation(\r\n            model, X_train, Y_train, X_val, Y_val, model_save_path,\r\n            normalization_params, model_type, **model_params\r\n        )\r\n        logger.info(\r\n            f\"deviceId {device_id_str}: 모델 학습이 완료되었습니다. \"\r\n            f\"(epochs: {training_info[\u0027epochs\u0027]}, val_mse: {validation_metrics[\u0027mse\u0027]:.6f})\"\r\n        )\r\n\r\n        # 11) 로컬 타임스탬프 버전 파일 생성 (YYYYMMDD_HHMMSS)\r\n        try:\r\n            timestamp_str \u003d datetime.now().strftime(\"%Y%m%d_%H%M%S\")\r\n            version_filename \u003d f\"{model_type.lower()}_model_dch_v4_{device_id_str}_{timestamp_str}.pth\"\r\n            version_path \u003d os.path.join(local_device_dir, version_filename)\r\n\r\n            shutil.copy2(model_save_path, version_path)\r\n            logger.info(\r\n                f\"deviceId {device_id_str}: 로컬 모델 버전 저장 완료 → {version_path}\"\r\n            )\r\n        except Exception as e:\r\n            logger.warning(\r\n                f\"deviceId {device_id_str}: 로컬 모델 버전 저장 실패: {e}\"\r\n            )\r\n\r\n        # 12) HDFS 백업 (deviceId 폴더 + timestamp 파일명)\r\n        if HDFS_MODEL_DIR:\r\n            try:\r\n                spark \u003d SparkSession.getActiveSession()\r\n                if spark is not None:\r\n                    jvm   \u003d spark._sc._jvm\r\n                    hconf \u003d spark._sc._jsc.hadoopConfiguration()\r\n                    fs    \u003d jvm.org.apache.hadoop.fs.FileSystem.get(hconf)\r\n                    Path  \u003d jvm.org.apache.hadoop.fs.Path\r\n\r\n                    base_dir   \u003d HDFS_MODEL_DIR.rstrip(\u0027/\u0027)\r\n                    device_dir \u003d f\"{base_dir}/{device_id_str}\"\r\n                    fs.mkdirs(Path(device_dir))\r\n\r\n                    # 로컬과 동일 timestamp 사용\r\n                    hdfs_filename \u003d f\"{model_type.lower()}_model_dch_v4_{device_id_str}_{timestamp_str}.pth\"\r\n\r\n                    src_path \u003d Path(model_save_path)\r\n                    dst_path \u003d Path(f\"{device_dir}/{hdfs_filename}\")\r\n\r\n                    # overwrite\u003dTrue\r\n                    fs.copyFromLocalFile(False, True, src_path, dst_path)\r\n\r\n                    logger.info(\r\n                        f\"deviceId {device_id_str}: HDFS 모델 백업 완료 → {device_dir}/{hdfs_filename}\"\r\n                    )\r\n                else:\r\n                    logger.warning(\r\n                        f\"deviceId {device_id_str}: SparkSession이 없어 HDFS 백업을 건너뜁니다.\"\r\n                    )\r\n            except Exception as e:\r\n                logger.warning(\r\n                    f\"deviceId {device_id_str}: HDFS 모델 백업 실패: {e}\"\r\n                )\r\n    else:\r\n        logger.info(\r\n            f\"deviceId {device_id_str}: 기존 저장된 모델로 예측을 진행합니다. \"\r\n            f\"(재학습 없음)\"\r\n        )\r\n\r\n    # 13) 예측 및 DoD 효과 계산 (연산 로직 그대로)\r\n    performance_metrics \u003d evaluate_model_performance_v2(\r\n        model,\r\n        X_all,\r\n        data_id[\"capacity_norm\"].values.reshape(-1, 1).astype(np.float32),\r\n        normalization_params,\r\n        data_id[\"energy_capacity\"].values\r\n    )\r\n    data_id[\"capa_pred\"] \u003d performance_metrics[\u0027predictions\u0027]\r\n\r\n    # DoD 참조점 고정\r\n    X_dod_ref \u003d data_id[[\"temp_norm\", \"crate_norm\", \"dod_norm\"]].copy()\r\n    X_dod_ref[\"dod_norm\"] \u003d 0.0\r\n    with torch.no_grad():\r\n        base_pred_norm \u003d model(torch.tensor(X_dod_ref.values.astype(np.float32))).numpy().flatten()\r\n        base_pred_real \u003d base_pred_norm * ((capa_max - capa_min) + eps) + capa_min\r\n    data_id[\"capa_2factor\"] \u003d base_pred_real\r\n    data_id[\"dod_effect\"]   \u003d data_id[\"capa_pred\"] - data_id[\"capa_2factor\"]\r\n\r\n    # 최대 용량 산출\r\n    ec_filt \u003d data_id.loc[keep_mask_sorted, \"energy_capacity\"].values.astype(float)\r\n    if ec_filt.size \u003e 0:\r\n        max_capa \u003d float(np.max(ec_filt))\r\n    else:\r\n        max_capa \u003d float(np.max(ec_vals))\r\n\r\n    # capacity 보정 : max_capacity + dod_effect\r\n    data_id[\"capa_decomposed\"] \u003d max_capa + data_id[\"dod_effect\"]\r\n\r\n    # 성능 지표 추가\r\n    for key, value in performance_metrics.items():\r\n        if key !\u003d \u0027predictions\u0027:\r\n            data_id[key] \u003d value\r\n\r\n    # 14) 결과 컬럼 (deviceId 기준)\r\n    result_columns \u003d [\r\n        \u0027deviceId\u0027, \u0027day_of_soh\u0027, \u0027max_mileage\u0027, \u0027accum_dod\u0027, \u0027avg_bms_temp\u0027, \u0027discharge_rate\u0027,\r\n        \u0027energy_capacity\u0027, \u0027capa_pred\u0027, \u0027capa_2factor\u0027, \u0027dod_effect\u0027,\r\n        \u0027capa_decomposed\u0027, \u0027first_dod_est\u0027\r\n    ]\r\n    data_id[\u0027deviceId\u0027] \u003d device_id_str\r\n    result_id \u003d data_id[result_columns]\r\n    return result_id\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:25:43.323",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764558009420_1954604995",
+      "id": "paragraph_1764558009420_1954604995",
+      "dateCreated": "2025-12-01 12:00:09.420",
+      "dateStarted": "2025-12-01 14:25:43.329",
+      "dateFinished": "2025-12-01 14:25:43.403",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n\n\n# 누적 DoD 계산 함수\ndef cal_total_dod(df):\n    \"\"\"\n    누적 DoD 계산 함수\n    - 마일리지와 DoD 누적값 기반 회귀분석\n    - 효율성 기반 백업 계산 방법\n    \"\"\"\n\n    # id → deviceId 기준으로 사용\n    df1 \u003d df.select(\n        \"deviceId\", \"day_of_soh\", \"total_cycle\", \"total_dod\",\n        \"max_mileage\", \"avg_bms_temp\", \"discharge_rate\", \"energy_capacity\"\n    )\n\n    window_ordered \u003d Window.partitionBy(\"deviceId\").orderBy(\"day_of_soh\")\n    window_id      \u003d Window.partitionBy(\"deviceId\")\n\n    # 마일리지 차이 계산\n    df1 \u003d df1.withColumn(\"prev_max_mileage\", lag(\"max_mileage\").over(window_ordered))\n    df1 \u003d df1.withColumn(\"next_max_mileage\", lead(\"max_mileage\").over(window_ordered))\n    df1 \u003d df1.withColumn(\n        \"prev_max_mileage\",\n        when(col(\"prev_max_mileage\").isNull(), lit(0)).otherwise(col(\"prev_max_mileage\"))\n    )\n    df1 \u003d df1.withColumn(\"mileage_diff\", col(\"max_mileage\") - col(\"prev_max_mileage\"))\n\n    # DoD 효율성 계산\n    df1 \u003d df1.withColumn(\n        \"total_mileage_range\",\n        pyspark_max(\"max_mileage\").over(window_id) - pyspark_min(\"max_mileage\").over(window_id)\n    )\n    df1 \u003d df1.withColumn(\n        \"total_dod_range\",\n        pyspark_max(\"total_dod\").over(window_id) - pyspark_min(\"total_dod\").over(window_id)\n    )\n    df1 \u003d df1.withColumn(\n        \"dod_efficiency_km_per_dod\",\n        col(\"total_mileage_range\") / col(\"total_dod_range\")\n    )\n\n    df1 \u003d df1.withColumn(\"first_actual_max_mileage\", first(\"max_mileage\").over(window_id))\n\n    # 회귀분석용 데이터 필터\n    regression_df \u003d df1.filter(\n        ~(\n            (col(\"max_mileage\") \u003e col(\"prev_max_mileage\")) \u0026\n            (col(\"max_mileage\") \u003e col(\"next_max_mileage\"))\n        )\n    )\n\n    regression_df \u003d regression_df.withColumn(\n        \"accum_mileage\",\n        col(\"max_mileage\") - first(\"max_mileage\").over(window_ordered)\n    )\n    regression_df \u003d regression_df.withColumn(\n        \"accum_dod_change\",\n        col(\"total_dod\") - first(\"total_dod\").over(window_ordered)\n    )\n\n    regression_df \u003d regression_df.withColumn(\"mean_x\", avg(\"accum_dod_change\").over(window_id))\n    regression_df \u003d regression_df.withColumn(\"mean_y\", avg(\"accum_mileage\").over(window_id))\n    regression_df \u003d regression_df.withColumn(\"x_diff\", col(\"accum_dod_change\") - col(\"mean_x\"))\n    regression_df \u003d regression_df.withColumn(\"y_diff\", col(\"accum_mileage\") - col(\"mean_y\"))\n    regression_df \u003d regression_df.withColumn(\"xy_diff\", col(\"x_diff\") * col(\"y_diff\"))\n    regression_df \u003d regression_df.withColumn(\"x_diff_squared\", col(\"x_diff\") * col(\"x_diff\"))\n\n    regression_df \u003d regression_df.withColumn(\n        \"slope\",\n        sum(\"xy_diff\").over(window_id) / sum(\"x_diff_squared\").over(window_id)\n    )\n    regression_df \u003d regression_df.withColumn(\n        \"intercept\",\n        col(\"mean_y\") - col(\"slope\") * col(\"mean_x\")\n    )\n\n    # 초기 DoD 추정\n    regression_df \u003d regression_df.withColumn(\n        \"first_total_dod\",\n        first(\"total_dod\").over(window_ordered)\n    )\n    regression_df \u003d regression_df.withColumn(\n        \"numerator_check\",\n        col(\"first_actual_max_mileage\") - col(\"intercept\")\n    )\n    regression_df \u003d regression_df.withColumn(\n        \"first_dod_est_regression\",\n        when(\n            (col(\"slope\") \u003c\u003d 0) | (col(\"numerator_check\") \u003c\u003d 0),\n            lit(None).cast(IntegerType())\n        ).otherwise(\n            pyspark_round(col(\"numerator_check\") / col(\"slope\"), 0).cast(IntegerType())\n        )\n    )\n\n    # 효율성 기반 초기 DoD 추정\n    regression_df \u003d regression_df.withColumn(\n        \"first_dod_est_efficiency\",\n        pyspark_round(\n            col(\"first_actual_max_mileage\") / col(\"dod_efficiency_km_per_dod\"),\n            0\n        ).cast(IntegerType())\n    )\n\n    # 최종 first_dod_est 결정\n    regression_df \u003d regression_df.withColumn(\n        \"first_dod_est\",\n        when(\n            (col(\"first_dod_est_regression\").isNotNull()) \u0026\n            (col(\"first_dod_est_regression\") \u003e 0) \u0026\n            (col(\"first_dod_est_regression\") \u003e\u003d col(\"first_dod_est_efficiency\") / 10) \u0026\n            (col(\"first_dod_est_regression\") \u003c\u003d col(\"first_dod_est_efficiency\") * 10),\n            col(\"first_dod_est_regression\")\n        ).otherwise(col(\"first_dod_est_efficiency\"))\n    )\n\n    # deviceId 기준 first_dod_est 조인\n    first_dod_est_df \u003d regression_df.select(\"deviceId\", \"first_dod_est\").distinct()\n    df1 \u003d df1.join(first_dod_est_df, on\u003d\"deviceId\", how\u003d\"left\")\n\n    df1 \u003d df1.withColumn(\n        \"first_dod_est\",\n        when(\n            col(\"first_dod_est\") \u003c\u003d 0,\n            pyspark_round(\n                col(\"first_actual_max_mileage\") / col(\"dod_efficiency_km_per_dod\"),\n                0\n            ).cast(IntegerType())\n        ).otherwise(col(\"first_dod_est\"))\n    )\n\n    df1 \u003d df1.withColumn(\"accum_dod\", col(\"first_dod_est\") + col(\"total_dod\"))\n\n    return df1\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:23:23.661",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764558017652_1501393113",
+      "id": "paragraph_1764558017652_1501393113",
+      "dateCreated": "2025-12-01 12:00:17.652",
+      "dateStarted": "2025-12-01 14:23:23.663",
+      "dateFinished": "2025-12-01 14:23:23.693",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n\n# MLP 기반 용량 예측\n# 특정 ID만 로드해서 처리하는 엔트리 함수\ndef mlp_decomposition(spark, id_value\u003dNone, day_of_soh\u003dNone, model_type\u003d\"MLP\", **model_params):\n\n    # 데이터 로드 (원래 로직 그대로)\n    if MLP_IO_CONFIG[\"input\"][\"source\"].lower() \u003d\u003d \"csv\":\n        if not id_value:\n            logger.error(\"ID가 입력되지 않았습니다. 프로그램을 종료합니다.\")\n            sys.exit(1)\n\n        capa_csv_path \u003d MLP_IO_CONFIG[\"input\"][\"csv_path\"]\n        csv_path \u003d capa_csv_path.replace(\"{id}\", id_value)\n\n        logger.info(f\"ID: {id_value} 의 CSV 파일을 로드합니다: {csv_path}\")\n        df \u003d load_data_from_csv(spark, csv_path)\n\n        if day_of_soh:\n            df \u003d df.filter(col(\"day_of_soh\") \u003c\u003d day_of_soh)\n            logger.info(f\"CSV 데이터에서 day_of_soh \u003c\u003d {day_of_soh} 로 필터링\")\n        else:\n            logger.info(\"날짜가 입력되지 않았습니다. 전체 데이터를 추출합니다.\")\n\n    else:  # \"db\"\n        if not id_value:\n            logger.info(\"ID가 입력되지 않았습니다. 프로그램을 종료합니다.\")\n            sys.exit(0)\n        else:\n            query \u003d DB_QUERY_FROM_SOH_CAPA.format(id_value\u003did_value)\n\n        df \u003d load_data_from_db(spark, query)\n\n    # id → deviceId 컬럼 정리\n    if \"deviceId\" not in df.columns and \"id\" in df.columns:\n        df \u003d df.withColumnRenamed(\"id\", \"deviceId\")\n    elif \"deviceId\" not in df.columns:\n        logger.error(\"[MLP] 입력 데이터에 deviceId/id 컬럼이 없습니다.\")\n        sys.exit(1)\n\n    # 누적 DoD 계산\n    df1 \u003d cal_total_dod(df)\n\n    # MLP 알고리즘으로 SOH 추정\n    df2 \u003d (\n        df1.select(\n            \"deviceId\", \"day_of_soh\", \"accum_dod\",\n            \"avg_bms_temp\", \"discharge_rate\",\n            \"energy_capacity\", \"first_dod_est\", \"max_mileage\"\n        )\n        .orderBy(\"deviceId\", \"day_of_soh\")\n    )\n    \n    # aggregate by id and day_of_soh (추가)\n    # 동일날짜 데이터 생성\n    df2 \u003d df2.groupBy(\u0027deviceId\u0027, \u0027day_of_soh\u0027).agg(\n        max(\u0027accum_dod\u0027).alias(\u0027accum_dod\u0027),\n        avg(\u0027avg_bms_temp\u0027).alias(\u0027avg_bms_temp\u0027),\n        avg(\u0027discharge_rate\u0027).alias(\u0027discharge_rate\u0027),\n        avg(\u0027energy_capacity\u0027).alias(\u0027energy_capacity\u0027),\n        avg(\u0027first_dod_est\u0027).alias(\u0027first_dod_est\u0027),\n        max(\u0027max_mileage\u0027).alias(\u0027max_mileage\u0027)\n    )\n    \n\n    data_list \u003d df2.rdd.collect()\n    data \u003d pd.DataFrame([row.asDict() for row in data_list])\n\n    if data.empty:\n        logger.info(\"[MLP] 처리할 데이터가 없습니다.\")\n        return pd.DataFrame()\n\n    device_list \u003d data[\"deviceId\"].unique()\n    result_list \u003d []\n\n    for device_id in device_list:\n        device_id_str \u003d str(device_id).zfill(11)\n        data_id \u003d data[data[\"deviceId\"] \u003d\u003d device_id].copy()\n        result_id \u003d process_single_id_data(data_id, device_id_str, model_type, **model_params)\n        result_list.append(result_id)\n\n    result \u003d pd.concat(result_list, ignore_index\u003dTrue)\n    return result\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:23:23.763",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764558032236_1902217492",
+      "id": "paragraph_1764558032236_1902217492",
+      "dateCreated": "2025-12-01 12:00:32.236",
+      "dateStarted": "2025-12-01 14:23:23.768",
+      "dateFinished": "2025-12-01 14:23:23.793",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n# 기존 결과에서 deviceId별 마지막 day_of_soh 가져오기\ndef get_last_processed_day_per_device(spark):\n    \"\"\"\n    기존 soh_mlp 결과에서 deviceId별 마지막 day_of_soh 조회\n    - 결과가 없으면 빈 dict 리턴\n    - key: 11자리 zero-padding 된 deviceId (string)\n    \"\"\"\n    out_path \u003d MLP_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]\n\n    try:\n        mlp_df \u003d spark.read.parquet(out_path)\n    except Exception:\n        logger.info(\"[MLP] 기존 soh_mlp 결과가 없어, 이번 배치는 신규(full)처럼 처리합니다.\")\n        return {}\n\n    last_df \u003d (\n        mlp_df\n        .groupBy(\"deviceId\")\n        .agg(F.max(\"day_of_soh\").alias(\"last_day_of_soh\"))\n    )\n\n    last_pd \u003d last_df.toPandas()\n\n    last_map \u003d {\n        str(row[\"deviceId\"]).zfill(11): row[\"last_day_of_soh\"]\n        for _, row in last_pd.iterrows()\n    }\n    return last_map\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:23:23.868",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764565296229_1400413313",
+      "id": "paragraph_1764565296229_1400413313",
+      "dateCreated": "2025-12-01 14:01:36.229",
+      "dateStarted": "2025-12-01 14:23:23.873",
+      "dateFinished": "2025-12-01 14:23:23.899",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\n\r\ndef load_mlp_source(spark):\r\n    \"\"\"\r\n    MLP 단계 소스 로더\r\n    - 입력 : soh_capa 전체 parquet\r\n    - 경로 : MLP_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027] 에서 가져온다\r\n    - deviceId를 11자리 string으로 통일\r\n    \"\"\"\r\n    capa_path \u003d MLP_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027]\r\n\r\n    logger.info(f\"[MLP] capa parquet 로드: {capa_path}\")\r\n    capa_df \u003d (\r\n        spark.read\r\n             .format(\"parquet\")\r\n             .load(capa_path)\r\n    )\r\n\r\n    cols \u003d capa_df.columns\r\n\r\n    # 1) 이미 deviceId가 있으면 → 11자리 zero-padding\r\n    if \"deviceId\" in cols:\r\n        capa_df \u003d capa_df.withColumn(\r\n            \"deviceId\",\r\n            F.lpad(F.col(\"deviceId\").cast(\"string\"), 11, \"0\")\r\n        )\r\n        return capa_df\r\n\r\n    # 2) deviceId 없고 id만 있으면 → rename + 11자리 zero-padding\r\n    if \"id\" in cols:\r\n        logger.info(\"[MLP] id 컬럼을 deviceId로 rename 합니다.\")\r\n        capa_df \u003d (\r\n            capa_df\r\n            .withColumnRenamed(\"id\", \"deviceId\")\r\n            .withColumn(\"deviceId\", F.lpad(F.col(\"deviceId\").cast(\"string\"), 11, \"0\"))\r\n        )\r\n        return capa_df\r\n\r\n    # 3) 둘 다 없으면 에러 로그 + 빈 DF\r\n    logger.error(\"[MLP] capa_df에 deviceId/id 컬럼이 없습니다.\")\r\n    return spark.createDataFrame([], StructType([]))\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:23:23.973",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764565361846_233102419",
+      "id": "paragraph_1764565361846_233102419",
+      "dateCreated": "2025-12-01 14:02:41.846",
+      "dateStarted": "2025-12-01 14:23:23.978",
+      "dateFinished": "2025-12-01 14:23:23.994",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n# 현재 구조 (run_mlp_full_batch)\n# mlp_decomposition() 사용x \u003c-단일함수용\n#load_mlp_source(spark) 로 여러 단말기 ID의 전체 capa 데이터를 한 번에 로드하고,\n#cal_total_dod(capa_df) → process_single_id_data()를\n#deviceId별로 루프 돌면서 처리하는 방식\n# \n\ndef run_mlp_full_batch(spark, model_type\u003d\"MLP\", **model_params):\n    \"\"\"\n    증분 MLP 배치 (append 방식)\n    - cal_total_dod, 집계(df2)는 항상 capa 전체 기준\n    - MLP 학습/예측은 \u0027신규 day_of_soh가 있는 deviceId\u0027만 수행\n    - 결과는 \u0027신규 날짜 row만\u0027 soh_mlp 경로에 append\n    \"\"\"\n\n    # 0) 기존 soh_mlp에서 deviceId별 마지막 day_of_soh 조회\n    last_day_map \u003d get_last_processed_day_per_device(spark)  # {deviceId_str(11자리): last_day}\n\n    # 1) capa 전체 로드\n    capa_df \u003d load_mlp_source(spark)\n    \n    # 테스트용 하드코딩 (끝나면 꼭 지우기!)\n    capa_df \u003d capa_df.filter(F.col(\"day_of_soh\") \u003c\u003d F.lit(\"2025-05-02\"))\n    \n    \n    if capa_df.rdd.isEmpty():\n        logger.info(\"[MLP] capa 데이터가 없습니다. 종료합니다.\")\n        return\n\n    # 2) 누적 DoD 계산 (deviceId 기준)\n    df1 \u003d cal_total_dod(capa_df)\n\n    # 3) (deviceId, day_of_soh) 단위 집계\n    df2 \u003d (\n        df1\n        .groupBy(\"deviceId\", \"day_of_soh\")\n        .agg(\n            F.max(\"accum_dod\").alias(\"accum_dod\"),\n            F.avg(\"avg_bms_temp\").alias(\"avg_bms_temp\"),\n            F.avg(\"discharge_rate\").alias(\"discharge_rate\"),\n            F.avg(\"energy_capacity\").alias(\"energy_capacity\"),\n            F.avg(\"first_dod_est\").alias(\"first_dod_est\"),\n            F.max(\"max_mileage\").alias(\"max_mileage\"),\n        )\n        .orderBy(\"deviceId\", \"day_of_soh\")\n    )\n\n    # 4) Spark → pandas 변환\n    data_list \u003d df2.rdd.collect()\n    data \u003d pd.DataFrame([row.asDict() for row in data_list])\n\n    if data.empty:\n        logger.info(\"[MLP] 처리할 데이터가 없습니다.\")\n        return\n\n    device_list \u003d data[\"deviceId\"].unique()\n    result_list \u003d []\n\n    # 5) deviceId별 처리\n    for device_id in device_list:\n        device_id_str \u003d str(device_id).zfill(11)\n        logger.info(f\"[MLP] deviceId\u003d{device_id_str} 처리 시작\")\n\n        # 이 단말의 전체 히스토리\n        data_id \u003d data[data[\"deviceId\"] \u003d\u003d device_id_str].copy()\n        if data_id.empty:\n            continue\n\n        # 이 단말의 마지막 처리 날짜 (기존 soh_mlp 기준)\n        last_day \u003d last_day_map.get(device_id_str)\n\n        # 5-1) 신규 데이터 존재 여부 확인\n        if last_day is not None:\n            has_new \u003d (data_id[\"day_of_soh\"] \u003e last_day).any()\n            if not has_new:\n                logger.info(f\"[MLP] deviceId\u003d{device_id_str}: 신규 day_of_soh 없음 → 스킵\")\n                continue\n\n        # 5-2) 전체 히스토리로 MLP 학습/예측\n        #      (process_single_id_data는 전체 data_id 기준으로 학습/예측)\n        result_id_all \u003d process_single_id_data(\n            data_id, device_id_str, model_type, **model_params\n        )\n\n        # 5-3) 이 중에서 \u0027신규 날짜\u0027만 결과로 사용\n        if last_day is not None:\n            result_id_new \u003d result_id_all[result_id_all[\"day_of_soh\"] \u003e last_day]\n        else:\n            # 기존 soh_mlp에 이 단말이 없었던 경우 → 전체 저장\n            result_id_new \u003d result_id_all\n\n        if result_id_new.empty:\n            logger.info(f\"[MLP] deviceId\u003d{device_id_str}: 신규 결과 없음\")\n            continue\n\n        result_list.append(result_id_new)\n\n    if not result_list:\n        logger.info(\"[MLP] 이번 배치에서 추가할 신규 결과가 없습니다.\")\n        return\n\n    # 6) 신규 결과 합치기\n    incr_pd \u003d pd.concat(result_list, ignore_index\u003dTrue)\n    incr_spark \u003d spark.createDataFrame(incr_pd)\n\n    # 7) 신규 결과만 append 저장 (기존 soh_mlp는 건드리지 않음)\n    out_path \u003d MLP_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]\n    (\n        incr_spark\n        .write\n        .mode(\"append\")          # append 모드로 쌓기\n        .partitionBy(\"deviceId\")\n        .parquet(out_path)\n    )\n\n    logger.info(f\"[MLP] 증분 배치 처리 완료 (append): {out_path}\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:26:16.473",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764558050708_684322977",
+      "id": "paragraph_1764558050708_684322977",
+      "dateCreated": "2025-12-01 12:00:50.708",
+      "dateStarted": "2025-12-01 14:26:16.478",
+      "dateFinished": "2025-12-01 14:26:16.503",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n\n# 전체 capa → 전체 MLP → soh_mlp overwrite 실행\nrun_mlp_full_batch(spark, model_type\u003d\"MLP\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:26:20.193",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "2025-12-01 14:26:20,424 - INFO - [MLP] 기존 soh_mlp 결과가 없어, 이번 배치는 신규(full)처럼 처리합니다.\n2025-12-01 14:26:20,428 - INFO - [MLP] capa parquet 로드: hdfs:///QH/SOH_Model/discharge/soh_capa/\n2025-12-01 14:26:27,708 - INFO - [MLP] deviceId\u003d01229438897 처리 시작\n2025-12-01 14:26:28,119 - INFO - deviceId 01229438897: 저장된 모델이 없어 새로 학습합니다. (경로: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229438897/mlp_model_dch_v4_01229438897.pth)\n2025-12-01 14:26:28,121 - INFO - deviceId 01229438897: 모델 학습을 시작합니다.\nModel trained and saved successfully to: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229438897/mlp_model_dch_v4_01229438897.pth\n2025-12-01 14:26:59,130 - INFO - deviceId 01229438897: 모델 학습이 완료되었습니다. (epochs: 174, val_mse: 0.021067)\n2025-12-01 14:26:59,132 - INFO - deviceId 01229438897: 로컬 모델 버전 저장 완료 → /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229438897/mlp_model_dch_v4_01229438897_20251201_142659.pth\n2025-12-01 14:26:59,287 - INFO - deviceId 01229438897: HDFS 모델 백업 완료 → hdfs:///QH/SOH_Model/discharge/models/mlp_model/01229438897/mlp_model_dch_v4_01229438897_20251201_142659.pth\n2025-12-01 14:26:59,374 - INFO - [MLP] deviceId\u003d01229898903 처리 시작\n2025-12-01 14:26:59,425 - INFO - deviceId 01229898903: 저장된 모델이 없어 새로 학습합니다. (경로: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229898903/mlp_model_dch_v4_01229898903.pth)\n2025-12-01 14:26:59,427 - INFO - deviceId 01229898903: 모델 학습을 시작합니다.\nModel trained and saved successfully to: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229898903/mlp_model_dch_v4_01229898903.pth\n2025-12-01 14:27:06,420 - INFO - deviceId 01229898903: 모델 학습이 완료되었습니다. (epochs: 68, val_mse: 0.025336)\n2025-12-01 14:27:06,422 - INFO - deviceId 01229898903: 로컬 모델 버전 저장 완료 → /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229898903/mlp_model_dch_v4_01229898903_20251201_142706.pth\n2025-12-01 14:27:06,544 - INFO - deviceId 01229898903: HDFS 모델 백업 완료 → hdfs:///QH/SOH_Model/discharge/models/mlp_model/01229898903/mlp_model_dch_v4_01229898903_20251201_142706.pth\n2025-12-01 14:27:06,557 - INFO - [MLP] deviceId\u003d01229968996 처리 시작\n2025-12-01 14:27:06,563 - INFO - deviceId 01229968996: 저장된 모델이 없어 새로 학습합니다. (경로: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229968996/mlp_model_dch_v4_01229968996.pth)\n2025-12-01 14:27:06,565 - INFO - deviceId 01229968996: 모델 학습을 시작합니다.\nModel trained and saved successfully to: /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229968996/mlp_model_dch_v4_01229968996.pth\n2025-12-01 14:27:07,537 - INFO - deviceId 01229968996: 모델 학습이 완료되었습니다. (epochs: 56, val_mse: 0.093876)\n2025-12-01 14:27:07,539 - INFO - deviceId 01229968996: 로컬 모델 버전 저장 완료 → /home/kadap/QH/SOH_Model/models/discharge/mlp_model/01229968996/mlp_model_dch_v4_01229968996_20251201_142707.pth\n2025-12-01 14:27:07,674 - INFO - deviceId 01229968996: HDFS 모델 백업 완료 → hdfs:///QH/SOH_Model/discharge/models/mlp_model/01229968996/mlp_model_dch_v4_01229968996_20251201_142707.pth\n2025-12-01 14:27:09,561 - INFO - [MLP] 증분 배치 처리 완료 (append): hdfs:///QH/SOH_Model/discharge/soh_mlp/\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:46113/jobs/job?id\u003d18"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764558060492_474072091",
+      "id": "paragraph_1764558060492_474072091",
+      "dateCreated": "2025-12-01 12:01:00.492",
+      "dateStarted": "2025-12-01 14:26:20.197",
+      "dateFinished": "2025-12-01 14:27:09.567",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 14:26:20.196",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764566780196_1738207958",
+      "id": "paragraph_1764566780196_1738207958",
+      "dateCreated": "2025-12-01 14:26:20.196",
+      "status": "READY"
+    }
+  ],
+  "name": "soh_mlp_final_test",
+  "id": "2MCREQ7W2",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false
+  }
+}
