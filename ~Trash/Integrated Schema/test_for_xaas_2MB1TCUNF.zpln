@@ -1,0 +1,577 @@
+{
+  "paragraphs": [
+    {
+      "title": "PP 조회",
+      "text": "%spark_user.pyspark\n\nfrom pyspark.sql import functions as F\n# 1. Spark 세션 생성\n# 2. Parquet 파일 경로 지정\nfile_path \u003d \"hdfs:///QH/Pre_Processed/Passenger_Car/PP_Set/deviceId\u003d01229968996\"\n\n\n# 3. 파일 불러오기\ndf \u003d spark.read.parquet(file_path)\n\n\n# 4. 데이터 확인\ndf.show(5)\ndf.printSchema()\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 12:04:54.996",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+--------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+-----+-----+-----+-------------------------+------------+--------+\n|                uuid|sourceCode|          createdAt|         insultedAt|  status|totalMileage|speed|mcuMotorRpm|motorTorqueActual|paddleShiftUp|paddleShiftDown| SOC|displaySoc| SOH|batteryPackVoltages|batteryPackCurrents|batteryTotalDischargedCapacity|batteryTotalChargedCapacity|batteryTotalDischargedEnergy|batteryTotalChargedEnergy|totalSlowChargeCount|maxCellVoltages|maxCellVoltageNum|minCellVoltages|minCellVoltageNum|insulationResistance|batteryModuleTemperatures|maxModuleTemperatures|minModuleTemperatures|heater1Temperature|batteryCoolantInletTemperature|batteryPraBusbarTemperature|motorTemperature|inverterTemperature|heatSinkTemperature|igbtTemperature|internalTemperatureFront|externalTemperature|ltrOutletTemperature|   c_date1|cvdiff|ctdiff|mean_ct|socdiff|  sop|  sob|  sot|airconditionCompressorRpm|isHvptcDrive| pt_date|\n+--------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+-----+-----+-----+-------------------------+------------+--------+\n|df93758d-3f59-4d0...|      kmon|2025-05-01 00:04:28|2025-05-01 00:05:40|CHARGE_S|    271100.0|  0.0|        0.0|              0.0|            0|              0|87.5|      89.5|97.0|              734.1|                0.0|                         124.7|                      146.5|                        87.7|                    104.8|                   3|           4.08|               33|           4.06|               52|              3000.0|              21,22,20,22|                 22.0|                 20.0|              19.0|                          20.0|                       36.0|           24.98|               22.7|              22.22|            0.0|                    22.0|               16.0|                 0.0|2025-05-01|  0.02|   2.0|  21.25|    2.0|97.47|99.31|100.0|                        0|           0|20250501|\n|153296eb-dd3d-49f...|      kmon|2025-05-01 00:04:28|2025-05-01 00:05:40|CHARGE_S|    271100.0|  0.0|        0.0|              0.0|            0|              0|87.5|      89.5|97.0|              734.1|                0.0|                         124.7|                      146.5|                        87.7|                    104.8|                   3|           4.08|               33|           4.06|               52|              3000.0|              21,22,20,22|                 22.0|                 20.0|              19.0|                          20.0|                       36.0|           24.98|               22.7|              22.22|            0.0|                    22.0|               16.0|                 0.0|2025-05-01|  0.02|   2.0|  21.25|    2.0|97.47|99.31|100.0|                        0|           0|20250501|\n|e4620ae3-9847-4a5...|      kmon|2025-05-01 00:04:29|2025-05-01 00:05:40|CHARGE_S|    271100.0|  0.0|        0.0|              0.0|            0|              0|87.5|      89.5|97.0|              734.1|                0.0|                         124.7|                      146.5|                        87.7|                    104.8|                   3|           4.08|               33|           4.06|               52|              3000.0|              21,22,20,22|                 22.0|                 20.0|              19.0|                          20.0|                       36.0|           24.85|              22.71|              22.25|            0.0|                    22.0|               16.0|                 0.0|2025-05-01|  0.02|   2.0|  21.25|    2.0|97.47|99.31|100.0|                        0|           0|20250501|\n|e110de02-e655-4d0...|      kmon|2025-05-01 00:04:29|2025-05-01 00:05:40|CHARGE_S|    271100.0|  0.0|        0.0|              0.0|            0|              0|87.5|      89.5|97.0|              734.1|                0.0|                         124.7|                      146.5|                        87.7|                    104.8|                   3|           4.08|               33|           4.06|               52|              3000.0|              21,22,20,22|                 22.0|                 20.0|              19.0|                          20.0|                       36.0|           24.85|              22.71|              22.25|            0.0|                    22.0|               16.0|                 0.0|2025-05-01|  0.02|   2.0|  21.25|    2.0|97.47|99.31|100.0|                        0|           0|20250501|\n|2518f157-77ac-4ba...|      kmon|2025-05-01 00:04:30|2025-05-01 00:05:40|CHARGE_S|    271100.0|  0.0|        0.0|              0.0|            0|              0|87.5|      89.5|97.0|              734.2|                0.0|                         124.7|                      146.5|                        87.7|                    104.8|                   3|           4.08|               33|           4.06|              131|              3000.0|              21,22,20,22|                 22.0|                 20.0|              19.0|                          20.0|                       36.0|           24.85|              22.71|              22.25|            0.0|                    22.0|               16.0|                 0.0|2025-05-01|  0.02|   2.0|  21.25|    2.0|97.47|99.31|100.0|                        0|           0|20250501|\n+--------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+-----+-----+-----+-------------------------+------------+--------+\nonly showing top 5 rows\n\nroot\n |-- uuid: string (nullable \u003d true)\n |-- sourceCode: string (nullable \u003d true)\n |-- createdAt: timestamp (nullable \u003d true)\n |-- insultedAt: timestamp (nullable \u003d true)\n |-- status: string (nullable \u003d true)\n |-- totalMileage: double (nullable \u003d true)\n |-- speed: double (nullable \u003d true)\n |-- mcuMotorRpm: double (nullable \u003d true)\n |-- motorTorqueActual: double (nullable \u003d true)\n |-- paddleShiftUp: integer (nullable \u003d true)\n |-- paddleShiftDown: integer (nullable \u003d true)\n |-- SOC: double (nullable \u003d true)\n |-- displaySoc: double (nullable \u003d true)\n |-- SOH: double (nullable \u003d true)\n |-- batteryPackVoltages: double (nullable \u003d true)\n |-- batteryPackCurrents: double (nullable \u003d true)\n |-- batteryTotalDischargedCapacity: double (nullable \u003d true)\n |-- batteryTotalChargedCapacity: double (nullable \u003d true)\n |-- batteryTotalDischargedEnergy: double (nullable \u003d true)\n |-- batteryTotalChargedEnergy: double (nullable \u003d true)\n |-- totalSlowChargeCount: integer (nullable \u003d true)\n |-- maxCellVoltages: double (nullable \u003d true)\n |-- maxCellVoltageNum: integer (nullable \u003d true)\n |-- minCellVoltages: double (nullable \u003d true)\n |-- minCellVoltageNum: integer (nullable \u003d true)\n |-- insulationResistance: double (nullable \u003d true)\n |-- batteryModuleTemperatures: string (nullable \u003d true)\n |-- maxModuleTemperatures: double (nullable \u003d true)\n |-- minModuleTemperatures: double (nullable \u003d true)\n |-- heater1Temperature: double (nullable \u003d true)\n |-- batteryCoolantInletTemperature: double (nullable \u003d true)\n |-- batteryPraBusbarTemperature: double (nullable \u003d true)\n |-- motorTemperature: double (nullable \u003d true)\n |-- inverterTemperature: double (nullable \u003d true)\n |-- heatSinkTemperature: double (nullable \u003d true)\n |-- igbtTemperature: double (nullable \u003d true)\n |-- internalTemperatureFront: double (nullable \u003d true)\n |-- externalTemperature: double (nullable \u003d true)\n |-- ltrOutletTemperature: double (nullable \u003d true)\n |-- c_date1: date (nullable \u003d true)\n |-- cvdiff: double (nullable \u003d true)\n |-- ctdiff: double (nullable \u003d true)\n |-- mean_ct: double (nullable \u003d true)\n |-- socdiff: double (nullable \u003d true)\n |-- sop: double (nullable \u003d true)\n |-- sob: double (nullable \u003d true)\n |-- sot: double (nullable \u003d true)\n |-- airconditionCompressorRpm: integer (nullable \u003d true)\n |-- isHvptcDrive: integer (nullable \u003d true)\n |-- pt_date: integer (nullable \u003d true)\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:40877/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:40877/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:40877/jobs/job?id\u003d2"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764313839460_1062941010",
+      "id": "paragraph_1764313839460_1062941010",
+      "dateCreated": "2025-11-28 16:10:39.460",
+      "dateStarted": "2025-12-01 12:04:55.000",
+      "dateFinished": "2025-12-01 12:06:26.831",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\nfrom pyspark.sql import functions as F\n\n# createdAt 컬럼의 최소, 최대, 전체 행 개수 조회\ndf.select(\n    F.min(\"createdAt\").alias(\"min_createdAt\"),\n    F.max(\"createdAt\").alias(\"max_createdAt\"),\n    #F.count(\"*\").alias(\"row_count\")\n).show(truncate\u003dFalse)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 16:14:12.362",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-------------------+-------------------+\n|min_createdAt      |max_createdAt      |\n+-------------------+-------------------+\n|2025-05-13 00:04:52|2025-06-14 23:40:24|\n+-------------------+-------------------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:44407/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:44407/jobs/job?id\u003d4"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764313933859_79413216",
+      "id": "paragraph_1764313933859_79413216",
+      "dateCreated": "2025-11-28 16:12:13.859",
+      "dateStarted": "2025-11-28 16:14:12.366",
+      "dateFinished": "2025-11-28 16:14:19.108",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\nfrom pyspark.sql import functions as F\r\n\r\ndevice_id   \u003d \"01229968996\"\r\nbase_path   \u003d \"hdfs:///QH/Pre_Processed/Passenger_Car/PP_Set\"\r\nsrc_path    \u003d f\"{base_path}/deviceId\u003d{device_id}\"\r\n\r\n# HDFS 임시 저장 경로\r\nhdfs_out    \u003d f\"hdfs:///home/tmp/for_xaas_data/{device_id}\"\r\n\r\n# 1) 데이터 로드\r\ndf \u003d (\r\n    spark.read\r\n         .option(\"basePath\", base_path)\r\n         .parquet(src_path)\r\n)\r\n\r\n# 2) pt_date 기준 필터 예시 (이미 잘 되던 코드 사용)\r\ndf_filtered \u003d (\r\n    df\r\n    .filter(\r\n        (F.col(\"pt_date\") \u003e\u003d \"20250430\") \u0026\r\n        (F.col(\"pt_date\") \u003c\u003d \"20250502\")\r\n    )\r\n    .select(\r\n        \"deviceId\",\r\n        \"createdAt\",\r\n        \"status\",\r\n        \"cvdiff\",\r\n        \"ctdiff\",\r\n        \"socdiff\",\r\n        \"sop\",\r\n        \"sob\",\r\n        \"sot\"\r\n    )\r\n)\r\n\r\nprint(\"필터 후 건수:\", df_filtered.count())\r\n\r\n# 3) HDFS로 CSV 저장\r\n(df_filtered\r\n    .coalesce(1)               # 한 파일로\r\n    .write\r\n    .mode(\"overwrite\")\r\n    .option(\"header\", True)\r\n    .csv(hdfs_out)\r\n)\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 18:44:24.485",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "필터 후 건수: 155137\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:42269/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42269/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42269/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42269/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42269/jobs/job?id\u003d19"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764314708778_1197048491",
+      "id": "paragraph_1764314708778_1197048491",
+      "dateCreated": "2025-11-28 16:25:08.778",
+      "dateStarted": "2025-11-28 18:44:24.489",
+      "dateFinished": "2025-11-28 18:44:27.569",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\n# 1) 로컬 목적지 디렉토리 정리 (기존 것 삭제)\nrm -rf /home/kadap/upload/for_xaas_data/01229968996\nmkdir -p /home/kadap/upload/for_xaas_data/01229968996\n\n# 2) HDFS 내용 확인\nhdfs dfs -ls /home/tmp/for_xaas_data/01229968996\n\n# 3) HDFS → 로컬로 복사\nhdfs dfs -get -f /home/tmp/for_xaas_data/01229968996/* /home/kadap/upload/for_xaas_data/01229968996/\n\n# 4) 로컬에 뭐가 내려왔는지 확인\nls -l /home/kadap/upload/for_xaas_data/01229968996\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 18:44:36.205",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Found 2 items\n-rw-r--r--   1 kadap supergroup          0 2025-11-28 18:44 /home/tmp/for_xaas_data/01229968996/_SUCCESS\n-rw-r--r--   1 kadap supergroup   12346293 2025-11-28 18:44 /home/tmp/for_xaas_data/01229968996/part-00000-c48330ad-80f4-4402-81e7-29f21f4c87f6-c000.csv\ntotal 12060\n-rw-r--r-- 1 kadap kadap        0 Nov 28 18:44 _SUCCESS\n-rw-r--r-- 1 kadap kadap 12346293 Nov 28 18:44 part-00000-c48330ad-80f4-4402-81e7-29f21f4c87f6-c000.csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764316300297_1947637196",
+      "id": "paragraph_1764316300297_1947637196",
+      "dateCreated": "2025-11-28 16:51:40.297",
+      "dateStarted": "2025-11-28 18:44:36.210",
+      "dateFinished": "2025-11-28 18:44:40.251",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\nfrom pyspark.sql import functions as F\n\n# 1. Parquet 경로 (partition 경로)\nfile_path \u003d \"hdfs:///QH/Pre_Processed/Passenger_Car/PP_Set/deviceId\u003d01229968996\"\n\n# 2. 파일 불러오기\ndf \u003d spark.read.parquet(file_path)\n\n# 3. pt_date 필터링\ndf_filtered \u003d (\n    df.filter(\n        (F.col(\"pt_date\") \u003e\u003d \"20250501\") \u0026\n        (F.col(\"pt_date\") \u003c\u003d \"20250502\")\n    )\n)\n\n# 4. 데이터 확인\ndf_filtered.show(5, truncate\u003dFalse)\ndf_filtered.printSchema()\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 17:10:46.262",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+------------------------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+---+---+-----+-------------------------+------------+--------+\n|uuid                                |sourceCode|createdAt          |insultedAt         |status  |totalMileage|speed|mcuMotorRpm|motorTorqueActual|paddleShiftUp|paddleShiftDown|SOC |displaySoc|SOH |batteryPackVoltages|batteryPackCurrents|batteryTotalDischargedCapacity|batteryTotalChargedCapacity|batteryTotalDischargedEnergy|batteryTotalChargedEnergy|totalSlowChargeCount|maxCellVoltages|maxCellVoltageNum|minCellVoltages|minCellVoltageNum|insulationResistance|batteryModuleTemperatures|maxModuleTemperatures|minModuleTemperatures|heater1Temperature|batteryCoolantInletTemperature|batteryPraBusbarTemperature|motorTemperature|inverterTemperature|heatSinkTemperature|igbtTemperature|internalTemperatureFront|externalTemperature|ltrOutletTemperature|c_date1   |cvdiff|ctdiff|mean_ct|socdiff|sop|sob|sot  |airconditionCompressorRpm|isHvptcDrive|pt_date |\n+------------------------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+---+---+-----+-------------------------+------------+--------+\n|df93758d-3f59-4d04-84d6-07d0aa4da6a9|kmon      |2025-05-01 00:04:28|2025-05-01 00:05:40|CHARGE_S|271100.0    |0.0  |0.0        |0.0              |0            |0              |87.5|89.5      |97.0|734.1              |0.0                |124.7                         |146.5                      |87.7                        |104.8                    |3                   |4.08           |33               |4.06           |52               |3000.0              |21,22,20,22              |22.0                 |20.0                 |19.0              |20.0                          |36.0                       |24.98           |22.7               |22.22              |0.0            |22.0                    |16.0               |0.0                 |2025-05-01|0.02  |2.0   |21.25  |2.0    |0.0|0.0|100.0|0                        |0           |20250501|\n|153296eb-dd3d-49f0-81e9-a6131384aa10|kmon      |2025-05-01 00:04:28|2025-05-01 00:05:40|CHARGE_S|271100.0    |0.0  |0.0        |0.0              |0            |0              |87.5|89.5      |97.0|734.1              |0.0                |124.7                         |146.5                      |87.7                        |104.8                    |3                   |4.08           |33               |4.06           |52               |3000.0              |21,22,20,22              |22.0                 |20.0                 |19.0              |20.0                          |36.0                       |24.98           |22.7               |22.22              |0.0            |22.0                    |16.0               |0.0                 |2025-05-01|0.02  |2.0   |21.25  |2.0    |0.0|0.0|100.0|0                        |0           |20250501|\n|e4620ae3-9847-4a57-a01e-b14cfe510cfe|kmon      |2025-05-01 00:04:29|2025-05-01 00:05:40|CHARGE_S|271100.0    |0.0  |0.0        |0.0              |0            |0              |87.5|89.5      |97.0|734.1              |0.0                |124.7                         |146.5                      |87.7                        |104.8                    |3                   |4.08           |33               |4.06           |52               |3000.0              |21,22,20,22              |22.0                 |20.0                 |19.0              |20.0                          |36.0                       |24.85           |22.71              |22.25              |0.0            |22.0                    |16.0               |0.0                 |2025-05-01|0.02  |2.0   |21.25  |2.0    |0.0|0.0|100.0|0                        |0           |20250501|\n|e110de02-e655-4d0e-911a-f1269f3d3441|kmon      |2025-05-01 00:04:29|2025-05-01 00:05:40|CHARGE_S|271100.0    |0.0  |0.0        |0.0              |0            |0              |87.5|89.5      |97.0|734.1              |0.0                |124.7                         |146.5                      |87.7                        |104.8                    |3                   |4.08           |33               |4.06           |52               |3000.0              |21,22,20,22              |22.0                 |20.0                 |19.0              |20.0                          |36.0                       |24.85           |22.71              |22.25              |0.0            |22.0                    |16.0               |0.0                 |2025-05-01|0.02  |2.0   |21.25  |2.0    |0.0|0.0|100.0|0                        |0           |20250501|\n|2518f157-77ac-4ba1-a5dd-39597d5a0784|kmon      |2025-05-01 00:04:30|2025-05-01 00:05:40|CHARGE_S|271100.0    |0.0  |0.0        |0.0              |0            |0              |87.5|89.5      |97.0|734.2              |0.0                |124.7                         |146.5                      |87.7                        |104.8                    |3                   |4.08           |33               |4.06           |131              |3000.0              |21,22,20,22              |22.0                 |20.0                 |19.0              |20.0                          |36.0                       |24.85           |22.71              |22.25              |0.0            |22.0                    |16.0               |0.0                 |2025-05-01|0.02  |2.0   |21.25  |2.0    |0.0|0.0|100.0|0                        |0           |20250501|\n+------------------------------------+----------+-------------------+-------------------+--------+------------+-----+-----------+-----------------+-------------+---------------+----+----------+----+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+----------+------+------+-------+-------+---+---+-----+-------------------------+------------+--------+\nonly showing top 5 rows\n\nroot\n |-- uuid: string (nullable \u003d true)\n |-- sourceCode: string (nullable \u003d true)\n |-- createdAt: timestamp (nullable \u003d true)\n |-- insultedAt: timestamp (nullable \u003d true)\n |-- status: string (nullable \u003d true)\n |-- totalMileage: double (nullable \u003d true)\n |-- speed: double (nullable \u003d true)\n |-- mcuMotorRpm: double (nullable \u003d true)\n |-- motorTorqueActual: double (nullable \u003d true)\n |-- paddleShiftUp: integer (nullable \u003d true)\n |-- paddleShiftDown: integer (nullable \u003d true)\n |-- SOC: double (nullable \u003d true)\n |-- displaySoc: double (nullable \u003d true)\n |-- SOH: double (nullable \u003d true)\n |-- batteryPackVoltages: double (nullable \u003d true)\n |-- batteryPackCurrents: double (nullable \u003d true)\n |-- batteryTotalDischargedCapacity: double (nullable \u003d true)\n |-- batteryTotalChargedCapacity: double (nullable \u003d true)\n |-- batteryTotalDischargedEnergy: double (nullable \u003d true)\n |-- batteryTotalChargedEnergy: double (nullable \u003d true)\n |-- totalSlowChargeCount: integer (nullable \u003d true)\n |-- maxCellVoltages: double (nullable \u003d true)\n |-- maxCellVoltageNum: integer (nullable \u003d true)\n |-- minCellVoltages: double (nullable \u003d true)\n |-- minCellVoltageNum: integer (nullable \u003d true)\n |-- insulationResistance: double (nullable \u003d true)\n |-- batteryModuleTemperatures: string (nullable \u003d true)\n |-- maxModuleTemperatures: double (nullable \u003d true)\n |-- minModuleTemperatures: double (nullable \u003d true)\n |-- heater1Temperature: double (nullable \u003d true)\n |-- batteryCoolantInletTemperature: double (nullable \u003d true)\n |-- batteryPraBusbarTemperature: double (nullable \u003d true)\n |-- motorTemperature: double (nullable \u003d true)\n |-- inverterTemperature: double (nullable \u003d true)\n |-- heatSinkTemperature: double (nullable \u003d true)\n |-- igbtTemperature: double (nullable \u003d true)\n |-- internalTemperatureFront: double (nullable \u003d true)\n |-- externalTemperature: double (nullable \u003d true)\n |-- ltrOutletTemperature: double (nullable \u003d true)\n |-- c_date1: date (nullable \u003d true)\n |-- cvdiff: double (nullable \u003d true)\n |-- ctdiff: double (nullable \u003d true)\n |-- mean_ct: double (nullable \u003d true)\n |-- socdiff: double (nullable \u003d true)\n |-- sop: double (nullable \u003d true)\n |-- sob: double (nullable \u003d true)\n |-- sot: double (nullable \u003d true)\n |-- airconditionCompressorRpm: integer (nullable \u003d true)\n |-- isHvptcDrive: integer (nullable \u003d true)\n |-- pt_date: integer (nullable \u003d true)\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:37003/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:37003/jobs/job?id\u003d5"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764316849594_416225914",
+      "id": "paragraph_1764316849594_416225914",
+      "dateCreated": "2025-11-28 17:00:49.594",
+      "dateStarted": "2025-11-28 17:10:46.266",
+      "dateFinished": "2025-11-28 17:10:51.755",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 16:35:06.888",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Found 1 items\ndrwxr-xr-x   - kadap supergroup          0 2025-11-28 16:29 /home/kadap/upload/for_xaas_data/01229438897\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764315184461_9047648",
+      "id": "paragraph_1764315184461_9047648",
+      "dateCreated": "2025-11-28 16:33:04.461",
+      "dateStarted": "2025-11-28 16:33:08.988",
+      "dateFinished": "2025-11-28 16:33:24.574",
+      "status": "FINISHED"
+    },
+    {
+      "title": "승용 SOH 결과",
+      "text": "%spark_user.pyspark\n\nfrom pyspark.sql import functions as F\n# 1. Spark 세션 생성\n# 2. Parquet 파일 경로 지정\nfile_path \u003d \"hdfs:///QH/SOH_Model/discharge/soh_stress_factor/deviceId\u003d01229438897\"\n\n\n# 3. 파일 불러오기\ndf \u003d spark.read.parquet(file_path)\n\n\n# 4. 데이터 확인\ndf.show(5)\ndf.printSchema()\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 16:16:00.306",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+----------+---------+------------+--------------------+--------------------+\n|day_of_soh|daily_soh|longterm_soh|       feature_value|  feature_importance|\n+----------+---------+------------+--------------------+--------------------+\n|2023-08-09|    0.969|       0.986|{accum_cycle_cnt:...|{accum_cycle_cnt:...|\n|2023-08-10|    0.969|       0.986|{accum_cycle_cnt:...|{accum_cycle_cnt:...|\n|2023-08-22|    0.964|       0.986|{accum_cycle_cnt:...|{accum_cycle_cnt:...|\n|2023-08-23|    0.966|       0.986|{accum_cycle_cnt:...|{accum_cycle_cnt:...|\n|2023-08-29|    0.967|       0.985|{accum_cycle_cnt:...|{accum_cycle_cnt:...|\n+----------+---------+------------+--------------------+--------------------+\nonly showing top 5 rows\n\nroot\n |-- day_of_soh: string (nullable \u003d true)\n |-- daily_soh: double (nullable \u003d true)\n |-- longterm_soh: double (nullable \u003d true)\n |-- feature_value: string (nullable \u003d true)\n |-- feature_importance: string (nullable \u003d true)\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:44407/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:44407/jobs/job?id\u003d6"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764314052364_1360895088",
+      "id": "paragraph_1764314052364_1360895088",
+      "dateCreated": "2025-11-28 16:14:12.364",
+      "dateStarted": "2025-11-28 16:16:00.310",
+      "dateFinished": "2025-11-28 16:16:01.930",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\r\nfrom pyspark.sql import functions as F\r\n\r\ndevice_id \u003d \"01229968996\"\r\nbase_path \u003d \"hdfs:///QH/SOH_Model/discharge/soh_stress_factor\"\r\nsrc_path  \u003d f\"{base_path}/deviceId\u003d{device_id}\"\r\n\r\nhdfs_out  \u003d f\"hdfs:///home/tmp/for_xaas_data/{device_id}\"\r\n\r\n# 1) 데이터 로드 (deviceId 파티션 컬럼 포함해서 읽기)\r\ndf \u003d (\r\n    spark.read\r\n         .option(\"basePath\", base_path)   # 👈 이게 있어야 deviceId가 컬럼으로 생김\r\n         .parquet(src_path)\r\n)\r\n\r\ndf.printSchema()\r\n\r\n# 2) day_of_soh 기준 날짜 필터\r\ndf_filtered \u003d (\r\n    df\r\n    .filter(\r\n        (F.col(\"day_of_soh\") \u003e\u003d F.lit(\"2025-04-02\")) \u0026\r\n        (F.col(\"day_of_soh\") \u003c\u003d F.lit(\"2025-05-02\"))\r\n    )\r\n    .select(\r\n        \"deviceId\",\r\n        \"day_of_soh\",\r\n        \"daily_soh\",\r\n        \"longterm_soh\",\r\n        \"feature_value\",\r\n        \"feature_importance\"\r\n    )\r\n)\r\n\r\nprint(\"필터 후 건수:\", df_filtered.count())\r\n\r\n# 3) HDFS로 CSV 저장\r\n(df_filtered\r\n    .coalesce(1)\r\n    .write\r\n    .mode(\"overwrite\")\r\n    .option(\"header\", True)\r\n    .csv(hdfs_out)\r\n)\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-29 16:51:25.812",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "root\n |-- day_of_soh: string (nullable \u003d true)\n |-- daily_soh: double (nullable \u003d true)\n |-- longterm_soh: double (nullable \u003d true)\n |-- feature_value: string (nullable \u003d true)\n |-- feature_importance: string (nullable \u003d true)\n |-- deviceId: integer (nullable \u003d true)\n\n필터 후 건수: 11\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:45465/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:45465/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:45465/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:45465/jobs/job?id\u003d15"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764323731427_988583322",
+      "id": "paragraph_1764323731427_988583322",
+      "dateCreated": "2025-11-28 18:55:31.427",
+      "dateStarted": "2025-11-29 16:51:25.817",
+      "dateFinished": "2025-11-29 16:51:27.131",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\nfrom pyspark.sql import functions as F\n\n# createdAt 컬럼의 최소, 최대, 전체 행 개수 조회\ndf.select(\n    F.min(\"day_of_soh\").alias(\"min_daily_soh\"),\n    F.max(\"day_of_soh\").alias(\"max_daily_soh\"),\n    #F.count(\"*\").alias(\"row_count\")\n).show(truncate\u003dFalse)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-29 14:02:00.251",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-------------+-------------+\n|min_daily_soh|max_daily_soh|\n+-------------+-------------+\n|2023-08-09   |2025-06-13   |\n+-------------+-------------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:34243/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:34243/jobs/job?id\u003d5"
+            }
+          ],
+          "interpreterSettingId": "spark_user"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764314160308_1588648707",
+      "id": "paragraph_1764314160308_1588648707",
+      "dateCreated": "2025-11-28 16:16:00.308",
+      "dateStarted": "2025-11-29 14:02:00.253",
+      "dateFinished": "2025-11-29 14:02:01.895",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\n# 1) 로컬 목적지 디렉토리 정리 (기존 것 삭제)\nrm -rf /home/kadap/upload/for_xaas_data/01229968996\nmkdir -p /home/kadap/upload/for_xaas_data/01229968996\n\n# 2) HDFS 내용 확인\nhdfs dfs -ls /home/tmp/for_xaas_data/01229968996\n\n# 3) HDFS → 로컬로 복사\nhdfs dfs -get -f /home/tmp/for_xaas_data/01229968996/* /home/kadap/upload/for_xaas_data/01229968996/\n\n# 4) 로컬에 뭐가 내려왔는지 확인\nls -l /home/kadap/upload/for_xaas_data/01229968996\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-29 16:51:32.877",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Found 2 items\n-rw-r--r--   1 kadap supergroup          0 2025-11-29 16:51 /home/tmp/for_xaas_data/01229968996/_SUCCESS\n-rw-r--r--   1 kadap supergroup       4223 2025-11-29 16:51 /home/tmp/for_xaas_data/01229968996/part-00000-2950be29-9860-4ac5-8103-2c8bc960090f-c000.csv\ntotal 8\n-rw-r--r-- 1 kadap kadap    0 Nov 29 16:51 _SUCCESS\n-rw-r--r-- 1 kadap kadap 4223 Nov 29 16:51 part-00000-2950be29-9860-4ac5-8103-2c8bc960090f-c000.csv\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764314183868_589816063",
+      "id": "paragraph_1764314183868_589816063",
+      "dateCreated": "2025-11-28 16:16:23.868",
+      "dateStarted": "2025-11-29 16:51:32.882",
+      "dateFinished": "2025-11-29 16:51:36.779",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-28 19:06:24.894",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1764324384894_500711300",
+      "id": "paragraph_1764324384894_500711300",
+      "dateCreated": "2025-11-28 19:06:24.894",
+      "status": "READY"
+    }
+  ],
+  "name": "test_for_xaas",
+  "id": "2MB1TCUNF",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
