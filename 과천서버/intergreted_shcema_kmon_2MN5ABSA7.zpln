@@ -1,0 +1,256 @@
+{
+  "paragraphs": [
+    {
+      "title": "1.S3 설정 및 경로 정의",
+      "text": "%spark_high.pyspark\r\nimport boto3, os, sys, re, traceback\r\nfrom datetime import datetime\r\nfrom pyspark.sql import functions as F\r\n# ── S3 설정 ────────────────────────────────────────────────\r\nhc \u003d sc._jsc.hadoopConfiguration()\r\nhc.set(\"fs.s3a.endpoint\",                    \"http://192.168.0.105:80\")\r\nhc.set(\"fs.s3a.access.key\",                  \"8XTYLABJCSLJKUTQBK94\")\r\nhc.set(\"fs.s3a.secret.key\",                  \"fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\")\r\nhc.set(\"fs.s3a.path.style.access\",           \"true\")\r\nhc.set(\"fs.s3a.impl\",                        \"org.apache.hadoop.fs.s3a.S3AFileSystem\")\r\nhc.set(\"fs.s3a.connection.ssl.enabled\",      \"false\")\r\nhc.set(\"fs.s3a.signing-algorithm\",           \"S3SignerType\")\r\n# ── S3 커넥션 안정성 설정 (타임아웃/재시도) ───────────────\r\nhc.set(\"fs.s3a.connection.timeout\",          \"600000\")\r\nhc.set(\"fs.s3a.socket.timeout\",              \"600000\")\r\nhc.set(\"fs.s3a.connection.establish.timeout\",\"600000\")\r\nhc.set(\"fs.s3a.attempts.maximum\",            \"10\")\r\nhc.set(\"fs.s3a.retry.limit\",                 \"10\")\r\nhc.set(\"fs.s3a.retry.interval\",              \"500ms\")\r\n# ── Connection pool 유지 설정 ─────────────────────────────\r\nhc.set(\"fs.s3a.connection.ttl\",              \"-1\")\r\nhc.set(\"fs.s3a.connection.idle.time\",        \"3600000\")\r\nhc.set(\"fs.s3a.pool.timeout\",                \"3600000\")\r\n# ── 경로 설정 ──────────────────────────────────────────────\r\nRAW_BASE_PATH    \u003d \"s3a://bigdata/kmon/parquet\"\r\nMASTER_CSV_PATH  \u003d \"s3a://quantum/data_folder/metaData/VehicleMaster.csv\"\r\nOUTPUT_BASE_PATH \u003d \"s3a://parquet/kslab_kmon\"\r\nprint(\"S3 설정 완료\")\r\nprint(f\"  RAW : {RAW_BASE_PATH}\")\r\nprint(f\"  OUT : {OUTPUT_BASE_PATH}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-06 06:28:12.825",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python",
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "S3 설정 완료\n  RAW : s3a://bigdata/kmon/parquet\n  OUT : s3a://parquet/kslab_kmon\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774599543683_601948635",
+      "id": "paragraph_1774599543683_601948635",
+      "dateCreated": "2026-03-27 08:19:03.683",
+      "dateStarted": "2026-04-02 00:38:52.655",
+      "dateFinished": "2026-04-02 00:39:40.992",
+      "status": "FINISHED"
+    },
+    {
+      "title": "2.모듈 다운로드 및 import",
+      "text": "%spark_high.pyspark\r\nimport boto3, os, sys\r\n\r\n# ── 인증정보 직접 명시 ─────────────────────────────────────\r\ns3 \u003d boto3.client(\r\n    \"s3\",\r\n    endpoint_url          \u003d \"http://192.168.0.105:80\",\r\n    aws_access_key_id     \u003d \"8XTYLABJCSLJKUTQBK94\",\r\n    aws_secret_access_key \u003d \"fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\",\r\n    region_name           \u003d \"us-east-1\"\r\n)\r\n\r\nlocal_dir \u003d \"/tmp/kmon\"\r\nos.makedirs(local_dir, exist_ok\u003dTrue)\r\n\r\nfor f in [\"kmon_kslab_config.py\", \"kmon_kslab_pp_func.py\", \"kmon_kslab_utils.py\"]:\r\n    s3.download_file(\"quantum\", f\"data_folder/Intergrated_Schema/kmon/{f}\", f\"{local_dir}/{f}\")\r\n    print(f\"Downloaded: {f}\")\r\n\r\nsys.path.insert(0, local_dir)\r\n\r\nfrom kmon_kslab_config import ADD_COLUMNS, RISKY_CAST_MAP\r\nfrom kmon_kslab_pp_func import (\r\n    convert_df_new, bit_process, add_status, combine_bmt_columns,\r\n    drop_if_exists, add_row_uuid, select_columns,\r\n    add_missing_columns, cast_risky_columns\r\n)\r\nfrom kmon_kslab_utils import print_timestamp\r\n\r\nprint(\"\u003d\u003d\u003d OK \u003d\u003d\u003d\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-06 06:28:28.468",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Downloaded: kmon_kslab_config.py\nDownloaded: kmon_kslab_pp_func.py\nDownloaded: kmon_kslab_utils.py\n\u003d\u003d\u003d OK \u003d\u003d\u003d\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774856215779_2083439257",
+      "id": "paragraph_1774856215779_2083439257",
+      "dateCreated": "2026-03-30 07:36:55.779",
+      "dateStarted": "2026-04-02 00:39:42.128",
+      "dateFinished": "2026-04-02 00:39:42.314",
+      "status": "FINISHED"
+    },
+    {
+      "title": "3. 헬퍼 함수 및 단말기 목록 조회",
+      "text": "%spark_high.pyspark\r\n\r\ndef get_device_ids(raw_base):\r\n    \"\"\"bigdata 버킷 id\u003d 파티션 폴더에서 전체 단말기 ID 목록 추출\"\"\"\r\n    jvm  \u003d spark._jvm\r\n    conf \u003d sc._jsc.hadoopConfiguration()\r\n    path \u003d jvm.org.apache.hadoop.fs.Path(raw_base)\r\n    fs   \u003d path.getFileSystem(conf)\r\n    return sorted([\r\n        s.getPath().getName().replace(\"id\u003d\", \"\")\r\n        for s in fs.listStatus(path)\r\n        if s.getPath().getName().startswith(\"id\u003d\")\r\n    ])\r\n\r\ndef get_device_max_dates(output_base):\r\n    \"\"\"output _deviceId\u003d 폴더에서 단말기별 max _date 조회 (증분용)\"\"\"\r\n    try:\r\n        jvm  \u003d spark._jvm\r\n        conf \u003d sc._jsc.hadoopConfiguration()\r\n        path \u003d jvm.org.apache.hadoop.fs.Path(output_base)\r\n        fs   \u003d path.getFileSystem(conf)\r\n        if not fs.exists(path):\r\n            return {}\r\n        result \u003d {}\r\n        for device in fs.listStatus(path):\r\n            name \u003d device.getPath().getName()\r\n            if not name.startswith(\"_deviceId\u003d\"):\r\n                continue\r\n            device_id \u003d name.replace(\"_deviceId\u003d\", \"\")\r\n            dates \u003d [\r\n                s.getPath().getName().replace(\"_date\u003d\", \"\")\r\n                for s in fs.listStatus(device.getPath())\r\n                if s.getPath().getName().startswith(\"_date\u003d\")\r\n            ]\r\n            if dates:\r\n                result[device_id] \u003d max(dates)\r\n        return result\r\n    except Exception as e:\r\n        print(f\"  [WARN] get_device_max_dates 실패: {e}\")\r\n        return {}\r\n\r\n# ── 전체 단말기 목록 및 처리 이력 조회 ────────────────────\r\nall_device_ids \u003d get_device_ids(RAW_BASE_PATH)\r\nprocessed_map  \u003d get_device_max_dates(OUTPUT_BASE_PATH)\r\n\r\nprint(f\"전체 단말기 수   : {len(all_device_ids)}\")\r\nprint(f\"처리 완료 단말기 : {len(processed_map)}\")\r\nprint(f\"전체 단말기 목록 : {all_device_ids}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-06 06:28:40.922",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "전체 단말기 수   : 71\n처리 완료 단말기 : 19\n전체 단말기 목록 : [\u002701229168898\u0027, \u002701229198901\u0027, \u002701229208905\u0027, \u002701229219366\u0027, \u002701229238905\u0027, \u002701229258900\u0027, \u002701229268895\u0027, \u002701229279367\u0027, \u002701229298900\u0027, \u002701229408898\u0027, \u002701229428953\u0027, \u002701229438897\u0027, \u002701229438903\u0027, \u002701229438904\u0027, \u002701229438905\u0027, \u002701229459372\u0027, \u002701229508904\u0027, \u002701229518902\u0027, \u002701229518904\u0027, \u002701229518905\u0027, \u002701229528904\u0027, \u002701229528905\u0027, \u002701229559364\u0027, \u002701229608897\u0027, \u002701229618901\u0027, \u002701229628897\u0027, \u002701229638933\u0027, \u002701229668904\u0027, \u002701229808904\u0027, \u002701229828903\u0027, \u002701229828961\u0027, \u002701229838902\u0027, \u002701229838910\u0027, \u002701229838915\u0027, \u002701229838918\u0027, \u002701229838969\u0027, \u002701229848907\u0027, \u002701229848911\u0027, \u002701229848920\u0027, \u002701229848956\u0027, \u002701229848978\u0027, \u002701229848988\u0027, \u002701229858910\u0027, \u002701229858987\u0027, \u002701229859021\u0027, \u002701229868912\u0027, \u002701229868966\u0027, \u002701229888910\u0027, \u002701229888959\u0027, \u002701229889022\u0027, \u002701229898903\u0027, \u002701229898910\u0027, \u002701229898913\u0027, \u002701229898935\u0027, \u002701229898943\u0027, \u002701229898971\u0027, \u002701229898996\u0027, \u002701229938960\u0027, \u002701229948937\u0027, \u002701229948960\u0027, \u002701229948961\u0027, \u002701229958960\u0027, \u002701229958961\u0027, \u002701229958978\u0027, \u002701229968960\u0027, \u002701229968961\u0027, \u002701229968962\u0027, \u002701229968965\u0027, \u002701229968996\u0027, \u002701229978913\u0027, \u002701229978961\u0027]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774856236059_353618128",
+      "id": "paragraph_1774856236059_353618128",
+      "dateCreated": "2026-03-30 07:37:16.059",
+      "dateStarted": "2026-04-02 00:39:54.350",
+      "dateFinished": "2026-04-02 00:39:56.570",
+      "status": "FINISHED"
+    },
+    {
+      "title": "4.실행 대상 단말기 선택 및 master 로드",
+      "text": "%spark_high.pyspark\r\n\r\n# ════════════════════════════════════════════════════════════\r\n# 실행 대상 단말기 설정 (필요에 따라 아래 3가지 중 하나만 사용)\r\n# ════════════════════════════════════════════════════════════\r\n\r\n# Case 1. 전체 단말기 실행 (기본)\r\n#target_device_ids \u003d all_device_ids\r\n\r\n# Case 2. 특정 단말기만 선택 (주석 해제 후 사용)\r\n# target_device_ids \u003d [\r\n#     \"01229848911\",\r\n#     \"01229438897\",\r\n# ]\r\n\r\n# Case 3. 특정 단말기 제외 (주석 해제 후 사용)\r\nEXCLUDE_DEVICE_IDS \u003d [\r\n    \"01229208905\", # 무조건 제외 c_date 엉망인 단말기\r\n    \"01229459372\",\r\n    \"01229858987\",\r\n    \"01229848988\",\r\n    #\"01229628897\", 그룹코드3으로 65대 정리한 문서에는 없지만, db에는 정리됨\r\n    \"01229808904\",\r\n    \"01229848907\",\r\n    \"01229608897\",\r\n]\r\ntarget_device_ids \u003d [d for d in all_device_ids if d not in EXCLUDE_DEVICE_IDS]\r\n\r\n# ════════════════════════════════════════════════════════════\r\n\r\nprint(f\"실행 대상 단말기 수: {len(target_device_ids)}\")\r\nprint(f\"실행 대상 목록    : {target_device_ids}\")\r\n\r\n# ── master 데이터 로드 ─────────────────────────────────────\r\ndf_master \u003d (\r\n    spark.read.format(\"csv\")\r\n        .option(\"header\", \"true\")\r\n        .option(\"multiLine\", \"true\")\r\n        .option(\"escape\", \"\\\"\")\r\n        .load(MASTER_CSV_PATH)\r\n        .select(\r\n            F.col(\"deviceId\").cast(\"string\").alias(\"deviceId\"),\r\n            F.col(\"sourceCode\").cast(\"string\").alias(\"sourceCode\"),\r\n            F.col(\"groupCode\").cast(\"int\").alias(\"groupCode\"),\r\n            F.col(\"vehicleNumber\").cast(\"string\").alias(\"vehicleNumber\")\r\n        )\r\n        .dropna(subset\u003d[\"deviceId\"])\r\n        .dropDuplicates([\"deviceId\"])\r\n        .withColumn(\r\n            \"deviceId_norm\",\r\n            F.when(\r\n                (F.length(F.col(\"deviceId\")) \u003d\u003d 10) \u0026\r\n                (F.substring(F.col(\"deviceId\"), 1, 1) !\u003d F.lit(\u00270\u0027)),\r\n                F.lpad(F.col(\"deviceId\"), 11, \u00270\u0027)\r\n            ).otherwise(F.col(\"deviceId\"))\r\n        )\r\n)\r\n\r\ndf_master_bc \u003d F.broadcast(\r\n    df_master.select(\"deviceId_norm\", \"sourceCode\", \"groupCode\", \"vehicleNumber\")\r\n)\r\n\r\nprint(f\"master 로드 완료 : {df_master.count():,} 건\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-06 06:29:04.294",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "실행 대상 단말기 수: 64\n실행 대상 목록    : [\u002701229168898\u0027, \u002701229198901\u0027, \u002701229219366\u0027, \u002701229238905\u0027, \u002701229258900\u0027, \u002701229268895\u0027, \u002701229279367\u0027, \u002701229298900\u0027, \u002701229408898\u0027, \u002701229428953\u0027, \u002701229438897\u0027, \u002701229438903\u0027, \u002701229438904\u0027, \u002701229438905\u0027, \u002701229508904\u0027, \u002701229518902\u0027, \u002701229518904\u0027, \u002701229518905\u0027, \u002701229528904\u0027, \u002701229528905\u0027, \u002701229559364\u0027, \u002701229618901\u0027, \u002701229628897\u0027, \u002701229638933\u0027, \u002701229668904\u0027, \u002701229828903\u0027, \u002701229828961\u0027, \u002701229838902\u0027, \u002701229838910\u0027, \u002701229838915\u0027, \u002701229838918\u0027, \u002701229838969\u0027, \u002701229848911\u0027, \u002701229848920\u0027, \u002701229848956\u0027, \u002701229848978\u0027, \u002701229858910\u0027, \u002701229859021\u0027, \u002701229868912\u0027, \u002701229868966\u0027, \u002701229888910\u0027, \u002701229888959\u0027, \u002701229889022\u0027, \u002701229898903\u0027, \u002701229898910\u0027, \u002701229898913\u0027, \u002701229898935\u0027, \u002701229898943\u0027, \u002701229898971\u0027, \u002701229898996\u0027, \u002701229938960\u0027, \u002701229948937\u0027, \u002701229948960\u0027, \u002701229948961\u0027, \u002701229958960\u0027, \u002701229958961\u0027, \u002701229958978\u0027, \u002701229968960\u0027, \u002701229968961\u0027, \u002701229968962\u0027, \u002701229968965\u0027, \u002701229968996\u0027, \u002701229978913\u0027, \u002701229978961\u0027]\nmaster 로드 완료 : 233 건\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-sparkhigh-2mn5absa7-ljijxz.local.zeppelin-project.org/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mn5absa7-ljijxz.local.zeppelin-project.org/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mn5absa7-ljijxz.local.zeppelin-project.org/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mn5absa7-ljijxz.local.zeppelin-project.org/jobs/job?id\u003d3"
+            }
+          ],
+          "interpreterSettingId": "spark_high"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774856253762_876642903",
+      "id": "paragraph_1774856253762_876642903",
+      "dateCreated": "2026-03-30 07:37:33.762",
+      "dateStarted": "2026-04-02 00:39:57.803",
+      "dateFinished": "2026-04-02 00:40:06.225",
+      "status": "FINISHED"
+    },
+    {
+      "title": "5. 변환 및 저장 실행",
+      "text": "%spark_high.pyspark\r\nimport traceback\r\nfrom datetime import datetime\r\n\r\nDROP_COLS \u003d [\r\n    \"c_state\", \"mcu_state\", \"bms_state\", \"m_curr\", \"o_state\", \"oce\",\r\n    \"pss\", \"hvptc\", \"group_code\", \"seq\", \"car_num\",\r\n    \"bmv_1\", \"bmv_2\", \"bmv_3\", \"bmv_4\"\r\n]\r\n\r\n# ── 체크포인트 설정 ────────────────────────────────────────\r\nPP_CHECKPOINT \u003d \"s3a://parquet/kslab_kmon/checkpoint/completed.txt\"\r\n\r\npp_fs \u003d spark._jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    spark._jvm.java.net.URI(\"s3a://parquet\"),\r\n    sc._jsc.hadoopConfiguration()\r\n)\r\n\r\ndef pp_checkpoint_load():\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(PP_CHECKPOINT)\r\n    if not pp_fs.exists(p):\r\n        return set()\r\n    stream \u003d pp_fs.open(p)\r\n    reader \u003d spark._jvm.java.io.BufferedReader(\r\n        spark._jvm.java.io.InputStreamReader(stream)\r\n    )\r\n    completed \u003d set()\r\n    line \u003d reader.readLine()\r\n    while line is not None:\r\n        if line.strip():\r\n            completed.add(line.strip())\r\n        line \u003d reader.readLine()\r\n    reader.close()\r\n    return completed\r\n\r\ndef pp_checkpoint_save(dev_id, completed):\r\n    completed.add(dev_id)\r\n    p \u003d spark._jvm.org.apache.hadoop.fs.Path(PP_CHECKPOINT)\r\n    stream \u003d pp_fs.create(p, True)\r\n    writer \u003d spark._jvm.java.io.PrintWriter(\r\n        spark._jvm.java.io.OutputStreamWriter(stream, \"UTF-8\")\r\n    )\r\n    for d in sorted(completed):\r\n        writer.println(d)\r\n    writer.close()\r\n\r\ndef process_one_device(device_id, last_date\u003dNone) -\u003e str:\r\n    try:\r\n        raw_path \u003d f\"{RAW_BASE_PATH}/id\u003d{device_id}\"\r\n\r\n        # ── 1. 전체 데이터 한 번만 read → cache ──────────────\r\n        df_full \u003d spark.read.parquet(raw_path)\r\n\r\n        if \"id\" not in df_full.columns:\r\n            df_full \u003d df_full.withColumn(\"id\", F.lit(device_id))\r\n\r\n        # ── 2. 증분 필터 ──────────────────────────────────────\r\n        if last_date:\r\n            df_full \u003d df_full.filter(F.col(\"c_date\").substr(1, 10) \u003e\u003d last_date)\r\n\r\n        df_full \u003d df_full.cache()\r\n        total   \u003d df_full.count()\r\n        print_timestamp(f\"[START] {device_id} | {total:,}건 (cache 완료)\")\r\n\r\n        # ── 3. master 조인 ────────────────────────────────────\r\n        df \u003d df_full\r\n        df \u003d df.withColumn(\r\n            \"id_norm\",\r\n            F.when(\r\n                (F.length(F.col(\"id\").cast(\"string\")) \u003d\u003d 10) \u0026\r\n                (F.substring(F.col(\"id\").cast(\"string\"), 1, 1) !\u003d F.lit(\u00270\u0027)),\r\n                F.lpad(F.col(\"id\").cast(\"string\"), 11, \u00270\u0027)\r\n            ).otherwise(F.col(\"id\").cast(\"string\"))\r\n        )\r\n        df \u003d (\r\n            df.join(df_master_bc,\r\n                    on\u003dF.col(\"id_norm\") \u003d\u003d F.col(\"deviceId_norm\"),\r\n                    how\u003d\"left\")\r\n              .drop(\"deviceId_norm\", \"id_norm\")\r\n              .fillna({\"groupCode\": 0, \"vehicleNumber\": \"\"})\r\n        )\r\n\r\n        # ── 4. 통합스키마 변환 ────────────────────────────────\r\n        df \u003d convert_df_new(df)\r\n        df \u003d add_row_uuid(df, col_name\u003d\"id\")\r\n        df \u003d bit_process(df)\r\n        df \u003d add_status(df)\r\n        df \u003d combine_bmt_columns(df)\r\n        df \u003d drop_if_exists(df, DROP_COLS)\r\n        df \u003d add_missing_columns(df, ADD_COLUMNS)\r\n        df \u003d cast_risky_columns(df, RISKY_CAST_MAP)\r\n        df \u003d select_columns(df)\r\n\r\n        # ── 5. 파티션 컬럼 추가 ───────────────────────────────\r\n        df \u003d (\r\n            df.withColumn(\"_deviceId\", F.col(\"deviceId\"))\r\n              .withColumn(\"_date\", F.date_format(F.col(\"createdAt\"), \"yyyy-MM-dd\"))\r\n        )\r\n\r\n        # ── 6. 저장 ───────────────────────────────────────────\r\n        (\r\n            df.write\r\n              .mode(\"append\")\r\n              .option(\"compression\", \"snappy\")\r\n              .option(\"maxRecordsPerFile\", \"2000000\")\r\n              .partitionBy(\"_deviceId\", \"_date\")\r\n              .parquet(OUTPUT_BASE_PATH)\r\n        )\r\n\r\n        df_full.unpersist()\r\n        spark.catalog.clearCache()\r\n        print_timestamp(f\"[DONE] {device_id}\")\r\n        return \"OK\"\r\n\r\n    except Exception as e:\r\n        print_timestamp(f\"[FAIL] {device_id} → {e}\")\r\n        traceback.print_exc()\r\n        try:\r\n            df_full.unpersist()\r\n        except:\r\n            pass\r\n        spark.catalog.clearCache()\r\n        return f\"FAIL: {e}\"\r\n\r\n\r\n# ── 체크포인트 로드 ────────────────────────────────────────\r\npp_completed \u003d pp_checkpoint_load()\r\nprint(f\"체크포인트 로드: 완료된 단말기 {len(pp_completed)}개\")\r\n\r\n# ── 실행 ──────────────────────────────────────────────────\r\nresults     \u003d {}\r\nbatch_start \u003d datetime.now()\r\n\r\nfor device_id in target_device_ids:\r\n    if device_id in pp_completed:\r\n        print_timestamp(f\"[SKIP] {device_id} (체크포인트)\")\r\n        results[device_id] \u003d \"SKIP\"\r\n        continue\r\n\r\n    last_date      \u003d processed_map.get(device_id)\r\n    result         \u003d process_one_device(device_id, last_date)\r\n    results[device_id] \u003d result\r\n\r\n    if result \u003d\u003d \"OK\":\r\n        pp_checkpoint_save(device_id, pp_completed)\r\n\r\ntotal_elapsed \u003d datetime.now() - batch_start\r\n\r\n# ── 결과 요약 ──────────────────────────────────────────────\r\nok_cnt   \u003d sum(1 for v in results.values() if v \u003d\u003d \"OK\")\r\nskip_cnt \u003d sum(1 for v in results.values() if v \u003d\u003d \"SKIP\")\r\nfail_cnt \u003d sum(1 for v in results.values() if v.startswith(\"FAIL\"))\r\n\r\nprint(f\"\\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\")\r\nprint(f\"  성공  : {ok_cnt}\")\r\nprint(f\"  스킵  : {skip_cnt}\")\r\nprint(f\"  실패  : {fail_cnt}\")\r\nprint(f\"  총 소요: {total_elapsed}\")\r\n\r\nif fail_cnt:\r\n    print(\"\\n실패 단말기:\")\r\n    for k, v in results.items():\r\n        if v.startswith(\"FAIL\"):\r\n            print(f\"  {k}: {v}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-06 06:29:12.179",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true,
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "체크포인트 로드: 완료된 단말기 64개\n[2026-04-02 03:59:35] [SKIP] 01229168898 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229198901 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229219366 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229238905 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229258900 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229268895 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229279367 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229298900 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229408898 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229428953 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229438897 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229438903 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229438904 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229438905 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229508904 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229518902 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229518904 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229518905 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229528904 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229528905 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229559364 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229618901 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229628897 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229638933 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229668904 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229828903 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229828961 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229838902 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229838910 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229838915 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229838918 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229838969 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229848911 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229848920 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229848956 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229848978 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229858910 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229859021 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229868912 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229868966 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229888910 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229888959 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229889022 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898903 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898910 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898913 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898935 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898943 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898971 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229898996 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229938960 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229948937 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229948960 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229948961 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229958960 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229958961 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229958978 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229968960 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229968961 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229968962 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229968965 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229968996 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229978913 (체크포인트)\n[2026-04-02 03:59:35] [SKIP] 01229978961 (체크포인트)\n\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\n  성공  : 0\n  스킵  : 64\n  실패  : 0\n  총 소요: 0:00:00.017687\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774856253428_59266595",
+      "id": "paragraph_1774856253428_59266595",
+      "dateCreated": "2026-03-30 07:37:33.428",
+      "dateStarted": "2026-04-02 03:59:35.249",
+      "dateFinished": "2026-04-02 03:59:35.404",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "intergreted_shcema_kmon",
+  "id": "2MN5ABSA7",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": false,
+    "inIsolatedMode": false
+  }
+}

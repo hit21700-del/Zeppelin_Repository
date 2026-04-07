@@ -1,0 +1,297 @@
+{
+  "paragraphs": [
+    {
+      "text": "%spark_high.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.types import (\r\n    StructType, StructField,\r\n    StringType, IntegerType, LongType, DoubleType, TimestampType\r\n)\r\nfrom datetime import datetime, timedelta\r\nimport re\r\n\r\nINPUT_ROOT  \u003d \"s3a://kafka\"\r\nOUTPUT_ROOT \u003d \"s3a://parquet\"\r\n# SOURCES     \u003d [\"kslab_emon\", \"kslab_kmon\", \"kslab_kmon3\", \"kslab_kmon_new\", \"skr\"]\r\nSOURCES     \u003d [ \"kslab_kmon\", \"kslab_kmon3\", \"kslab_emon\", \"skr\"]\r\n\r\nhc \u003d sc._jsc.hadoopConfiguration()\r\nhc.set(\"fs.s3a.endpoint\",               \"http://192.168.0.105:80\")\r\nhc.set(\"fs.s3a.access.key\",             \"8XTYLABJCSLJKUTQBK94\")\r\nhc.set(\"fs.s3a.secret.key\",             \"fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\")\r\nhc.set(\"fs.s3a.path.style.access\",      \"true\")\r\nhc.set(\"fs.s3a.impl\",                   \"org.apache.hadoop.fs.s3a.S3AFileSystem\")\r\nhc.set(\"fs.s3a.connection.ssl.enabled\", \"false\")\r\nhc.set(\"fs.s3a.signing-algorithm\",      \"S3SignerType\")\r\nprint(\"S3A 설정 완료\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 09:18:39.358",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "S3A 설정 완료\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1773886754330_1811318683",
+      "id": "paragraph_1773886754330_1811318683",
+      "dateCreated": "2026-03-19 02:19:14.330",
+      "dateStarted": "2026-03-27 09:18:39.363",
+      "dateFinished": "2026-03-27 09:19:17.189",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_high.pyspark\r\n\r\ndef get_all_input_dates(source_prefix):\r\n    \"\"\"Input S3에 존재하는 모든 날짜 폴더 목록 반환\"\"\"\r\n    input_base \u003d f\"{INPUT_ROOT}/{source_prefix}\"\r\n    try:\r\n        jvm  \u003d spark._jvm\r\n        conf \u003d sc._jsc.hadoopConfiguration()\r\n        path \u003d jvm.org.apache.hadoop.fs.Path(input_base)\r\n        fs   \u003d path.getFileSystem(conf)\r\n        if not fs.exists(path):\r\n            print(f\"  [{source_prefix}] 폴더 없음, 스킵\")\r\n            return []\r\n        return sorted([\r\n            s.getPath().getName()\r\n            for s in fs.listStatus(path)\r\n            if re.match(r\"\\d{4}-\\d{2}-\\d{2}\", s.getPath().getName())\r\n        ])\r\n    except Exception as e:\r\n        print(f\"  [WARN] input 날짜 폴더 조회 실패: {e}\")\r\n        return []\r\n\r\n\r\ndef get_device_max_dates(output_base):\r\n    \"\"\"\r\n    output 폴더 목록만으로 deviceId별 max date 조회\r\n    파일 읽기 없이 폴더 목록만 사용 → 빠름\r\n    반환: {\"Agent01\": \"2024-09-01\", \"Agent02\": \"2024-08-31\"}\r\n    \"\"\"\r\n    try:\r\n        jvm  \u003d spark._jvm\r\n        conf \u003d sc._jsc.hadoopConfiguration()\r\n        path \u003d jvm.org.apache.hadoop.fs.Path(output_base)\r\n        fs   \u003d path.getFileSystem(conf)\r\n\r\n        if not fs.exists(path):\r\n            return {}\r\n\r\n        device_max_dates \u003d {}\r\n        for device in fs.listStatus(path):\r\n            if not device.getPath().getName().startswith(\"_deviceId\u003d\"):\r\n                continue\r\n            device_id \u003d device.getPath().getName().replace(\"_deviceId\u003d\", \"\")\r\n            dates \u003d [\r\n                s.getPath().getName().replace(\"_date\u003d\", \"\")\r\n                for s in fs.listStatus(device.getPath())\r\n                if s.getPath().getName().startswith(\"_date\u003d\")\r\n            ]\r\n            if dates:\r\n                device_max_dates[device_id] \u003d max(dates)\r\n\r\n        return device_max_dates\r\n    except Exception:\r\n        return {}\r\n\r\n\r\ndef get_target_dates(source_prefix):\r\n    \"\"\"\r\n    최초 실행: 전체 날짜 폴더 반환\r\n    증분 실행: deviceId별 max date 중 가장 이른 날짜 이후 폴더만 반환\r\n    \"\"\"\r\n    all_input_dates \u003d get_all_input_dates(source_prefix)\r\n    if not all_input_dates:\r\n        return [], False\r\n\r\n    output_base      \u003d f\"{OUTPUT_ROOT}/{source_prefix}\"\r\n    device_max_dates \u003d get_device_max_dates(output_base)\r\n\r\n    if not device_max_dates:\r\n        # 최초 실행\r\n        print(f\"  [최초 실행] 전체 날짜 {len(all_input_dates)}개 읽기\")\r\n        print(f\"  날짜 범위: {all_input_dates[0]} ~ {all_input_dates[-1]}\")\r\n        return all_input_dates, True\r\n    else:\r\n        # 증분 실행: deviceId별 max date 중 가장 이른 날짜 기준\r\n        min_date     \u003d min(device_max_dates.values())\r\n        target_dates \u003d [d for d in all_input_dates if d \u003e\u003d min_date]\r\n        print(f\"  [증분 실행] deviceId별 마지막 날짜: {device_max_dates}\")\r\n        print(f\"  스캔 시작일: {min_date} / 대상 폴더: {target_dates}\")\r\n        return target_dates, False\r\n\r\nprint(\"헬퍼 함수 정의 완료\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 09:19:17.212",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "헬퍼 함수 정의 완료\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1773886768065_46623801",
+      "id": "paragraph_1773886768065_46623801",
+      "dateCreated": "2026-03-19 02:19:28.065",
+      "dateStarted": "2026-03-27 09:19:17.226",
+      "dateFinished": "2026-03-27 09:19:17.244",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_high.pyspark\n\n# ── JSON 읽기 전용 스키마 (전체 StringType → 스키마 추론 생략용) ──\nJSON_SCHEMA \u003d StructType([\n    StructField(\"id\",                              StringType(), True),\n    StructField(\"sourceCode\",                      StringType(), True),\n    StructField(\"firmwareVersion\",                 StringType(), True),\n    StructField(\"schemaVersion\",                   StringType(), True),\n    StructField(\"insertedAt\",                      StringType(), True),\n    StructField(\"collectedAt\",                     StringType(), True),\n    StructField(\"VIN\",                             StringType(), True),\n    StructField(\"deviceId\",                        StringType(), True),\n    StructField(\"createdAt\",                       StringType(), True),\n    StructField(\"messageCode\",                     StringType(), True),\n    StructField(\"longitude\",                       StringType(), True),\n    StructField(\"latitude\",                        StringType(), True),\n    StructField(\"azimuth\",                         StringType(), True),\n    StructField(\"isEVReady\",                       StringType(), True),\n    StructField(\"totalMileage\",                    StringType(), True),\n    StructField(\"isBrake\",                         StringType(), True),\n    StructField(\"brakeDetail\",                     StringType(), True),\n    StructField(\"accelPedalDepth\",                 StringType(), True),\n    StructField(\"speed\",                           StringType(), True),\n    StructField(\"accelerationX\",                   StringType(), True),\n    StructField(\"accelerationY\",                   StringType(), True),\n    StructField(\"accelerationZ\",                   StringType(), True),\n    StructField(\"SOC\",                             StringType(), True),\n    StructField(\"displaySOC\",                      StringType(), True),\n    StructField(\"totalSlowChargeCount\",            StringType(), True),\n    StructField(\"totalSlowChargeDuration\",         StringType(), True),\n    StructField(\"totalFastChargeCount\",            StringType(), True),\n    StructField(\"totalFastChargeDuration\",         StringType(), True),\n    StructField(\"isMotorPulseWidthModulationOn\",   StringType(), True),\n    StructField(\"inverterDcInputVoltage\",          StringType(), True),\n    StructField(\"motorPhaseCurrent\",               StringType(), True),\n    StructField(\"mcuMotorRpm\",                     StringType(), True),\n    StructField(\"motorTorqueActual\",               StringType(), True),\n    StructField(\"SOH\",                             StringType(), True),\n    StructField(\"totalActiveTime\",                 StringType(), True),\n    StructField(\"batteryPackVoltage\",              StringType(), True),\n    StructField(\"batteryPackCurrent\",              StringType(), True),\n    StructField(\"inverterCapacitorVoltage\",        StringType(), True),\n    StructField(\"batteryTotalChargedCapacity\",     StringType(), True),\n    StructField(\"batteryTotalDischargedCapacity\",  StringType(), True),\n    StructField(\"batteryTotalChargedEnergy\",       StringType(), True),\n    StructField(\"batteryTotalDischargedEnergy\",    StringType(), True),\n    StructField(\"batteryMaxChargePower\",           StringType(), True),\n    StructField(\"batteryMaxDischargePower\",        StringType(), True),\n    StructField(\"isCellBalancing\",                 StringType(), True),\n    StructField(\"cellBalancingCount\",              StringType(), True),\n    StructField(\"batteryCellVoltageDiff\",          StringType(), True),\n    StructField(\"maxCellVoltageNum\",               StringType(), True),\n    StructField(\"maxCellVoltage\",                  StringType(), True),\n    StructField(\"minCellVoltageNum\",               StringType(), True),\n    StructField(\"minCellVoltage\",                  StringType(), True),\n    StructField(\"cellVoltages\",                    StringType(), True),\n    StructField(\"isBatteryHeaterRelayOn\",          StringType(), True),\n    StructField(\"airConditionerCompressor\",        StringType(), True),\n    StructField(\"insulationResistance\",            StringType(), True),\n    StructField(\"obcOutputVoltage\",                StringType(), True),\n    StructField(\"obcOutputCurrent\",                StringType(), True),\n    StructField(\"acInputVoltage\",                  StringType(), True),\n    StructField(\"ldcOutputVoltage\",                StringType(), True),\n    StructField(\"ldcOutputCurrent\",                StringType(), True),\n    StructField(\"auxiliaryBatteryVoltage\",         StringType(), True),\n    StructField(\"auxiliaryBatteryCurrent\",         StringType(), True),\n    StructField(\"auxiliaryBatterySOC\",             StringType(), True),\n    StructField(\"auxiliaryBatteryTemperature\",     StringType(), True),\n    StructField(\"motorTemperature\",                StringType(), True),\n    StructField(\"inverterTemperature\",             StringType(), True),\n    StructField(\"heatSinkTemperature\",             StringType(), True),\n    StructField(\"igbtTemperature\",                 StringType(), True),\n    StructField(\"heater1Temperature\",              StringType(), True),\n    StructField(\"maxCellTemperature\",              StringType(), True),\n    StructField(\"minCellTemperature\",              StringType(), True),\n    StructField(\"batteryModuleTemperatures\",       StringType(), True),\n    StructField(\"batteryCoolantInletTemperature\",  StringType(), True),\n    StructField(\"batteryPraBusbarTemperature\",     StringType(), True),\n    StructField(\"ltrOutletTemperature\",            StringType(), True),\n    StructField(\"internalTemperatureFront\",        StringType(), True),\n    StructField(\"externalTemperature\",             StringType(), True),\n    StructField(\"isMcuFault\",                      StringType(), True),\n    StructField(\"isMcuTorqueLimited\",              StringType(), True),\n    StructField(\"isMcuMotorControllable\",          StringType(), True),\n    StructField(\"isBmsMainRelayOn\",                StringType(), True),\n    StructField(\"isBmsBatteryUsable\",              StringType(), True),\n    StructField(\"isBmsWarning\",                    StringType(), True),\n    StructField(\"isBmsFault\",                      StringType(), True),\n    StructField(\"isBmsFused\",                      StringType(), True),\n    StructField(\"isWinterModeActive\",              StringType(), True),\n    StructField(\"bmsStatusDetail\",                 StringType(), True),\n    StructField(\"isCharge\",                        StringType(), True),\n    StructField(\"isSlowChargeConnected\",           StringType(), True),\n    StructField(\"isFastChargeConnected\",           StringType(), True),\n    StructField(\"isMcuMainRelayOffRequest\",        StringType(), True),\n    StructField(\"isMcuReady\",                      StringType(), True),\n    StructField(\"batteryExternalTemperature\",      StringType(), True),\n    StructField(\"isHvptcDrive\",                    StringType(), True),\n    StructField(\"isObcFault\",                      StringType(), True),\n    StructField(\"isObcChargeComplete\",             StringType(), True),\n    StructField(\"isObcChargeConnectedStatus\",      StringType(), True),\n    StructField(\"paddleShiftUp\",                   StringType(), True),\n    StructField(\"paddleShiftDown\",                 StringType(), True),\n    StructField(\"isFastChargeProcessingStatus\",    StringType(), True),\n    StructField(\"isFastChargeProcessError\",        StringType(), True),\n    StructField(\"obcChargeModeDcVoltage\",          StringType(), True),\n    StructField(\"obcChargeModeDcCurrent\",          StringType(), True),\n    StructField(\"obcInnerDcLinkVoltage\",           StringType(), True),\n    StructField(\"accumRegenBrakeEnergy\",           StringType(), True),\n    StructField(\"slowChargeCount\",                 StringType(), True),\n    StructField(\"fastChargeCount\",                 StringType(), True),\n    StructField(\"status\",                          StringType(), True),\n])\n\n# ── 최종 저장 타입 스키마 (원하는 타입 기준) ──────────────\nTARGET_SCHEMA \u003d StructType([\n    StructField(\"id\",                              StringType(),    True),\n    StructField(\"sourceCode\",                      StringType(),    True),\n    StructField(\"firmwareVersion\",                 StringType(),    True),\n    StructField(\"schemaVersion\",                   StringType(),    True),\n    StructField(\"insertedAt\",                      TimestampType(), True),\n    StructField(\"collectedAt\",                     TimestampType(), True),\n    StructField(\"VIN\",                             StringType(),    True),\n    StructField(\"deviceId\",                        StringType(),    True),\n    StructField(\"createdAt\",                       TimestampType(), True),\n    StructField(\"messageCode\",                     IntegerType(),   True),\n    StructField(\"longitude\",                       DoubleType(),    True),\n    StructField(\"latitude\",                        DoubleType(),    True),\n    StructField(\"azimuth\",                         DoubleType(),    True),\n    StructField(\"isEVReady\",                       IntegerType(),   True),\n    StructField(\"totalMileage\",                    IntegerType(),   True),\n    StructField(\"isBrake\",                         IntegerType(),   True),\n    StructField(\"brakeDetail\",                     StringType(),    True),\n    StructField(\"accelPedalDepth\",                 DoubleType(),    True),\n    StructField(\"speed\",                           IntegerType(),   True),\n    StructField(\"accelerationX\",                   DoubleType(),    True),\n    StructField(\"accelerationY\",                   DoubleType(),    True),\n    StructField(\"accelerationZ\",                   DoubleType(),    True),\n    StructField(\"SOC\",                             DoubleType(),    True),\n    StructField(\"displaySOC\",                      DoubleType(),    True),\n    StructField(\"totalSlowChargeCount\",            LongType(),      True),\n    StructField(\"totalSlowChargeDuration\",         LongType(),      True),\n    StructField(\"totalFastChargeCount\",            LongType(),      True),\n    StructField(\"totalFastChargeDuration\",         LongType(),      True),\n    StructField(\"isMotorPulseWidthModulationOn\",   IntegerType(),   True),\n    StructField(\"inverterDcInputVoltage\",          StringType(),    True),\n    StructField(\"motorPhaseCurrent\",               DoubleType(),    True),\n    StructField(\"mcuMotorRpm\",                     DoubleType(),    True),\n    StructField(\"motorTorqueActual\",               DoubleType(),    True),\n    StructField(\"SOH\",                             DoubleType(),    True),\n    StructField(\"totalActiveTime\",                 LongType(),      True),\n    StructField(\"batteryPackVoltage\",              DoubleType(),    True),\n    StructField(\"batteryPackCurrent\",              DoubleType(),    True),\n    StructField(\"inverterCapacitorVoltage\",        StringType(),    True),\n    StructField(\"batteryTotalChargedCapacity\",     DoubleType(),    True),\n    StructField(\"batteryTotalDischargedCapacity\",  DoubleType(),    True),\n    StructField(\"batteryTotalChargedEnergy\",       DoubleType(),    True),\n    StructField(\"batteryTotalDischargedEnergy\",    DoubleType(),    True),\n    StructField(\"batteryMaxChargePower\",           DoubleType(),    True),\n    StructField(\"batteryMaxDischargePower\",        DoubleType(),    True),\n    StructField(\"isCellBalancing\",                 IntegerType(),   True),\n    StructField(\"cellBalancingCount\",              IntegerType(),   True),\n    StructField(\"batteryCellVoltageDiff\",          DoubleType(),    True),\n    StructField(\"maxCellVoltageNum\",               IntegerType(),   True),\n    StructField(\"maxCellVoltage\",                  DoubleType(),    True),\n    StructField(\"minCellVoltageNum\",               IntegerType(),   True),\n    StructField(\"minCellVoltage\",                  DoubleType(),    True),\n    StructField(\"cellVoltages\",                    StringType(),    True),\n    StructField(\"isBatteryHeaterRelayOn\",          IntegerType(),   True),\n    StructField(\"airConditionerCompressor\",        IntegerType(),   True),\n    StructField(\"insulationResistance\",            DoubleType(),    True),\n    StructField(\"obcOutputVoltage\",                DoubleType(),    True),\n    StructField(\"obcOutputCurrent\",                DoubleType(),    True),\n    StructField(\"acInputVoltage\",                  DoubleType(),    True),\n    StructField(\"ldcOutputVoltage\",                DoubleType(),    True),\n    StructField(\"ldcOutputCurrent\",                DoubleType(),    True),\n    StructField(\"auxiliaryBatteryVoltage\",         DoubleType(),    True),\n    StructField(\"auxiliaryBatteryCurrent\",         DoubleType(),    True),\n    StructField(\"auxiliaryBatterySOC\",             DoubleType(),    True),\n    StructField(\"auxiliaryBatteryTemperature\",     DoubleType(),    True),\n    StructField(\"motorTemperature\",                DoubleType(),    True),\n    StructField(\"inverterTemperature\",             DoubleType(),    True),\n    StructField(\"heatSinkTemperature\",             DoubleType(),    True),\n    StructField(\"igbtTemperature\",                 DoubleType(),    True),\n    StructField(\"heater1Temperature\",              DoubleType(),    True),\n    StructField(\"maxCellTemperature\",              DoubleType(),    True),\n    StructField(\"minCellTemperature\",              DoubleType(),    True),\n    StructField(\"batteryModuleTemperatures\",       StringType(),    True),\n    StructField(\"batteryCoolantInletTemperature\",  DoubleType(),    True),\n    StructField(\"batteryPraBusbarTemperature\",     DoubleType(),    True),\n    StructField(\"ltrOutletTemperature\",            DoubleType(),    True),\n    StructField(\"internalTemperatureFront\",        DoubleType(),    True),\n    StructField(\"externalTemperature\",             DoubleType(),    True),\n    StructField(\"isMcuFault\",                      IntegerType(),   True),\n    StructField(\"isMcuTorqueLimited\",              IntegerType(),   True),\n    StructField(\"isMcuMotorControllable\",          IntegerType(),   True),\n    StructField(\"isBmsMainRelayOn\",                IntegerType(),   True),\n    StructField(\"isBmsBatteryUsable\",              IntegerType(),   True),\n    StructField(\"isBmsWarning\",                    IntegerType(),   True),\n    StructField(\"isBmsFault\",                      IntegerType(),   True),\n    StructField(\"isBmsFused\",                      IntegerType(),   True),\n    StructField(\"isWinterModeActive\",              IntegerType(),   True),\n    StructField(\"bmsStatusDetail\",                 StringType(),    True),\n    StructField(\"isCharge\",                        IntegerType(),   True),\n    StructField(\"isSlowChargeConnected\",           IntegerType(),   True),\n    StructField(\"isFastChargeConnected\",           IntegerType(),   True),\n    StructField(\"isMcuMainRelayOffRequest\",        IntegerType(),   True),\n    StructField(\"isMcuReady\",                      IntegerType(),   True),\n    StructField(\"batteryExternalTemperature\",      DoubleType(),    True),\n    StructField(\"isHvptcDrive\",                    IntegerType(),   True),\n    StructField(\"isObcFault\",                      IntegerType(),   True),\n    StructField(\"isObcChargeComplete\",             IntegerType(),   True),\n    StructField(\"isObcChargeConnectedStatus\",      IntegerType(),   True),\n    StructField(\"paddleShiftUp\",                   IntegerType(),   True),\n    StructField(\"paddleShiftDown\",                 IntegerType(),   True),\n    StructField(\"isFastChargeProcessingStatus\",    IntegerType(),   True),\n    StructField(\"isFastChargeProcessError\",        IntegerType(),   True),\n    StructField(\"obcChargeModeDcVoltage\",          DoubleType(),    True),\n    StructField(\"obcChargeModeDcCurrent\",          DoubleType(),    True),\n    StructField(\"obcInnerDcLinkVoltage\",           DoubleType(),    True),\n    StructField(\"accumRegenBrakeEnergy\",           DoubleType(),    True),\n    StructField(\"slowChargeCount\",                 LongType(),      True),\n    StructField(\"fastChargeCount\",                 LongType(),      True),\n    StructField(\"status\",                          StringType(),    True),\n])\n\n\ndef apply_target_schema(df):\n    \"\"\"TARGET_SCHEMA 기준 타입 변환\"\"\"\n    select_cols \u003d []\n    for field in TARGET_SCHEMA.fields:\n        col_name \u003d field.name\n        col_type \u003d field.dataType\n        if col_name in df.columns:\n            select_cols.append(F.col(col_name).cast(col_type).alias(col_name))\n        else:\n            select_cols.append(F.lit(None).cast(col_type).alias(col_name))\n    return df.select(*select_cols)\n\n\ndef convert_to_parquet(source_prefix):\n    output_base \u003d f\"{OUTPUT_ROOT}/{source_prefix}\"\n\n    print(f\"\\n{\u0027\u003d\u0027*50}\")\n    print(f\"[{source_prefix}] 시작\")\n\n    # ── 1. 처리 대상 날짜 결정 ────────────────────────────\n    target_dates, is_initial \u003d get_target_dates(source_prefix)\n\n    if not target_dates:\n        print(f\"  → 처리 대상 없음, 스킵\")\n        return\n\n    # ── 2. 월별로 그룹핑 ──────────────────────────────────\n    month_groups \u003d {}\n    for d in target_dates:\n        month_key \u003d d[:7]\n        if month_key not in month_groups:\n            month_groups[month_key] \u003d []\n        month_groups[month_key].append(d)\n\n    total_months \u003d len(month_groups)\n    print(f\"  처리 대상: {len(target_dates)}일 / {total_months}개월\")\n\n    # ── 3. 월별로 나눠서 처리 ─────────────────────────────\n    for idx, (month_key, dates) in enumerate(sorted(month_groups.items()), 1):\n        print(f\"\\n  [{idx}/{total_months}] {month_key} ({len(dates)}일치) 처리 중...\")\n\n        input_paths \u003d [\n            f\"{INPUT_ROOT}/{source_prefix}/{d}/*.json\"\n            for d in dates\n        ]\n\n        try:\n            # JSON 읽기 (전체 StringType → 스키마 추론 생략)\n            df \u003d (spark.read\n                 .option(\"mode\", \"PERMISSIVE\")\n                 .schema(JSON_SCHEMA)\n                 .json(input_paths))\n\n            # ArrayType 루트 처리\n            if len(df.columns) \u003d\u003d 1 and df.schema.fields[0].dataType.__class__.__name__ \u003d\u003d \"ArrayType\":\n                root_col \u003d df.columns[0]\n                df \u003d df.select(F.explode(F.col(root_col)).alias(\"_root\")).select(\"_root.*\")\n\n            missing \u003d [c for c in (\"deviceId\", \"createdAt\") if c not in df.columns]\n            if missing:\n                raise ValueError(f\"필수 컬럼 없음: {missing}\")\n\n            # 타입 변환\n            df \u003d apply_target_schema(df)\n\n            # input 내 중복 제거\n            df \u003d df.dropDuplicates([\"deviceId\", \"createdAt\"])\n\n            # ── 증분 실행 시 날짜별 anti-join으로 중복 방지 ──\n            if not is_initial:\n                from functools import reduce\n                anti_joined_dfs \u003d []\n                for date_str in dates:\n                    date_df \u003d df.filter(\n                        F.date_format(F.col(\"createdAt\"), \"yyyy-MM-dd\") \u003d\u003d date_str\n                    )\n                    try:\n                        existing_date_df \u003d spark.read.parquet(\n                            f\"{output_base}/_deviceId\u003d*/_date\u003d{date_str}\"\n                        )\n                        date_df \u003d date_df.join(\n                            existing_date_df.select(\"deviceId\", \"createdAt\"),\n                            on\u003d[\"deviceId\", \"createdAt\"],\n                            how\u003d\"left_anti\"\n                        )\n                        print(f\"    {date_str} anti-join 적용\")\n                    except Exception:\n                        print(f\"    {date_str} 신규 날짜\")\n                    anti_joined_dfs.append(date_df)\n\n                df \u003d reduce(lambda a, b: a.union(b), anti_joined_dfs)\n\n            # parquet 저장\n            (df\n                .withColumn(\"_deviceId\", F.col(\"deviceId\"))\n                .withColumn(\"_date\",     F.date_format(F.col(\"createdAt\"), \"yyyy-MM-dd\"))\n                .write\n                .mode(\"append\")\n                .partitionBy(\"_deviceId\", \"_date\")\n                .parquet(output_base))\n\n            print(f\"  [{idx}/{total_months}] {month_key} 완료 ✓\")\n\n        except Exception as e:\n            print(f\"  [{idx}/{total_months}] {month_key} 오류: {e}\")\n            continue\n\n    print(f\"\\n[{source_prefix}] 전체 완료 ✓\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 09:19:17.326",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774062007545_1058162342",
+      "id": "paragraph_1774062007545_1058162342",
+      "dateCreated": "2026-03-21 03:00:07.545",
+      "dateStarted": "2026-03-27 09:19:17.329",
+      "dateFinished": "2026-03-27 09:19:17.409",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_high.pyspark\r\nfrom datetime import datetime\r\n\r\nresults \u003d {}\r\nbatch_start \u003d datetime.now()\r\n\r\nfor src in SOURCES:\r\n    src_start \u003d datetime.now()\r\n    try:\r\n        convert_to_parquet(src)\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"SUCCESS ({elapsed})\"\r\n    except Exception as e:\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"FAILED: {e}\"\r\n        print(f\"[{src}] 오류: {e}\")\r\n\r\ntotal_elapsed \u003d datetime.now() - batch_start\r\nprint(\"\\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\")\r\nfor src, status in results.items():\r\n    print(f\"  {src}: {status}\")\r\nprint(f\"\\n총 소요 시간: {total_elapsed}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 09:19:17.429",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[kslab_kmon] 시작\n  [kslab_kmon] 폴더 없음, 스킵\n  → 처리 대상 없음, 스킵\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[kslab_kmon3] 시작\n  [kslab_kmon3] 폴더 없음, 스킵\n  → 처리 대상 없음, 스킵\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[kslab_emon] 시작\n  [최초 실행] 전체 날짜 189개 읽기\n  날짜 범위: 1999-12-31 ~ 2025-07-01\n  처리 대상: 189일 / 10개월\n\n  [1/10] 1999-12 (1일치) 처리 중...\n  [1/10] 1999-12 완료 ✓\n\n  [2/10] 2000-01 (31일치) 처리 중...\n  [2/10] 2000-01 완료 ✓\n\n  [3/10] 2000-02 (16일치) 처리 중...\n  [3/10] 2000-02 완료 ✓\n\n  [4/10] 2024-12 (1일치) 처리 중...\n  [4/10] 2024-12 완료 ✓\n\n  [5/10] 2025-02 (17일치) 처리 중...\n  [5/10] 2025-02 완료 ✓\n\n  [6/10] 2025-03 (31일치) 처리 중...\n  [6/10] 2025-03 완료 ✓\n\n  [7/10] 2025-04 (30일치) 처리 중...\n  [7/10] 2025-04 완료 ✓\n\n  [8/10] 2025-05 (31일치) 처리 중...\n  [8/10] 2025-05 완료 ✓\n\n  [9/10] 2025-06 (30일치) 처리 중...\n  [9/10] 2025-06 완료 ✓\n\n  [10/10] 2025-07 (1일치) 처리 중...\n  [10/10] 2025-07 완료 ✓\n\n[kslab_emon] 전체 완료 ✓\n\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n[skr] 시작\n  [skr] 폴더 없음, 스킵\n  → 처리 대상 없음, 스킵\n\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\n  kslab_kmon: SUCCESS (0:00:00.088051)\n  kslab_kmon3: SUCCESS (0:00:00.054604)\n  kslab_emon: SUCCESS (5:45:41.709554)\n  skr: SUCCESS (0:00:00.064931)\n\n총 소요 시간: 5:45:41.917448\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "//4040-sparkhigh-2mp8fxqnz-mjcvju.local.zeppelin-project.org/jobs/job?id\u003d24"
+            }
+          ],
+          "interpreterSettingId": "spark_high"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1773886785769_1974962207",
+      "id": "paragraph_1773886785769_1974962207",
+      "dateCreated": "2026-03-19 02:19:45.770",
+      "dateStarted": "2026-03-27 09:19:17.431",
+      "dateFinished": "2026-03-27 15:04:59.363",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_high.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-03-27 15:04:59.410",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1774041642402_147536401",
+      "id": "paragraph_1774041642402_147536401",
+      "dateCreated": "2026-03-20 21:20:42.402",
+      "dateStarted": "2026-03-27 15:04:59.415",
+      "dateFinished": "2026-03-27 15:04:59.475",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "S3_json_parquet_변환",
+  "id": "2MP8FXQNZ",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {
+    "isRunning": true
+  }
+}
