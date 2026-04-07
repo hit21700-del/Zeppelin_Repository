@@ -1,0 +1,313 @@
+{
+  "paragraphs": [
+    {
+      "title": "config 파일 import",
+      "text": "%spark.pyspark\n\nimport sys\n# sys.path.append(\"/home/kadap/python/pre_processing\") # 이전 테스트 경로\nsys.path.append(\"/home/kadap/QH/Pre_Processed\")\nfrom typing import Optional, List, Dict, Any\nfrom pyspark.sql import functions as F\nfrom pyspark.sql import SparkSession, DataFrame\nfrom pyspark.sql.functions import (\n    col, lit, when, count, sum as sum_, min, max, avg, \n    to_timestamp, unix_timestamp, from_unixtime,\n    date_format, hour, minute, second, \n    lag, lead, window, expr, round\n)\nfrom pyspark.sql.window import Window\nfrom pyspark.sql.types import (\n    StructType, StructField, StringType, IntegerType, \n    DoubleType, TimestampType, BooleanType\n)\n\nfrom kslab_config import( PP_IO_CONFIG, PROCESSING_PARAMS, DB_CONFIG, SELECTED_COLUMNS, \n                        SELECTED_COLUMNS_FINAL, DB_QUERY_KMON_DATA, DB_QUERY_MASTER_DATA, BUS_COLUMNS)\nfrom kslab_utils import (\n    print_timestamp, print_dfcount, create_spark_session,\n    load_data_from_db, load_data_from_csv, save_to_csv, save_to_db, load_vehicle_info,load_vehicle_master,save_to_parquet,load_data_from_parquet\n)\n\nfrom kslab_pp_func import (\n    convert_df_new, bit_process, add_status, select_columns, remove_outlier1,\n    remove_outlier2, add_columns, add_sox, attach_vehicle_master,attach_vehicle_info, get_last_processed_date\n)\n\n#from kslab_anomaly_label_func import AnomalyLabeler\n\n\n\nprint(DB_CONFIG[\"dbname\"], PP_IO_CONFIG[\"output\"][\"format\"])\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-02-11 05:27:34.674",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "KSLAB parquet\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758517358457_869917381",
+      "id": "paragraph_1758517358457_869917381",
+      "dateCreated": "2025-09-22 14:02:38.457",
+      "dateStarted": "2026-01-22 06:00:01.485",
+      "dateFinished": "2026-01-22 06:00:49.654",
+      "status": "FINISHED"
+    },
+    {
+      "title": "서비스용 데이터셋 생성",
+      "text": "%spark.pyspark\r\n\r\ndef process_data(spark: SparkSession) -\u003e DataFrame:\r\n    \r\n    # ─────────────────────────────────\r\n    # Step 0: 기존 결과에서 마지막 createdAt 조회\r\n    # ─────────────────────────────────\r\n    print_timestamp(\"Step 0\u003e Get last processed date from output parquet\")\r\n    last_dt \u003d get_last_processed_date(spark)\r\n    print(f\"[LOG] last_dt \u003d {last_dt}\")\r\n\r\n    if last_dt is None:\r\n        print(\"[Batch] 최초 실행: 전체 데이터를 처리합니다.\")\r\n    else:\r\n        print(f\"[Batch] 증분 실행: createdAt \u003e {last_dt} 인 데이터만 처리합니다.\")\r\n    \r\n    # ─────────────────────────────────\r\n    # Step 1: Load data (parquet only)\r\n    # ─────────────────────────────────\r\n    print_timestamp(\"Step 1\u003e Loading data (parquet)\")\r\n    df \u003d load_data_from_parquet(\r\n        spark,\r\n        file_path\u003dPP_IO_CONFIG[\u0027input\u0027][\u0027parquet_path\u0027],\r\n        recursive\u003dTrue,\r\n        only_parquet\u003dTrue\r\n    )\r\n\r\n    # 입력 데이터 전체 개수 로그\r\n    try:\r\n        cnt_total \u003d df.count()\r\n        print(f\"[LOG] Step1 Input Count (Before Filter): {cnt_total}\")\r\n    except:\r\n        print(\"[LOG] Step1 Input Count: unable to count (lazy until action)\")\r\n\r\n    # ─────────────────────────────────\r\n    # Step 1-1: 증분 필터 적용\r\n    # ─────────────────────────────────\r\n    if last_dt is not None:\r\n        print_timestamp(\"Step 1-1\u003e Applying incremental filter\")\r\n        df \u003d df.filter(F.col(\"createdAt\") \u003e F.lit(last_dt))\r\n\r\n        # 필터 후 데이터 수 확인\r\n        cnt_incr \u003d df.count()\r\n        print(f\"[LOG] After Incremental Filter Count: {cnt_incr}\")\r\n\r\n        # pushdown 확인용 explain\r\n        print(\"[LOG] Filter Explain Plan:\")\r\n        df.explain(True)\r\n\r\n    else:\r\n        print(\"[LOG] 최초 실행이므로 필터 적용 안함.\")\r\n\r\n    # Step 6-1: 이상치 제거 1\r\n    print_timestamp(\"Step 6-1\u003e remove_short_evr_anomalies\")\r\n    df \u003d remove_outlier1(df)\r\n\r\n    # Step 6-2: Remove outliers 2\r\n    print_timestamp(\"Step 6-2\u003e Removing outliers\")\r\n    df \u003d remove_outlier2(df)\r\n\r\n    # Step 7: 분석 컬럼(관제용) 추가\r\n    print_timestamp(\"Step 7\u003e Adding analysis columns\")\r\n    df \u003d add_columns(df)\r\n\r\n    # Step metaData merge\r\n    print_timestamp(\"Step meta\u003e Add/merge meta columns\")\r\n    vm \u003d load_vehicle_master(spark, PP_IO_CONFIG[\u0027meta\u0027][\u0027vehicle_master\u0027])\r\n    vi \u003d load_vehicle_info(  spark, PP_IO_CONFIG[\u0027meta\u0027][\u0027vehicle_info\u0027])\r\n\r\n    df \u003d attach_vehicle_master(df, vm)\r\n    df \u003d attach_vehicle_info(df, vi)\r\n\r\n    # Step 8: SOB, SOP 추가\r\n    print_timestamp(\"Step 8\u003e Adding SOB and SOP\")\r\n    df \u003d add_sox(df)\r\n\r\n    # ──────────────────────────────────\r\n    # 파티션용 일자 컬럼 생성\r\n    # ──────────────────────────────────\r\n    df \u003d df.withColumn(\r\n        \"pt_date\",\r\n        F.date_format(F.col(\"createdAt\"), \"yyyyMMdd\")\r\n    )\r\n    \r\n    # Step 10: Select final columns \r\n    print_timestamp(\"Step 10\u003e Selecting final columns\")\r\n    \r\n    cols \u003d SELECTED_COLUMNS_FINAL\r\n    if \"pt_date\" not in cols:\r\n        cols \u003d cols + [\"pt_date\"]\r\n\r\n    result_df \u003d df.select(*cols)\r\n\r\n    print(f\"[LOG] Final Result Count Before Save: {result_df.count()}\")\r\n\r\n    # Step 11: Save results\r\n    print_timestamp(\"Step 11\u003e Saving results\")\r\n    fmt \u003d PP_IO_CONFIG[\u0027output\u0027][\u0027format\u0027].lower()\r\n    \r\n    if fmt \u003d\u003d \u0027parquet\u0027:\r\n        out_path \u003d PP_IO_CONFIG[\u0027output\u0027][\u0027parquet_path\u0027]\r\n        print(f\"[LOG] Saving parquet to Path: {out_path}\")\r\n        save_to_parquet(\r\n            result_df,\r\n            output_path\u003dout_path,\r\n            mode\u003d\"append\",\r\n            partition_cols\u003d[\"deviceId\", \"pt_date\"]\r\n        )\r\n    elif fmt \u003d\u003d \u0027csv\u0027:\r\n        out_path \u003d PP_IO_CONFIG[\u0027output\u0027][\u0027csv_path\u0027]\r\n        print(f\"[LOG] Saving CSV to Path: {out_path}\")\r\n        os.makedirs(os.path.dirname(out_path), exist_ok\u003dTrue)\r\n        save_to_csv(result_df, out_path)\r\n    else:\r\n        print(f\"[LOG] Saving DB Table: {PP_IO_CONFIG[\u0027output\u0027][\u0027db_table\u0027]}\")\r\n        save_to_db(result_df, table_name\u003dPP_IO_CONFIG[\u0027output\u0027][\u0027db_table\u0027], mode\u003d\"overwrite\")\r\n\r\n    print_timestamp(\"Processing complete.\")\r\n    return result_df\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-02-11 05:27:36.701",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true,
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758517519255_2369298",
+      "id": "paragraph_1758517519255_2369298",
+      "dateCreated": "2025-09-22 14:05:19.255",
+      "dateStarted": "2026-01-21 03:01:16.096",
+      "dateFinished": "2026-01-21 03:01:16.137",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\ndf\u003dprocess_data(spark)",
+      "user": "anonymous",
+      "dateUpdated": "2026-02-11 05:27:37.586",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 87.2,
+              "optionOpen": false
+            }
+          }
+        },
+        "enabled": true,
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "[2026-01-21 03:01:26] Step 0\u003e Get last processed date from output parquet\n[LOG] last_dt \u003d 2025-06-14 23:40:24\n[Batch] 증분 실행: createdAt \u003e 2025-06-14 23:40:24 인 데이터만 처리합니다.\n[2026-01-21 03:01:43] Step 1\u003e Loading data (parquet)\n[OK] Parquet load planned from: hdfs:///QH/Intergrated_Schema/Passenger_Car\n[LOG] Step1 Input Count (Before Filter): 3988277\n[2026-01-21 03:01:46] Step 1-1\u003e Applying incremental filter\n[LOG] After Incremental Filter Count: 0\n[LOG] Filter Explain Plan:\n\u003d\u003d Parsed Logical Plan \u003d\u003d\n\u0027Filter (\u0027createdAt \u003e 2025-06-14 23:40:24)\n+- Relation [uuid#161,sourceCode#162,firmwareVersion#163,schemaVersion#164,insultedAt#165,collectedAt#166,VIN#167,deviceId#168,createdAt#169,messageCode#170,longitude#171,latitude#172,isEVReady#173,totalMileage#174,isBreak#175,accelPedalDepth#176,speed#177,SOC#178,displaySoc#179,batteryPackSocs#180,totalSlowChargeCount#181,totalSlowChargeDuration#182,totalFastChargeCount#183,totalFastChargeDuration#184,... 87 more fields] parquet\n\n\u003d\u003d Analyzed Logical Plan \u003d\u003d\nuuid: string, sourceCode: string, firmwareVersion: string, schemaVersion: string, insultedAt: timestamp, collectedAt: timestamp, VIN: string, deviceId: string, createdAt: timestamp, messageCode: int, longitude: double, latitude: double, isEVReady: int, totalMileage: int, isBreak: int, accelPedalDepth: double, speed: int, SOC: double, displaySoc: double, batteryPackSocs: double, totalSlowChargeCount: int, totalSlowChargeDuration: int, totalFastChargeCount: int, totalFastChargeDuration: int, ... 87 more fields\nFilter (createdAt#169 \u003e 2025-06-14 23:40:24)\n+- Relation [uuid#161,sourceCode#162,firmwareVersion#163,schemaVersion#164,insultedAt#165,collectedAt#166,VIN#167,deviceId#168,createdAt#169,messageCode#170,longitude#171,latitude#172,isEVReady#173,totalMileage#174,isBreak#175,accelPedalDepth#176,speed#177,SOC#178,displaySoc#179,batteryPackSocs#180,totalSlowChargeCount#181,totalSlowChargeDuration#182,totalFastChargeCount#183,totalFastChargeDuration#184,... 87 more fields] parquet\n\n\u003d\u003d Optimized Logical Plan \u003d\u003d\nFilter (isnotnull(createdAt#169) AND (createdAt#169 \u003e 2025-06-14 23:40:24))\n+- Relation [uuid#161,sourceCode#162,firmwareVersion#163,schemaVersion#164,insultedAt#165,collectedAt#166,VIN#167,deviceId#168,createdAt#169,messageCode#170,longitude#171,latitude#172,isEVReady#173,totalMileage#174,isBreak#175,accelPedalDepth#176,speed#177,SOC#178,displaySoc#179,batteryPackSocs#180,totalSlowChargeCount#181,totalSlowChargeDuration#182,totalFastChargeCount#183,totalFastChargeDuration#184,... 87 more fields] parquet\n\n\u003d\u003d Physical Plan \u003d\u003d\nFilter (isnotnull(createdAt#169) AND (createdAt#169 \u003e 2025-06-14 23:40:24))\n+- FileScan parquet [uuid#161,sourceCode#162,firmwareVersion#163,schemaVersion#164,insultedAt#165,collectedAt#166,VIN#167,deviceId#168,createdAt#169,messageCode#170,longitude#171,latitude#172,isEVReady#173,totalMileage#174,isBreak#175,accelPedalDepth#176,speed#177,SOC#178,displaySoc#179,batteryPackSocs#180,totalSlowChargeCount#181,totalSlowChargeDuration#182,totalFastChargeCount#183,totalFastChargeDuration#184,... 87 more fields] Batched: false, DataFilters: [isnotnull(createdAt#169), (createdAt#169 \u003e 2025-06-14 23:40:24)], Format: Parquet, Location: InMemoryFileIndex(1 paths)[hdfs://mycluster/QH/Intergrated_Schema/Passenger_Car], PartitionFilters: [], PushedFilters: [IsNotNull(createdAt), GreaterThan(createdAt,2025-06-14 23:40:24.0)], ReadSchema: struct\u003cuuid:string,sourceCode:string,firmwareVersion:string,schemaVersion:string,insultedAt:times...\n\n[2026-01-21 03:01:48] Step 6-1\u003e remove_short_evr_anomalies\n[2026-01-21 03:01:49] Step 6-2\u003e Removing outliers\n[2026-01-21 03:02:16] Step 7\u003e Adding analysis columns\n[2026-01-21 03:02:18] Step meta\u003e Add/merge meta columns\n[2026-01-21 03:02:30] Step 8\u003e Adding SOB and SOP\n[2026-01-21 03:02:33] Step 10\u003e Selecting final columns\n[LOG] Final Result Count Before Save: 0\n[2026-01-21 03:02:43] Step 11\u003e Saving results\n[LOG] Saving parquet to Path: hdfs:///QH/Pre_Processed/Passenger_Car/PP_Set/\n[2026-01-21 03:02:51] Processing complete.\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d0"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d25"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d26"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d27"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d28"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d29"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:39743/jobs/job?id\u003d30"
+            }
+          ],
+          "interpreterSettingId": "spark_static"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758517840188_1768348860",
+      "id": "paragraph_1758517840188_1768348860",
+      "dateCreated": "2025-09-22 14:10:40.188",
+      "dateStarted": "2026-01-21 03:01:26.709",
+      "dateFinished": "2026-01-21 03:02:51.169",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\ndf.show(10)",
+      "user": "anonymous",
+      "dateUpdated": "2026-02-11 05:27:38.135",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true,
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+----+----------+--------+---------+----------+------+------------+-----+-----------+-----------------+-------------+---------------+---+----------+---+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+-------+------+------+-------+-------+---+---+---+-------------------------+------------+-------+\n|uuid|sourceCode|deviceId|createdAt|insultedAt|status|totalMileage|speed|mcuMotorRpm|motorTorqueActual|paddleShiftUp|paddleShiftDown|SOC|displaySoc|SOH|batteryPackVoltages|batteryPackCurrents|batteryTotalDischargedCapacity|batteryTotalChargedCapacity|batteryTotalDischargedEnergy|batteryTotalChargedEnergy|totalSlowChargeCount|maxCellVoltages|maxCellVoltageNum|minCellVoltages|minCellVoltageNum|insulationResistance|batteryModuleTemperatures|maxModuleTemperatures|minModuleTemperatures|heater1Temperature|batteryCoolantInletTemperature|batteryPraBusbarTemperature|motorTemperature|inverterTemperature|heatSinkTemperature|igbtTemperature|internalTemperatureFront|externalTemperature|ltrOutletTemperature|c_date1|cvdiff|ctdiff|mean_ct|socdiff|sop|sob|sot|airconditionCompressorRpm|isHvptcDrive|pt_date|\n+----+----------+--------+---------+----------+------+------------+-----+-----------+-----------------+-------------+---------------+---+----------+---+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+-------+------+------+-------+-------+---+---+---+-------------------------+------------+-------+\n+----+----------+--------+---------+----------+------+------------+-----+-----------+-----------------+-------------+---------------+---+----------+---+-------------------+-------------------+------------------------------+---------------------------+----------------------------+-------------------------+--------------------+---------------+-----------------+---------------+-----------------+--------------------+-------------------------+---------------------+---------------------+------------------+------------------------------+---------------------------+----------------+-------------------+-------------------+---------------+------------------------+-------------------+--------------------+-------+------+------+-------+-------+---+---+---+-------------------------+------------+-------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "http://10.10.17.66:42141/jobs/job?id\u003d31"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42141/jobs/job?id\u003d32"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42141/jobs/job?id\u003d33"
+            },
+            {
+              "jobUrl": "http://10.10.17.66:42141/jobs/job?id\u003d34"
+            }
+          ],
+          "interpreterSettingId": "spark_static"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758517840012_387529312",
+      "id": "paragraph_1758517840012_387529312",
+      "dateCreated": "2025-09-22 14:10:40.012",
+      "dateStarted": "2026-01-13 15:54:36.398",
+      "dateFinished": "2026-01-13 15:54:43.110",
+      "status": "FINISHED"
+    }
+  ],
+  "name": "pre_processing",
+  "id": "2M4UZZTUS",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}

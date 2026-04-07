@@ -1,0 +1,651 @@
+{
+  "paragraphs": [
+    {
+      "title": "하둡에 데이터파일 복제",
+      "text": "%spark.pyspark\n# hdfs에 파일 수동 업로드\nimport os\n\nlocal_csv \u003d \"/home/kadap/upload/small2.csv\" # 경로에 미리 파일 저장\nhdfs_dir \u003d \"/QH/TEST_DATA/\"\n\n# put (업로드)\nos.system(f\"hdfs dfs -put -f {local_csv} {hdfs_dir}\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-02 10:35:26.103",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "0\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758515446229_645222360",
+      "id": "paragraph_1758515446229_645222360",
+      "dateCreated": "2025-09-22 13:30:46.229",
+      "dateStarted": "2025-10-10 14:15:26.794",
+      "dateFinished": "2025-10-10 14:16:20.374",
+      "status": "FINISHED"
+    },
+    {
+      "title": "디렉토리 리스트 확인",
+      "text": "%sh\nhdfs dfs -ls /QH/",
+      "user": "anonymous",
+      "dateUpdated": "2025-09-25 15:10:34.661",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/sh",
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Found 2 items\ndrwxr-xr-x   - kadap  supergroup          0 2025-09-23 10:07 /QH/TEST_DATA\ndrwxr-xr-x   - dr.who supergroup          0 2025-09-17 12:56 /QH/devtest\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758589620080_1839117045",
+      "id": "paragraph_1758589620080_1839117045",
+      "dateCreated": "2025-09-23 10:07:00.080",
+      "dateStarted": "2025-09-25 15:04:28.947",
+      "dateFinished": "2025-09-25 15:04:32.616",
+      "status": "FINISHED"
+    },
+    {
+      "title": "HDFS 디렉토리 생성",
+      "text": "%sh\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Passenger_Car\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_base\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_capa\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_final\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_rul\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_summary\n#hdfs dfs -mkdir /QH/Pre_Processed/Passenger_Car/\n#hdfs dfs -mkdir /QH/Pre_Processed/Commercial_Vehicle/\n#hdfs dfs -mkdir /QH/Pre_Processed/Passenger_Car/PP_Set\n#hdfs dfs -mkdir /QH/Pre_Processed/Passenger_Car/Cycle_set\n#hdfs dfs -mkdir /QH/Pre_Processed/Commercial_Vehicle/PP_Set\n#hdfs dfs -mkdir /QH/Pre_Processed/Commercial_Vehicle/Cycle_set\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/models\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/models/mlp_model\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/models/soh_map_model\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/models/xgb_model\n#hdfs dfs -mkdir /QH/SOH_Model/discharge/soh_stress_factor\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Passenger_Car/01229438897\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Passenger_Car/01229898903\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Passenger_Car/01229968996\n# 버스 디렉토리 생성\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/93\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/95\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/100\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/103\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/104\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/111\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/125\n#hdfs dfs -mkdir /QH/Intergrated_Schema/Commercial_Vehicle/170\n\nhdfs dfs -mkdir /QH/Anomaly_Detection_GRUAE",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 11:09:02.239",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "mkdir: `/QH/Anomaly_Detection_GRUAE\u0027: File exists\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "ExitValue: 1"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758780268947_832418850",
+      "id": "paragraph_1758780268947_832418850",
+      "dateCreated": "2025-09-25 15:04:28.947",
+      "dateStarted": "2025-11-28 18:47:41.847",
+      "dateFinished": "2025-11-28 18:47:43.654",
+      "status": "ERROR"
+    },
+    {
+      "title": "디렉토리 or 파일 삭제",
+      "text": "%sh\n#hdfs dfs -rm -r /QH/Intergrated_Schema/Passenger_Car/01229438897/*\n#hdfs dfs -rm -r /QH/Intergrated_Schema/Passenger_Car/01229898903/*\n#hdfs dfs -rm -r /QH/Intergrated_Schema/Passenger_Car/01229968996/*\n#hdfs dfs -rm -r /QH/Intergrated_Schema/Commercial_Vehicle/*\nhdfs dfs -rm /QH/Intergrated_Schema/Commercial_Vehicle/103/*\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-02 10:43:42.051",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Deleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00000-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00000-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00001-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00001-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00002-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00002-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00003-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00003-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00004-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00004-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00005-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00005-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00006-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00006-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00007-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00007-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00008-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00008-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00009-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00009-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00010-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00010-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00011-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00011-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00012-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00012-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00013-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00013-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00014-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00014-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00015-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00015-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00016-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00016-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00017-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00017-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00018-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00018-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00019-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00019-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00020-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00020-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00021-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00021-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00022-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00022-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00023-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00023-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00024-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00024-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00025-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00025-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00026-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00026-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00027-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00027-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00028-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00028-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00029-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00029-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00030-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00030-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00031-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00031-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00032-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00032-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00033-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00033-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00034-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00034-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00035-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00035-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00036-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00036-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00037-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00037-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00038-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00038-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00039-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00039-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00040-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00040-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00041-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00041-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00042-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00042-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00043-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00043-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00044-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00044-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00045-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00045-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00046-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00046-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00047-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00047-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00048-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00048-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00049-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00049-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00050-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00050-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00051-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00051-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00052-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00052-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00053-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00053-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00054-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00054-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00055-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00055-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00056-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00056-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00057-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00057-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00058-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00058-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00059-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00059-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00060-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00060-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00061-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00061-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00062-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00062-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00063-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00063-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00064-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00064-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00065-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00065-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00066-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00066-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00067-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00067-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00068-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00068-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00069-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00069-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00070-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00070-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00071-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00071-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00072-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00072-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00073-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00073-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00074-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00074-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00075-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00075-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00076-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00076-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00077-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00077-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00078-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00078-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00079-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00079-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00080-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00080-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00081-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00081-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00082-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00082-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00083-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00083-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00084-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00084-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00085-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00085-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00086-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00086-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00087-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00087-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00088-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00088-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00089-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00089-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00090-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00090-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00091-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00091-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00092-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00092-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00093-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00093-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00094-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00094-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00095-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00095-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00096-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00096-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00097-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00097-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00098-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00098-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00099-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00099-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00100-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00100-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00101-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00101-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00102-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00102-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00103-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00103-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00104-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00104-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00105-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00105-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00106-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00106-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00107-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00107-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00108-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00108-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00109-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00109-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00110-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00110-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00111-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00111-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00112-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00112-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00113-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00113-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00114-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00114-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00115-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00115-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00116-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00116-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00117-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00117-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00118-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00118-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00119-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00119-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00120-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00120-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00121-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00121-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00122-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00122-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00123-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00123-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00124-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00124-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00125-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00125-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00126-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00126-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00127-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00127-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00128-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00128-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00129-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00129-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00130-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00130-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00131-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00131-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00132-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00132-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00133-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00133-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00134-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00134-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00135-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00135-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00136-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00136-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00137-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00137-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00138-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00138-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00139-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00139-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00140-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00140-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00141-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00141-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00142-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00142-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00143-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00143-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00144-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00144-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00145-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00145-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00146-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00146-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00147-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00147-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00148-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00148-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00149-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00149-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00150-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00150-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00151-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00151-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00152-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00152-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00153-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00153-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00154-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00154-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00155-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00155-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00156-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00156-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00157-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00157-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00158-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00158-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00159-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00159-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00160-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00160-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00161-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00161-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00162-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00162-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00163-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00163-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00164-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00164-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00165-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00165-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00166-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00166-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00167-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00167-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00168-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00168-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00169-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00169-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00170-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00170-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00171-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00171-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00172-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00172-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00173-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00173-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00174-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00174-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00175-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00175-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00176-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00176-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00177-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00177-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00178-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00178-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00179-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00179-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00180-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00180-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00181-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00181-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00182-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00182-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00183-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00183-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00184-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00184-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00185-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00185-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00186-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00186-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00187-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00187-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00188-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00188-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00189-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00189-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00190-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00190-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00191-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00191-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00192-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00192-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00193-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00193-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00194-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00194-b1d7623c-477a-44de-813c-2a0df28462f0-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00195-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00196-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00197-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00198-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\nDeleted /QH/Intergrated_Schema/Commercial_Vehicle/103/part-00199-214f369f-a9fc-420a-894f-08a8a61c44d2-c000.snappy.parquet\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1760667363801_471922484",
+      "id": "paragraph_1760667363801_471922484",
+      "dateCreated": "2025-10-17 11:16:03.801",
+      "dateStarted": "2025-12-01 11:05:11.048",
+      "dateFinished": "2025-12-01 11:05:52.651",
+      "status": "FINISHED"
+    },
+    {
+      "title": "메타데이터 파일서버 -\u003e 하둡 업로드",
+      "text": "%spark_user.pyspark\n# hdfs에 파일 수동 업로드\nimport os\n\nlocal_csv \u003d \"/home/kadap/QH/MetaData/VehicleMaster.csv\" # 경로에 미리 파일 저장\nhdfs_dir \u003d \"/QH/MetaData\"\n\n# put (업로드)\nos.system(f\"hdfs dfs -put -f {local_csv} {hdfs_dir}\")",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-24 16:00:07.059",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "0\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758955429712_845997907",
+      "id": "paragraph_1758955429712_845997907",
+      "dateCreated": "2025-09-27 15:43:49.712",
+      "dateStarted": "2025-12-24 16:00:07.066",
+      "dateFinished": "2025-12-24 16:00:52.523",
+      "status": "FINISHED"
+    },
+    {
+      "title": "파일서버 메타데이터 여러개 파일 -\u003e 하둡 업로드(csv파일인 경우)",
+      "text": "%spark_user.pyspark\nimport os\n\nlocal_dir \u003d \"/home/kadap/QH/Intergrated_Schema\"   # CSV 파일들이 있는 로컬 디렉토리\nhdfs_dir  \u003d \"/QH/Intergrated_Schema/Passenger_Car\"              # 업로드할 HDFS 경로\n\n# 디렉토리 내 모든 csv 파일 반복 업로드\nfor filename in os.listdir(local_dir):\n    if filename.endswith(\".csv\"):\n        local_path \u003d os.path.join(local_dir, filename)\n        cmd \u003d f\"hdfs dfs -put -f \u0027{local_path}\u0027 \u0027{hdfs_dir}\u0027\"\n        print(f\"[UPLOAD] {local_path} → {hdfs_dir}\")\n        os.system(cmd)\n\nprint(\"모든 CSV 파일 업로드 완료\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-01 11:04:15.120",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "모든 CSV 파일 업로드 완료\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1762246146575_1072313931",
+      "id": "paragraph_1762246146575_1072313931",
+      "dateCreated": "2025-11-04 17:49:06.575",
+      "dateStarted": "2025-11-18 14:45:02.689",
+      "dateFinished": "2025-11-18 14:46:09.809",
+      "status": "ABORT"
+    },
+    {
+      "title": "파일서버 메타데이터 여러개 파일 -\u003e 하둡 업로드(빠른복제)",
+      "text": "%sh\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229438897_20250513_parquet/* /QH/Intergrated_Schema/Passenger_Car/01229438897\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229898903_20250513_parquet/* /QH/Intergrated_Schema/Passenger_Car/01229898903\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229968996_20250514_parquet/* /QH/Intergrated_Schema/Passenger_Car/01229968996\n#hdfs dfs -put -f /home/kadap/upload/SOH_TEMP_DATA/kslab_soh_base_01229438897.parquet /QH/SOH_Model/discharge/soh_base/deviceId\u003d01229438897/\n#hdfs dfs -put -f /home/kadap/upload/SOH_TEMP_DATA/kslab_soh_base_01229898903.parquet /QH/SOH_Model/discharge/soh_base/deviceId\u003d01229898903/\n#hdfs dfs -put -f /home/kadap/upload/SOH_TEMP_DATA/kslab_soh_base_01229438897.parquet /QH/SOH_Model/discharge/soh_base/deviceId\u003d01229438897/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229968996_parquet/* /QH/Intergrated_Schema/Passenger_Car/01229968996/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_93/* /QH/Intergrated_Schema/Commercial_Vehicle/93/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_95/* /QH/Intergrated_Schema/Commercial_Vehicle/95/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_100/* /QH/Intergrated_Schema/Commercial_Vehicle/100/\nhdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_103/* /QH/Intergrated_Schema/Commercial_Vehicle/103/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_104/* /QH/Intergrated_Schema/Commercial_Vehicle/104/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_111/* /QH/Intergrated_Schema/Commercial_Vehicle/111/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_125/* /QH/Intergrated_Schema/Commercial_Vehicle/125/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Commercial_Vehicle/shcema_result_170/* /QH/Intergrated_Schema/Commercial_Vehicle/170/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/shcema_result_01229968996_aprilData/* /QH/Intergrated_Schema/Passenger_Car/01229968996/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229438897_filtered_parquet_20250514_20250614/* /QH/Intergrated_Schema/Passenger_Car/01229438897/\n#hdfs dfs -put -f /home/kadap/QH/Intergrated_Schema/Passenger_Car/01229898903_filtered_parquet_20250514_20250614/* /QH/Intergrated_Schema/Passenger_Car/01229898903/\n#hdfs dfs -put -f /home/kadap/upload/kslab_soh_base_01229968996.parquet /QH/SOH_Model/discharge/soh_base/deviceId\u003d01229968996/\n\n\n#hdfs dfs -put -f /home/kadap/QH/Anomaly_Detection_GRUAE/gru_model_v2.2.keras /QH/Anomaly_Detection_GRUAE/models\n#hdfs dfs -put -f /home/kadap/QH/Anomaly_Detection_GRUAE/ad_test_set.csv /QH/Anomaly_Detection_GRUAE/pp_output\n#hdfs dfs -put -f /home/kadap/QH/Anomaly_Detection_GRUAE/ad_test_set_bus.csv /QH/Anomaly_Detection_GRUAE/pp_output\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-12-02 10:48:41.902",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true,
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1762247002652_1136513209",
+      "id": "paragraph_1762247002652_1136513209",
+      "dateCreated": "2025-11-04 18:03:22.652",
+      "dateStarted": "2025-12-01 11:14:37.766",
+      "dateFinished": "2025-12-01 11:15:32.456",
+      "status": "FINISHED"
+    },
+    {
+      "title": "Data Load Test(특정파일)",
+      "text": "%spark_user.pyspark\n# from pyspark.sql.functions import input_file_name\n\n# # 단일 CSV 파일 경로\n# FILE_PATH \u003d \"/QH/TEST_DATA/small.csv\"\n\n# READ_OPTS \u003d {\n#     \"header\": \"true\",\n#     \"inferSchema\": \"true\",\n#     \"mode\": \"PERMISSIVE\",\n#     \"columnNameOfCorruptRecord\": \"_corrupt_record\",\n#     \"badRecordsPath\": \"/QH/_bad_records_raw\",\n#     \"multiLine\": \"false\",\n#     \"escape\": \"\\\\\",\n#     \"quote\": \"\\\"\",\n# }\n\n# # 단일 파일만 읽기\n# df \u003d (spark.read\n#       .options(**READ_OPTS)\n#       .csv(FILE_PATH)                      # ← 단일 파일 지정\n#       .withColumn(\"_src_file\", input_file_name()))\n\n# #df.show(5)        # 데이터 일부 확인\n# #print(\"Row count:\", df.count())",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-20 18:00:01.721",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1758950665760_1200047863",
+      "id": "paragraph_1758950665760_1200047863",
+      "dateCreated": "2025-09-27 14:24:25.760",
+      "status": "READY"
+    },
+    {
+      "title": "파이토치 cpu 버전 설치",
+      "text": "%sh\npip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-10-31 14:41:16.050",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Defaulting to user installation because normal site-packages is not writeable\nLooking in indexes: https://download.pytorch.org/whl/cpu, http://pypi.org/simple\nCollecting torch\n  Downloading https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (29 kB)\nCollecting torchvision\n  Downloading https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (5.9 kB)\nCollecting torchaudio\n  Downloading https://download.pytorch.org/whl/cpu/torchaudio-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl.metadata (6.9 kB)\nCollecting filelock (from torch)\n  Downloading https://download.pytorch.org/whl/filelock-3.19.1-py3-none-any.whl.metadata (2.1 kB)\nRequirement already satisfied: typing-extensions\u003e\u003d4.10.0 in /home/kadap/.local/lib/python3.10/site-packages (from torch) (4.15.0)\nCollecting sympy\u003e\u003d1.13.3 (from torch)\n  Downloading https://download.pytorch.org/whl/sympy-1.14.0-py3-none-any.whl.metadata (12 kB)\nCollecting networkx\u003e\u003d2.5.1 (from torch)\n  Downloading https://download.pytorch.org/whl/networkx-3.5-py3-none-any.whl.metadata (6.3 kB)\nRequirement already satisfied: jinja2 in /usr/lib/python3/dist-packages (from torch) (3.0.3)\nCollecting fsspec\u003e\u003d0.8.5 (from torch)\n  Downloading https://download.pytorch.org/whl/fsspec-2025.9.0-py3-none-any.whl.metadata (10 kB)\nRequirement already satisfied: numpy in /home/kadap/.local/lib/python3.10/site-packages (from torchvision) (2.2.6)\nRequirement already satisfied: pillow!\u003d8.3.*,\u003e\u003d5.3.0 in /usr/lib/python3/dist-packages (from torchvision) (9.0.1)\nINFO: pip is looking at multiple versions of networkx to determine which version is compatible with other requirements. This could take a while.\nCollecting networkx\u003e\u003d2.5.1 (from torch)\n  Downloading https://download.pytorch.org/whl/networkx-3.3-py3-none-any.whl.metadata (5.1 kB)\nCollecting mpmath\u003c1.4,\u003e\u003d1.1.0 (from sympy\u003e\u003d1.13.3-\u003etorch)\n  Downloading https://download.pytorch.org/whl/mpmath-1.3.0-py3-none-any.whl (536 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 4.3 MB/s  0:00:00\nDownloading https://download.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (184.4 MB)\n   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 184.4/184.4 MB 60.1 MB/s  0:00:03\nDownloading https://download.pytorch.org/whl/cpu/torchvision-0.24.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (1.9 MB)\n   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 15.7 MB/s  0:00:00\nDownloading https://download.pytorch.org/whl/cpu/torchaudio-2.9.0%2Bcpu-cp310-cp310-manylinux_2_28_x86_64.whl (493 kB)\nDownloading https://download.pytorch.org/whl/fsspec-2025.9.0-py3-none-any.whl (199 kB)\nDownloading https://download.pytorch.org/whl/networkx-3.3-py3-none-any.whl (1.7 MB)\n   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 17.8 MB/s  0:00:00\nDownloading https://download.pytorch.org/whl/sympy-1.14.0-py3-none-any.whl (6.3 MB)\n   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 28.7 MB/s  0:00:00\nDownloading https://download.pytorch.org/whl/filelock-3.19.1-py3-none-any.whl (15 kB)\nWARNING: Error parsing dependencies of distro-info: Invalid version: \u00271.1build1\u0027\nWARNING: Error parsing dependencies of python-debian: Invalid version: \u00270.1.43ubuntu1\u0027\nInstalling collected packages: mpmath, sympy, networkx, fsspec, filelock, torch, torchvision, torchaudio\n\nSuccessfully installed filelock-3.19.1 fsspec-2025.9.0 mpmath-1.3.0 networkx-3.3 sympy-1.14.0 torch-2.9.0+cpu torchaudio-2.9.0+cpu torchvision-0.24.0+cpu\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761889249812_855973338",
+      "id": "paragraph_1761889249812_855973338",
+      "dateCreated": "2025-10-31 14:40:49.813",
+      "dateStarted": "2025-10-31 14:41:16.055",
+      "dateFinished": "2025-10-31 14:41:45.844",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\nhdfs dfs -copyToLocal /QH/Pre_Processed/PP_Set/part-00000-1ce848ba-adf7-40f5-8160-78c339107827-c000.snappy.parquet /home/kadap/upload/\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-07 11:06:31.913",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1762481188810_1975342476",
+      "id": "paragraph_1762481188810_1975342476",
+      "dateCreated": "2025-11-07 11:06:28.810",
+      "dateStarted": "2025-11-07 11:06:31.919",
+      "dateFinished": "2025-11-07 11:06:36.604",
+      "status": "FINISHED"
+    },
+    {
+      "title": "XgBoost 설치",
+      "text": "%sh\npip install xgboost\u003d\u003d1.7.6\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:09:37.277",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/sh",
+        "title": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Defaulting to user installation because normal site-packages is not writeable\nLooking in indexes: http://repo.bigdata-car.kr/repository/pypi/simple, http://pypi.org/simple\nCollecting xgboost\u003d\u003d1.7.6\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/xgboost/1.7.6/xgboost-1.7.6-py3-none-manylinux2014_x86_64.whl (200.3 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200.3/200.3 MB 141.3 MB/s  0:00:01\nRequirement already satisfied: numpy in /home/kadap/.local/lib/python3.10/site-packages (from xgboost\u003d\u003d1.7.6) (2.2.6)\nRequirement already satisfied: scipy in /home/kadap/.local/lib/python3.10/site-packages (from xgboost\u003d\u003d1.7.6) (1.15.3)\nWARNING: Error parsing dependencies of distro-info: Invalid version: \u00271.1build1\u0027\nWARNING: Error parsing dependencies of python-debian: Invalid version: \u00270.1.43ubuntu1\u0027\nInstalling collected packages: xgboost\nSuccessfully installed xgboost-1.7.6\n\n[notice] A new release of pip is available: 25.2 -\u003e 25.3\n[notice] To update, run: python3 -m pip install --upgrade pip\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1761889276053_1260714860",
+      "id": "paragraph_1761889276053_1260714860",
+      "dateCreated": "2025-10-31 14:41:16.054",
+      "dateStarted": "2025-11-19 14:09:37.280",
+      "dateFinished": "2025-11-19 14:09:47.582",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\npip install shap\u003d\u003d0.41.0",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:16:05.903",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Defaulting to user installation because normal site-packages is not writeable\nLooking in indexes: http://repo.bigdata-car.kr/repository/pypi/simple, http://pypi.org/simple\nRequirement already satisfied: shap\u003d\u003d0.41.0 in /home/kadap/.local/lib/python3.10/site-packages (0.41.0)\nRequirement already satisfied: numpy in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (1.26.4)\nRequirement already satisfied: scipy in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (1.15.3)\nRequirement already satisfied: scikit-learn in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (1.7.2)\nRequirement already satisfied: pandas in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (2.3.2)\nRequirement already satisfied: tqdm\u003e4.25.0 in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (4.67.1)\nRequirement already satisfied: packaging\u003e20.9 in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (25.0)\nRequirement already satisfied: slicer\u003d\u003d0.0.7 in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (0.0.7)\nRequirement already satisfied: numba in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (0.61.2)\nRequirement already satisfied: cloudpickle in /home/kadap/.local/lib/python3.10/site-packages (from shap\u003d\u003d0.41.0) (3.1.2)\nRequirement already satisfied: llvmlite\u003c0.45,\u003e\u003d0.44.0dev0 in /home/kadap/.local/lib/python3.10/site-packages (from numba-\u003eshap\u003d\u003d0.41.0) (0.44.0)\nRequirement already satisfied: python-dateutil\u003e\u003d2.8.2 in /home/kadap/.local/lib/python3.10/site-packages (from pandas-\u003eshap\u003d\u003d0.41.0) (2.9.0.post0)\nRequirement already satisfied: pytz\u003e\u003d2020.1 in /usr/lib/python3/dist-packages (from pandas-\u003eshap\u003d\u003d0.41.0) (2022.1)\nRequirement already satisfied: tzdata\u003e\u003d2022.7 in /home/kadap/.local/lib/python3.10/site-packages (from pandas-\u003eshap\u003d\u003d0.41.0) (2025.2)\nRequirement already satisfied: six\u003e\u003d1.5 in /usr/lib/python3/dist-packages (from python-dateutil\u003e\u003d2.8.2-\u003epandas-\u003eshap\u003d\u003d0.41.0) (1.16.0)\nRequirement already satisfied: joblib\u003e\u003d1.2.0 in /home/kadap/.local/lib/python3.10/site-packages (from scikit-learn-\u003eshap\u003d\u003d0.41.0) (1.5.2)\nRequirement already satisfied: threadpoolctl\u003e\u003d3.1.0 in /home/kadap/.local/lib/python3.10/site-packages (from scikit-learn-\u003eshap\u003d\u003d0.41.0) (3.6.0)\nWARNING: Error parsing dependencies of distro-info: Invalid version: \u00271.1build1\u0027\nWARNING: Error parsing dependencies of python-debian: Invalid version: \u00270.1.43ubuntu1\u0027\n\n[notice] A new release of pip is available: 25.2 -\u003e 25.3\n[notice] To update, run: python3 -m pip install --upgrade pip\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763528977280_1246533365",
+      "id": "paragraph_1763528977280_1246533365",
+      "dateCreated": "2025-11-19 14:09:37.280",
+      "dateStarted": "2025-11-19 14:16:05.907",
+      "dateFinished": "2025-11-19 14:16:06.716",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\npip install --force-reinstall \"numpy\u003c2\"\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:15:53.076",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Defaulting to user installation because normal site-packages is not writeable\nLooking in indexes: http://repo.bigdata-car.kr/repository/pypi/simple, http://pypi.org/simple\nCollecting numpy\u003c2\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/numpy/1.26.4/numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 111.9 MB/s  0:00:00\nWARNING: Error parsing dependencies of distro-info: Invalid version: \u00271.1build1\u0027\nWARNING: Error parsing dependencies of python-debian: Invalid version: \u00270.1.43ubuntu1\u0027\nInstalling collected packages: numpy\n  Attempting uninstall: numpy\n    Found existing installation: numpy 2.2.6\n    Uninstalling numpy-2.2.6:\n      Successfully uninstalled numpy-2.2.6\nSuccessfully installed numpy-1.26.4\n\n[notice] A new release of pip is available: 25.2 -\u003e 25.3\n[notice] To update, run: python3 -m pip install --upgrade pip\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763529154974_107401337",
+      "id": "paragraph_1763529154974_107401337",
+      "dateCreated": "2025-11-19 14:12:34.974",
+      "dateStarted": "2025-11-19 14:15:53.082",
+      "dateFinished": "2025-11-19 14:16:00.323",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\npip install --force-reinstall \"numpy\u003c2\" \"shap\u003d\u003d0.41.0\"",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:52:35.395",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Defaulting to user installation because normal site-packages is not writeable\nLooking in indexes: http://repo.bigdata-car.kr/repository/pypi/simple, http://pypi.org/simple\nCollecting numpy\u003c2\n  Using cached http://repo.bigdata-car.kr/repository/pypi/packages/numpy/1.26.4/numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)\nCollecting shap\u003d\u003d0.41.0\n  Using cached http://repo.bigdata-car.kr/repository/pypi/packages/shap/0.41.0/shap-0.41.0-cp310-cp310-manylinux_2_12_x86_64.manylinux2010_x86_64.whl (572 kB)\nCollecting scipy (from shap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/scipy/1.15.3/scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (37.7 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 37.7/37.7 MB 137.9 MB/s  0:00:00\nCollecting scikit-learn (from shap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/scikit-learn/1.7.2/scikit_learn-1.7.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.7 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 MB 67.7 MB/s  0:00:00\nCollecting pandas (from shap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/pandas/2.3.3/pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 88.6 MB/s  0:00:00\nCollecting tqdm\u003e4.25.0 (from shap\u003d\u003d0.41.0)\n  Using cached http://repo.bigdata-car.kr/repository/pypi/packages/tqdm/4.67.1/tqdm-4.67.1-py3-none-any.whl (78 kB)\nCollecting packaging\u003e20.9 (from shap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/packaging/25.0/packaging-25.0-py3-none-any.whl (66 kB)\nCollecting slicer\u003d\u003d0.0.7 (from shap\u003d\u003d0.41.0)\n  Using cached http://repo.bigdata-car.kr/repository/pypi/packages/slicer/0.0.7/slicer-0.0.7-py3-none-any.whl (14 kB)\nCollecting numba (from shap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/numba/0.62.1/numba-0.62.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (3.7 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.7/3.7 MB 27.8 MB/s  0:00:00\nCollecting cloudpickle (from shap\u003d\u003d0.41.0)\n  Using cached http://repo.bigdata-car.kr/repository/pypi/packages/cloudpickle/3.1.2/cloudpickle-3.1.2-py3-none-any.whl (22 kB)\nCollecting llvmlite\u003c0.46,\u003e\u003d0.45.0dev0 (from numba-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/llvmlite/0.45.1/llvmlite-0.45.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (56.3 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.3/56.3 MB 132.5 MB/s  0:00:00\nCollecting python-dateutil\u003e\u003d2.8.2 (from pandas-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/python-dateutil/2.9.0.post0/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)\nCollecting pytz\u003e\u003d2020.1 (from pandas-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/pytz/2025.2/pytz-2025.2-py2.py3-none-any.whl (509 kB)\nCollecting tzdata\u003e\u003d2022.7 (from pandas-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/tzdata/2025.2/tzdata-2025.2-py2.py3-none-any.whl (347 kB)\nCollecting six\u003e\u003d1.5 (from python-dateutil\u003e\u003d2.8.2-\u003epandas-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/six/1.17.0/six-1.17.0-py2.py3-none-any.whl (11 kB)\nCollecting joblib\u003e\u003d1.2.0 (from scikit-learn-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/joblib/1.5.2/joblib-1.5.2-py3-none-any.whl (308 kB)\nCollecting threadpoolctl\u003e\u003d3.1.0 (from scikit-learn-\u003eshap\u003d\u003d0.41.0)\n  Downloading http://repo.bigdata-car.kr/repository/pypi/packages/threadpoolctl/3.6.0/threadpoolctl-3.6.0-py3-none-any.whl (18 kB)\nWARNING: Error parsing dependencies of distro-info: Invalid version: \u00271.1build1\u0027\nWARNING: Error parsing dependencies of python-debian: Invalid version: \u00270.1.43ubuntu1\u0027\nInstalling collected packages: pytz, tzdata, tqdm, threadpoolctl, slicer, six, packaging, numpy, llvmlite, joblib, cloudpickle, scipy, python-dateutil, numba, scikit-learn, pandas, shap\n  Attempting uninstall: tzdata\n    Found existing installation: tzdata 2025.2\n    Uninstalling tzdata-2025.2:\n      Successfully uninstalled tzdata-2025.2\n  Attempting uninstall: tqdm\n    Found existing installation: tqdm 4.67.1\n    Uninstalling tqdm-4.67.1:\n      Successfully uninstalled tqdm-4.67.1\n  Attempting uninstall: threadpoolctl\n    Found existing installation: threadpoolctl 3.6.0\n    Uninstalling threadpoolctl-3.6.0:\n      Successfully uninstalled threadpoolctl-3.6.0\n  Attempting uninstall: slicer\n    Found existing installation: slicer 0.0.7\n    Uninstalling slicer-0.0.7:\n      Successfully uninstalled slicer-0.0.7\n  Attempting uninstall: packaging\n    Found existing installation: packaging 25.0\n    Uninstalling packaging-25.0:\n      Successfully uninstalled packaging-25.0\n  Attempting uninstall: numpy\n    Found existing installation: numpy 1.26.4\n    Uninstalling numpy-1.26.4:\n      Successfully uninstalled numpy-1.26.4\n  Attempting uninstall: llvmlite\n    Found existing installation: llvmlite 0.44.0\n    Uninstalling llvmlite-0.44.0:\n      Successfully uninstalled llvmlite-0.44.0\n  Attempting uninstall: joblib\n    Found existing installation: joblib 1.5.2\n    Uninstalling joblib-1.5.2:\n      Successfully uninstalled joblib-1.5.2\n  Attempting uninstall: cloudpickle\n    Found existing installation: cloudpickle 3.1.2\n    Uninstalling cloudpickle-3.1.2:\n      Successfully uninstalled cloudpickle-3.1.2\n  Attempting uninstall: scipy\n    Found existing installation: scipy 1.15.3\n    Uninstalling scipy-1.15.3:\n      Successfully uninstalled scipy-1.15.3\n  Attempting uninstall: python-dateutil\n    Found existing installation: python-dateutil 2.9.0.post0\n    Uninstalling python-dateutil-2.9.0.post0:\n      Successfully uninstalled python-dateutil-2.9.0.post0\n  Attempting uninstall: numba\n    Found existing installation: numba 0.61.2\n    Uninstalling numba-0.61.2:\n      Successfully uninstalled numba-0.61.2\n  Attempting uninstall: scikit-learn\n    Found existing installation: scikit-learn 1.7.2\n    Uninstalling scikit-learn-1.7.2:\n      Successfully uninstalled scikit-learn-1.7.2\n  Attempting uninstall: pandas\n    Found existing installation: pandas 2.3.2\n    Uninstalling pandas-2.3.2:\n      Successfully uninstalled pandas-2.3.2\n  Attempting uninstall: shap\n    Found existing installation: shap 0.41.0\n    Uninstalling shap-0.41.0:\n      Successfully uninstalled shap-0.41.0\n\nSuccessfully installed cloudpickle-3.1.2 joblib-1.5.2 llvmlite-0.45.1 numba-0.62.1 numpy-1.26.4 packaging-25.0 pandas-2.3.3 python-dateutil-2.9.0.post0 pytz-2025.2 scikit-learn-1.7.2 scipy-1.15.3 shap-0.41.0 six-1.17.0 slicer-0.0.7 threadpoolctl-3.6.0 tqdm-4.67.1 tzdata-2025.2\n\n[notice] A new release of pip is available: 25.2 -\u003e 25.3\n[notice] To update, run: python3 -m pip install --upgrade pip\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763529353080_194382382",
+      "id": "paragraph_1763529353080_194382382",
+      "dateCreated": "2025-11-19 14:15:53.080",
+      "dateStarted": "2025-11-19 14:52:35.399",
+      "dateFinished": "2025-11-19 14:53:05.788",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\nimport numpy as np, shap\nprint(\"numpy \u003d\", np.__version__)\nprint(\"shap  \u003d\", shap.__version__)\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:53:40.523",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "IPython could not be loaded!\nnumpy \u003d 1.26.4\nshap  \u003d 0.41.0\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763531550235_1604659709",
+      "id": "paragraph_1763531550235_1604659709",
+      "dateCreated": "2025-11-19 14:52:30.235",
+      "dateStarted": "2025-11-19 14:53:40.531",
+      "dateFinished": "2025-11-19 14:54:29.948",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark_user.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2025-11-19 14:53:12.079",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1763531592079_1366180496",
+      "id": "paragraph_1763531592079_1366180496",
+      "dateCreated": "2025-11-19 14:53:12.079",
+      "status": "READY"
+    }
+  ],
+  "name": "settings",
+  "id": "2M8FM1VNP",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.1",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
