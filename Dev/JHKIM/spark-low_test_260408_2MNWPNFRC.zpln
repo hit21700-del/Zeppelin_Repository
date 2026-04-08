@@ -1,0 +1,31 @@
+{
+  "paragraphs": [
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775664663226_1055805536",
+      "id": "paragraph_1775664663226_1055805536",
+      "dateCreated": "2026-04-08 16:11:03.226",
+      "status": "READY"
+    }
+  ],
+  "name": "spark_low_test_260408",
+  "id": "2MNWPNFRC",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
