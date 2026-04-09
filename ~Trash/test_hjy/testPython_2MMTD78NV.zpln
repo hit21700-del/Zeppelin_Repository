@@ -1,0 +1,119 @@
+{
+  "paragraphs": [
+    {
+      "text": "%python\r\nimport os\r\n\r\n# CPU 코어 수\r\nprint(f\"CPU 코어 수: {os.cpu_count()}\")\r\n\r\n# 메모리\r\nwith open(\u0027/proc/meminfo\u0027) as f:\r\n    meminfo \u003d {}\r\n    for line in f:\r\n        key, val \u003d line.split(\u0027:\u0027)\r\n        meminfo[key.strip()] \u003d val.strip()\r\n\r\ntotal \u003d int(meminfo[\u0027MemTotal\u0027].split()[0]) / 1024\r\navailable \u003d int(meminfo[\u0027MemAvailable\u0027].split()[0]) / 1024\r\nused \u003d total - available\r\nprint(f\"전체 메모리: {total:.0f} MB\")\r\nprint(f\"사용 중: {used:.0f} MB\")\r\nprint(f\"사용 가능: {available:.0f} MB\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-07 05:16:57.912",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "CPU 코어 수: 72\n전체 메모리: 128037 MB\n사용 중: 53172 MB\n사용 가능: 74864 MB\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775538604468_2143105114",
+      "id": "paragraph_1775538604468_2143105114",
+      "dateCreated": "2026-04-07 05:10:04.468",
+      "dateStarted": "2026-04-07 05:16:57.917",
+      "dateFinished": "2026-04-07 05:16:57.942",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%sh\r\n/opt/zeppelin/packages/miniforge3/envs/ai/bin/python -m pip show psutil",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-07 05:15:17.248",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "sh",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/sh",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "WARNING: The directory \u0027/opt/zeppelin/.cache/pip\u0027 or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo\u0027s -H flag.\nWARNING: Package(s) not found: psutil\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "ExitValue: 1"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775538690661_2136056905",
+      "id": "paragraph_1775538690661_2136056905",
+      "dateCreated": "2026-04-07 05:11:30.661",
+      "dateStarted": "2026-04-07 05:15:17.253",
+      "dateFinished": "2026-04-07 05:15:17.484",
+      "status": "ERROR"
+    },
+    {
+      "text": "%python\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-07 05:12:48.646",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1775538768646_1244377771",
+      "id": "paragraph_1775538768646_1244377771",
+      "dateCreated": "2026-04-07 05:12:48.646",
+      "status": "READY"
+    }
+  ],
+  "name": "testPython",
+  "id": "2MMTD78NV",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
