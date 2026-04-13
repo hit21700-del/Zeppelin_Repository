@@ -1,0 +1,31 @@
+{
+  "paragraphs": [
+    {
+      "user": "anonymous",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776053106121_1589632519",
+      "id": "paragraph_1776053106121_1589632519",
+      "dateCreated": "2026-04-13 04:05:06.121",
+      "status": "READY"
+    }
+  ],
+  "name": "BUS_Anomaly_Detection",
+  "id": "2MNEQJ71Q",
+  "defaultInterpreterGroup": "python",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
