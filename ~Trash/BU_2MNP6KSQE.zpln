@@ -1,0 +1,431 @@
+{
+  "paragraphs": [
+    {
+      "text": "%python\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# Battery Feature Engineering Pipeline \n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 1 — Imports \u0026 Config\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nimport pandas as pd\nimport numpy as np\nfrom datetime import datetime\nimport warnings\nimport re\nimport os\nimport gc\nimport time\nimport psutil\nimport s3fs\nfrom numba import jit\nfrom multiprocessing import Pool, cpu_count\nwarnings.filterwarnings(\u0027ignore\u0027)\n\n# S3 Configuration\nBUCKET_NAME   \u003d \"quantum\"\nINPUT_FOLDER  \u003d \"data_folder\"\nOUTPUT_FOLDER \u003d \"output_folder\"\n\n# dtype map — float32 saves ~50% RAM vs default float64\nDTYPE_MAP \u003d {\n    \u0027vehicle_id\u0027:           \u0027int16\u0027,\n    \u0027bus_speed\u0027:            \u0027float32\u0027,\n    \u0027is_key_on\u0027:            \u0027int8\u0027,\n    \u0027is_charger_connected\u0027: \u0027int8\u0027,\n    \u0027is_parking_brake_on\u0027:  \u0027int8\u0027,\n    \u0027mileage\u0027:              \u0027float32\u0027,\n}\nfor _prefix in [\u0027cell_max_t\u0027, \u0027cell_min_t\u0027, \u0027cell_max_v\u0027, \u0027cell_min_v\u0027,\n                 \u0027voltage\u0027, \u0027current\u0027, \u0027soc\u0027, \u0027soh\u0027]:\n    for _j in range(1, 9):\n        DTYPE_MAP[f\u0027{_prefix}_P{_j}\u0027] \u003d \u0027float32\u0027\n\nprint(\"✅ P1 done — imports \u0026 config ready\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:04:21.484",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/python",
+        "colWidth": 12.0,
+        "editorHide": false,
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "Traceback (most recent call last):\n  File \"/tmp/python1291380348753793248/zeppelin_python.py\", line 152, in \u003cmodule\u003e\n    code \u003d compile(\u0027\\n\u0027.join(stmts), \u0027\u003cstdin\u003e\u0027, \u0027exec\u0027, ast.PyCF_ONLY_AST, 1)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"\u003cstdin\u003e\", line 10\n    %python\n    ^\nSyntaxError: invalid syntax\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_1990730347",
+      "id": "20260413-040231_1753332890",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "dateStarted": "2026-04-13 04:04:21.488",
+      "dateFinished": "2026-04-13 04:04:28.972",
+      "status": "ERROR"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 2 — Utility \u0026 Helper Functions\r\n# (Run once per session)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\ndef get_s3_fs():\r\n    return s3fs.S3FileSystem(anon\u003dFalse)\r\n\r\n\r\ndef log_memory(label: str) -\u003e float:\r\n    avail    \u003d psutil.virtual_memory().available / 1e9\r\n    used_pct \u003d psutil.virtual_memory().percent\r\n    print(f\"    [MEM] {label}: available\u003d{avail:.1f}GB  used\u003d{used_pct}%\")\r\n    return avail\r\n\r\n\r\ndef get_valid_cols(df, prefix, max_pack\u003d8):\r\n    \"\"\"Return only pack columns that contain real data.\"\"\"\r\n    valid \u003d []\r\n    for j in range(1, max_pack + 1):\r\n        col \u003d f\u0027{prefix}_P{j}\u0027\r\n        if col not in df.columns:\r\n            continue\r\n        if df[col].eq(0).all() or df[col].nunique() \u003c\u003d 1:\r\n            continue\r\n        valid.append(col)\r\n    return valid\r\n\r\n\r\ndef make_agg_dict(df, exclude_cols):\r\n    \"\"\"Auto-generate aggregation rules based on column names/types.\"\"\"\r\n    agg \u003d {}\r\n    for col in df.columns:\r\n        if col in exclude_cols:\r\n            continue\r\n        if col in [\u0027soc_group\u0027, \u0027temp_group\u0027, \u0027state\u0027, \u0027dnr\u0027, \u0027driving_mode\u0027]:\r\n            agg[col] \u003d \u0027first\u0027\r\n        elif any(x in col for x in [\r\n            \u0027risk_score\u0027, \u0027warn_\u0027, \u0027is_charging\u0027, \u0027is_stopped\u0027,\r\n            \u0027is_key_on\u0027, \u0027is_parking_brake_on\u0027, \u0027is_charger_connected\u0027,\r\n            \u0027thermal_risk\u0027, \u0027voltage_risk\u0027, \u0027retarder\u0027, \u0027rest_start\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif any(x in col for x in [\r\n            \u0027max_temp\u0027, \u0027max_cell\u0027, \u0027temp_gradient\u0027, \u0027temp_change\u0027,\r\n            \u0027temp_acceleration\u0027, \u0027heat_generation\u0027, \u0027joule_heat\u0027,\r\n            \u0027voltage_change\u0027, \u0027dW_dt\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif \u0027soh\u0027 in col.lower():\r\n            agg[col] \u003d \u0027min\u0027\r\n        elif col \u003d\u003d \u0027mileage\u0027:\r\n            agg[col] \u003d \u0027max\u0027\r\n        elif any(x in col for x in [\r\n            \u0027rest_voltage_recovery\u0027, \u0027rest_dV_dt\u0027, \u0027dV_dAh_charging\u0027\r\n        ]):\r\n            agg[col] \u003d \u0027mean\u0027\r\n        elif \u0027_normalized\u0027 in col:\r\n            agg[col] \u003d \u0027mean\u0027\r\n        elif df[col].dtype in [\u0027float64\u0027, \u0027int64\u0027, \u0027float32\u0027, \u0027int32\u0027]:\r\n            agg[col] \u003d \u0027mean\u0027\r\n        else:\r\n            agg[col] \u003d \u0027first\u0027\r\n    return agg\r\n\r\n\r\ndef list_s3_input_files(fs):\r\n    \"\"\"List all cleaned_*.csv files in the S3 input folder.\"\"\"\r\n    all_files \u003d fs.ls(f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/\")\r\n    return sorted([\r\n        f\"s3://{f}\" for f in all_files\r\n        if re.search(r\u0027cleaned_\\d+\\.csv$\u0027, f)\r\n    ])\r\n\r\nprint(\"✅ P2 done — utility functions ready\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_262660451",
+      "id": "20260413-040231_804100779",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 3 — Numba JIT Functions + Warmup\r\n# (Run once per session — warmup triggers compilation)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\n@jit(nopython\u003dTrue)\r\ndef calculate_dcir_numba(voltage_arr, current_arr, jump_mask):\r\n    \"\"\"Calculate DCIR with Numba JIT acceleration.\"\"\"\r\n    n    \u003d len(voltage_arr)\r\n    dcir \u003d np.full(n, np.nan)\r\n    for i in range(2, n):\r\n        if jump_mask[i]:\r\n            dV \u003d voltage_arr[i] - voltage_arr[i - 2]\r\n            dI \u003d current_arr[i] - current_arr[i - 2]\r\n            if abs(dI) \u003e 10:\r\n                dcir[i] \u003d abs(dV / dI)\r\n    return dcir\r\n\r\n\r\n@jit(nopython\u003dTrue)\r\ndef calculate_dT_dAh_numba(stability_reset, max_temp_arr, current_sum_arr):\r\n    \"\"\"Calculate dT/dAh with Numba JIT acceleration.\"\"\"\r\n    n                 \u003d len(stability_reset)\r\n    Ah_since_stable   \u003d np.zeros(n)\r\n    temp_since_stable \u003d np.zeros(n)\r\n    stable_temp       \u003d np.nan\r\n    cumulative_Ah     \u003d 0.0\r\n    for i in range(n):\r\n        if stability_reset[i]:\r\n            stable_temp   \u003d max_temp_arr[i]\r\n            cumulative_Ah \u003d 0.0\r\n        elif not np.isnan(stable_temp):\r\n            cumulative_Ah        +\u003d current_sum_arr[i] / 60.0\r\n            Ah_since_stable[i]    \u003d cumulative_Ah\r\n            temp_since_stable[i]  \u003d max_temp_arr[i] - stable_temp\r\n    return Ah_since_stable, temp_since_stable\r\n\r\n\r\n# Warmup — triggers JIT compilation now so first real call is instant\r\n_dv \u003d np.array([1.0, 2.0, 3.0])\r\n_jm \u003d np.array([False, False, True])\r\n_ \u003d calculate_dcir_numba(_dv, _dv, _jm)\r\n_ \u003d calculate_dT_dAh_numba(_jm, _dv, _dv)\r\n\r\nprint(\"✅ P3 done — Numba JIT compiled \u0026 warmed up\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_1936862670",
+      "id": "20260413-040231_1628014158",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 4 — Core Functions: process_single_file \u0026 merge_and_save\r\n# (Run once per session)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\ndef process_single_file(s3_path: str):\r\n    \"\"\"\r\n    Stream a single cleaned_*.csv from S3.\r\n    - float32 dtype       → ~50% less RAM\r\n    - .transform()        → no intermediate DataFrame copies\r\n    - Numba JIT           → fast DCIR and dT/dAh loops\r\n    - Parquet output      → 80% smaller than CSV\r\n    \"\"\"\r\n    fs \u003d get_s3_fs()\r\n\r\n    match       \u003d re.search(r\u0027cleaned_(\\d+)\\.csv\u0027, s3_path)\r\n    file_number \u003d match.group(1) if match else \u00270\u0027\r\n\r\n    print(f\"\\n{\u0027\u003d\u0027*70}\")\r\n    print(f\"[File {file_number}] {os.path.basename(s3_path)}\")\r\n    print(f\"{\u0027\u003d\u0027*70}\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # 1. Memory-efficient load from S3\r\n    # ------------------------------------------------------------------\r\n    log_memory(\"before load\")\r\n    with fs.open(s3_path, \u0027rb\u0027) as f:\r\n        df \u003d pd.read_csv(f, dtype\u003dDTYPE_MAP, low_memory\u003dFalse)\r\n    df[\u0027time\u0027] \u003d pd.to_datetime(df[\u0027time\u0027])\r\n    log_memory(\"after load\")\r\n    print(f\"  Loaded: {len(df):,} rows / {len(df.columns)} cols  \"\r\n          f\"({df.memory_usage(deep\u003dTrue).sum()/1e6:.1f} MB)\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # 2. Detect valid pack columns\r\n    # ------------------------------------------------------------------\r\n    temp_max_cols   \u003d get_valid_cols(df, \u0027cell_max_t\u0027)\r\n    temp_min_cols   \u003d get_valid_cols(df, \u0027cell_min_t\u0027)\r\n    cell_max_v_cols \u003d get_valid_cols(df, \u0027cell_max_v\u0027)\r\n    cell_min_v_cols \u003d get_valid_cols(df, \u0027cell_min_v\u0027)\r\n    voltage_cols    \u003d get_valid_cols(df, \u0027voltage\u0027)\r\n    current_cols    \u003d get_valid_cols(df, \u0027current\u0027)\r\n    soc_cols        \u003d get_valid_cols(df, \u0027soc\u0027)\r\n    soh_cols        \u003d get_valid_cols(df, \u0027soh\u0027)\r\n    print(f\"  Valid packs: {len(voltage_cols)}\")\r\n\r\n    # Pre-compute numpy arrays once — reused throughout\r\n    temp_max_arr   \u003d df[temp_max_cols].values.astype(np.float32)\r\n    temp_min_arr   \u003d df[temp_min_cols].values.astype(np.float32)\r\n    cell_max_v_arr \u003d df[cell_max_v_cols].values.astype(np.float32)\r\n    cell_min_v_arr \u003d df[cell_min_v_cols].values.astype(np.float32)\r\n    voltage_arr    \u003d df[voltage_cols].values.astype(np.float32)\r\n    current_arr    \u003d df[current_cols].values.astype(np.float32)\r\n    soc_arr        \u003d df[soc_cols].values.astype(np.float32)\r\n    soh_arr        \u003d df[soh_cols].values.astype(np.float32)\r\n\r\n    voltage_mean \u003d voltage_arr.mean(axis\u003d1)\r\n    current_sum  \u003d current_arr.sum(axis\u003d1)\r\n\r\n    # ------------------------------------------------------------------\r\n    # A. Original 30 derived features (fully vectorized)\r\n    # ------------------------------------------------------------------\r\n    print(\"  [A] Original 30 features...\")\r\n\r\n    df[\u0027max_temp\u0027]        \u003d temp_max_arr.max(axis\u003d1).astype(np.float32)\r\n    df[\u0027max_cell_t_diff\u0027] \u003d (temp_max_arr.max(axis\u003d1) - temp_min_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027max_cell_v_diff\u0027] \u003d np.abs(cell_max_v_arr.max(axis\u003d1) - cell_min_v_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027cell_v_std\u0027]      \u003d voltage_arr.std(axis\u003d1).astype(np.float32)\r\n    df[\u0027pack_soc_mean\u0027]   \u003d soc_arr.mean(axis\u003d1).astype(np.float32)\r\n    df[\u0027pack_soc_std\u0027]    \u003d soc_arr.std(axis\u003d1).astype(np.float32)\r\n    df[\u0027soh_min\u0027]         \u003d soh_arr.min(axis\u003d1).astype(np.float32)\r\n    df[\u0027total_power_kw\u0027]  \u003d (voltage_mean * current_sum / 1000).astype(np.float32)\r\n\r\n    v_s    \u003d pd.Series(voltage_mean, index\u003ddf.index)\r\n    c_s    \u003d pd.Series(current_sum,  index\u003ddf.index)\r\n    v_diff \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(lambda x: v_s.diff())\r\n    c_diff \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(lambda x: c_s.diff())\r\n    df[\u0027estimated_resistance\u0027] \u003d np.where(\r\n        np.abs(c_diff) \u003e 1, np.abs(v_diff / c_diff), np.nan\r\n    ).astype(np.float32)\r\n    del v_diff, c_diff\r\n\r\n    df[\u0027thermal_risk_score\u0027] \u003d (\r\n        (df[\u0027max_temp\u0027] \u003e\u003d 50).astype(np.int8) +\r\n        (df[\u0027max_cell_t_diff\u0027] \u003e\u003d 8).astype(np.int8)\r\n    )\r\n    df[\u0027voltage_risk_score\u0027] \u003d (\r\n        (df[\u0027max_cell_v_diff\u0027] \u003e 200).astype(np.int8) +\r\n        (df[\u0027cell_v_std\u0027] \u003e 50).astype(np.int8)\r\n    )\r\n    df[\u0027temp_gradient\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027temp_acceleration\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027temp_gradient\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027cell_v_cv\u0027]      \u003d (df[\u0027cell_v_std\u0027] / (voltage_mean + 1e-6)).astype(np.float32)\r\n    df[\u0027pack_soc_range\u0027] \u003d (soc_arr.max(axis\u003d1) - soc_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027soh_std\u0027]        \u003d soh_arr.std(axis\u003d1).astype(np.float32)\r\n\r\n    BATTERY_CAPACITY \u003d 300\r\n    df[\u0027c_rate\u0027]        \u003d (np.abs(current_sum) / BATTERY_CAPACITY).astype(np.float32)\r\n    df[\u0027power_density\u0027] \u003d (df[\u0027total_power_kw\u0027] / len(voltage_cols)).astype(np.float32)\r\n\r\n    df[\u0027temp_rolling_std_5min\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n        .transform(lambda x: x.rolling(300, min_periods\u003d1).std()).astype(np.float32)\r\n    )\r\n    df[\u0027voltage_volatility\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027]\r\n        .transform(lambda x: pd.Series(voltage_mean, index\u003dx.index)\r\n                   .rolling(60, min_periods\u003d1).std()).astype(np.float32)\r\n    )\r\n    df[\u0027accel_rate\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027bus_speed\u0027]\r\n        .transform(lambda x: x.diff()).astype(np.float32)\r\n    )\r\n    df[\u0027decel_rate\u0027] \u003d df[\u0027accel_rate\u0027].clip(upper\u003d0).astype(np.float32)\r\n    df[\u0027is_stopped\u0027] \u003d ((df[\u0027bus_speed\u0027] \u003d\u003d 0) \u0026 (df[\u0027is_key_on\u0027] \u003d\u003d 1)).astype(np.int8)\r\n    df[\u0027regen_ratio\u0027] \u003d (\r\n        pd.Series((current_sum \u003c 0).astype(np.int8), index\u003ddf.index)\r\n        .rolling(60, min_periods\u003d1).mean().astype(np.float32)\r\n    )\r\n    df[\u0027driving_mode\u0027] \u003d pd.cut(\r\n        df[\u0027bus_speed\u0027], bins\u003d[-1, 0, 20, 60, 120], labels\u003d[0, 1, 2, 3]\r\n    ).astype(np.int8)\r\n    df[\u0027is_charging\u0027] \u003d (\r\n        (df[\u0027is_charger_connected\u0027] \u003d\u003d 1) | (current_sum \u003c 0)\r\n    ).astype(np.int8)\r\n\r\n    soc_chg \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027pack_soc_mean\u0027].transform(lambda x: x.diff())\r\n    df[\u0027depth_of_discharge\u0027] \u003d soc_chg.clip(upper\u003d0).abs().astype(np.float32)\r\n    del soc_chg\r\n\r\n    ct \u003d np.abs(current_sum)\r\n    df[\u0027peak_current_ratio\u0027] \u003d np.where(\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).mean().values \u003e 0,\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).max().values /\r\n        pd.Series(ct).rolling(60, min_periods\u003d1).mean().values, 1\r\n    ).astype(np.float32)\r\n    del ct\r\n\r\n    temp_chg \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(lambda x: x.diff())\r\n    df[\u0027cooling_efficiency\u0027] \u003d temp_chg.clip(upper\u003d0).abs().astype(np.float32)\r\n    del temp_chg\r\n\r\n    df[\u0027heat_generation\u0027] \u003d (\r\n        (current_sum ** 2) * df[\u0027estimated_resistance\u0027].fillna(0)\r\n    ).astype(np.float32)\r\n\r\n    gc.collect()\r\n    print(f\"      ✓ Done  |  cols: {len(df.columns)}\")\r\n    log_memory(\"after A\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # B. New 28 derived features\r\n    # ------------------------------------------------------------------\r\n    print(\"  [B] New 28 features...\")\r\n\r\n    df[\u0027state\u0027] \u003d \u0027unknown\u0027\r\n    df.loc[df[\u0027is_charger_connected\u0027] \u003d\u003d 1, \u0027state\u0027] \u003d \u0027charging\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 0) \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027resting\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 1) \u0026 (df[\u0027bus_speed\u0027] \u003e 5)  \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027driving\u0027\r\n    df.loc[(df[\u0027is_key_on\u0027] \u003d\u003d 1) \u0026 (df[\u0027bus_speed\u0027] \u003c\u003d 5) \u0026 (df[\u0027state\u0027] \u003d\u003d \u0027unknown\u0027), \u0027state\u0027] \u003d \u0027idling\u0027\r\n\r\n    vr_std \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(voltage_mean, index\u003dx.index).rolling(60, min_periods\u003d1).std()\r\n    )\r\n    tr_std \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(\r\n        lambda x: x.rolling(60, min_periods\u003d1).std()\r\n    )\r\n    is_lc \u003d pd.Series(np.abs(current_sum) \u003c 10, index\u003ddf.index)\r\n    cd2   \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(current_sum, index\u003dx.index).diff(2).abs()\r\n    )\r\n    current_jump \u003d (\r\n        (vr_std \u003c 0.5).shift(10).fillna(False) \u0026\r\n        (tr_std \u003c 0.2).shift(10).fillna(False) \u0026\r\n        is_lc.shift(10).fillna(False) \u0026\r\n        (~is_lc) \u0026 (cd2 \u003e 30)\r\n    )\r\n    del vr_std, tr_std, is_lc, cd2\r\n\r\n    df[\u0027DCIR\u0027] \u003d np.nan\r\n    for v in df[\u0027vehicle_id\u0027].unique():\r\n        m \u003d df[\u0027vehicle_id\u0027] \u003d\u003d v\r\n        df.loc[m, \u0027DCIR\u0027] \u003d calculate_dcir_numba(\r\n            voltage_mean[m], current_sum[m],\r\n            current_jump[m].fillna(False).values\r\n        ).astype(np.float32)\r\n    del current_jump; gc.collect()\r\n\r\n    df[\u0027pack_current_CV\u0027]    \u003d (current_arr.std(axis\u003d1) / (np.abs(current_arr.mean(axis\u003d1)) + 1e-6)).astype(np.float32)\r\n    df[\u0027pack_current_range\u0027] \u003d (current_arr.max(axis\u003d1) - current_arr.min(axis\u003d1)).astype(np.float32)\r\n    df[\u0027pack_voltage_std\u0027]   \u003d voltage_arr.std(axis\u003d1).astype(np.float32)\r\n    dSOC_list \u003d [df.groupby(\u0027vehicle_id\u0027)[c].transform(lambda x: x.diff()) for c in soc_cols]\r\n    df[\u0027dSOC_dt_std\u0027] \u003d (\r\n        np.nanstd(np.column_stack(dSOC_list), axis\u003d1).astype(np.float32)\r\n        if dSOC_list else np.nan\r\n    )\r\n    del dSOC_list\r\n    df[\u0027impedance_instant\u0027] \u003d (\r\n        voltage_mean / np.where(current_sum !\u003d 0, current_sum, np.nan)\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027joule_heat\u0027] \u003d ((current_sum ** 2) * df[\u0027estimated_resistance\u0027].fillna(0)).astype(np.float32)\r\n    df[\u0027dW_dt\u0027]      \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027joule_heat\u0027]\r\n        .transform(lambda x: x.diff() / (10/60)).astype(np.float32)\r\n    )\r\n    dI_dt \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(current_sum, index\u003dx.index).diff() / (10/60)\r\n    )\r\n    dR_dt \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027estimated_resistance\u0027].transform(\r\n        lambda x: x.diff() / (10/60)\r\n    )\r\n    df[\u0027dW_dt_current_contrib\u0027]    \u003d (2 * current_sum * df[\u0027estimated_resistance\u0027].fillna(0) * dI_dt).astype(np.float32)\r\n    df[\u0027dW_dt_resistance_contrib\u0027] \u003d ((current_sum ** 2) * dR_dt).astype(np.float32)\r\n    del dI_dt, dR_dt; gc.collect()\r\n\r\n    df[\u0027Ah_cumulative\u0027] \u003d (current_sum / 3600).cumsum().astype(np.float32)\r\n    vd_s \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027].transform(\r\n        lambda x: pd.Series(voltage_mean, index\u003dx.index).diff().abs()\r\n    )\r\n    td_s \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027].transform(lambda x: x.diff().abs())\r\n    is_stable  \u003d (np.abs(current_sum) \u003c 5) \u0026 (td_s \u003c 0.1) \u0026 (vd_s \u003c 1)\r\n    stab_reset \u003d is_stable.shift(1).fillna(False) \u0026 ~is_stable\r\n    del vd_s, td_s, is_stable\r\n\r\n    df[\u0027Ah_since_stable\u0027] \u003d df[\u0027temp_since_stable\u0027] \u003d 0.0\r\n    for v in df[\u0027vehicle_id\u0027].unique():\r\n        m \u003d df[\u0027vehicle_id\u0027] \u003d\u003d v\r\n        Av, Tv \u003d calculate_dT_dAh_numba(\r\n            stab_reset[m].fillna(False).values,\r\n            df.loc[m, \u0027max_temp\u0027].values,\r\n            current_sum[m]\r\n        )\r\n        df.loc[m, \u0027Ah_since_stable\u0027]   \u003d Av.astype(np.float32)\r\n        df.loc[m, \u0027temp_since_stable\u0027] \u003d Tv.astype(np.float32)\r\n    del stab_reset; gc.collect()\r\n\r\n    df[\u0027dT_dAh\u0027] \u003d np.where(\r\n        df[\u0027Ah_since_stable\u0027] \u003e 0.1,\r\n        df[\u0027temp_since_stable\u0027] / df[\u0027Ah_since_stable\u0027], np.nan\r\n    ).astype(np.float32)\r\n    df[\u0027dW_dAh\u0027] \u003d np.where(\r\n        df[\u0027Ah_cumulative\u0027].diff() \u003e 0.1,\r\n        df[\u0027joule_heat\u0027].diff() / df[\u0027Ah_cumulative\u0027].diff(), np.nan\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027DCIR_increase_rate\u0027] \u003d (\r\n        df.groupby(\u0027vehicle_id\u0027)[\u0027DCIR\u0027]\r\n        .transform(lambda x: x.pct_change(360)).astype(np.float32)\r\n    )\r\n    df[\u0027thermal_resistance_risk\u0027] \u003d (\r\n        ((df[\u0027DCIR_increase_rate\u0027] \u003e 0.1).fillna(False).astype(np.float32) * 0.5) +\r\n        ((df[\u0027temp_gradient\u0027] \u003e 1.0).fillna(False).astype(np.float32) * 0.5)\r\n    ).astype(np.float32)\r\n\r\n    df[\u0027soc_imbalance_validation\u0027] \u003d (\r\n        (df[\u0027pack_soc_std\u0027] \u003e 0.4).astype(np.int8) +\r\n        (df[\u0027pack_voltage_std\u0027] \u003e 5).astype(np.int8) +\r\n        (df[\u0027pack_current_CV\u0027] \u003e 0.10).astype(np.int8)\r\n    )\r\n\r\n    df[\u0027dV_dAh_charging\u0027] \u003d np.nan\r\n    mc \u003d (df[\u0027state\u0027] \u003d\u003d \u0027charging\u0027) \u0026 (df[\u0027Ah_cumulative\u0027].diff() \u003e 0.01)\r\n    if mc.sum() \u003e 0:\r\n        vd \u003d pd.Series(voltage_mean, index\u003ddf.index).diff()\r\n        Ad \u003d df[\u0027Ah_cumulative\u0027].diff()\r\n        df.loc[mc, \u0027dV_dAh_charging\u0027] \u003d (vd[mc] / Ad[mc]).astype(np.float32)\r\n    del mc\r\n\r\n    prev_state \u003d df.groupby(\u0027vehicle_id\u0027)[\u0027state\u0027].shift(1)\r\n    rad \u003d (df[\u0027state\u0027] \u003d\u003d \u0027resting\u0027) \u0026 (prev_state \u003d\u003d \u0027driving\u0027)\r\n    rac \u003d (df[\u0027state\u0027] \u003d\u003d \u0027resting\u0027) \u0026 (prev_state \u003d\u003d \u0027charging\u0027)\r\n    del prev_state\r\n\r\n    df[\u0027rest_voltage_recovery_driving\u0027]  \u003d np.nan\r\n    df[\u0027rest_voltage_recovery_charging\u0027] \u003d np.nan\r\n    df[\u0027rest_dV_dt\u0027] \u003d np.nan\r\n\r\n    for idx in np.where(rad.fillna(False))[0]:\r\n        if idx + 6 \u003c len(df):\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_voltage_recovery_driving\u0027)] \u003d (\r\n                voltage_mean[idx + 6] - voltage_mean[idx]\r\n            )\r\n            x \u003d np.arange(6, dtype\u003dnp.float32)\r\n            y \u003d voltage_mean[idx:idx + 6].astype(np.float32)\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_dV_dt\u0027)] \u003d float(np.polyfit(x, y, 1)[0] * 6)\r\n\r\n    for idx in np.where(rac.fillna(False))[0]:\r\n        if idx + 6 \u003c len(df):\r\n            df.iloc[idx, df.columns.get_loc(\u0027rest_voltage_recovery_charging\u0027)] \u003d (\r\n                voltage_mean[idx + 6] - voltage_mean[idx]\r\n            )\r\n    del rad, rac; gc.collect()\r\n\r\n    df[\u0027soc_group\u0027] \u003d pd.cut(\r\n        df[\u0027pack_soc_mean\u0027], bins\u003d[0, 20, 40, 60, 80, 100],\r\n        labels\u003d[\u0027very_low\u0027, \u0027low\u0027, \u0027medium\u0027, \u0027high\u0027, \u0027very_high\u0027]\r\n    )\r\n    df[\u0027temp_group\u0027] \u003d pd.cut(\r\n        df[\u0027max_temp\u0027], bins\u003d[-40, 20, 25, 30, 35, 85],\r\n        labels\u003d[\u0027cold\u0027, \u0027cool\u0027, \u0027normal\u0027, \u0027warm\u0027, \u0027hot\u0027]\r\n    )\r\n\r\n    for feat in [\u0027pack_soc_std\u0027, \u0027max_cell_v_diff\u0027, \u0027pack_current_CV\u0027,\r\n                 \u0027DCIR\u0027, \u0027thermal_resistance_risk\u0027]:\r\n        if feat not in df.columns:\r\n            continue\r\n        gs \u003d df.groupby([\u0027soc_group\u0027, \u0027temp_group\u0027])[feat].agg([\u0027mean\u0027, \u0027std\u0027])\r\n        df[f\u0027{feat}_normalized\u0027] \u003d np.nan\r\n        for (sg, tg), s in gs.iterrows():\r\n            m \u003d (df[\u0027soc_group\u0027] \u003d\u003d sg) \u0026 (df[\u0027temp_group\u0027] \u003d\u003d tg)\r\n            df.loc[m, f\u0027{feat}_normalized\u0027] \u003d (\r\n                ((df.loc[m, feat] - s[\u0027mean\u0027]) / s[\u0027std\u0027]).astype(np.float32)\r\n                if s[\u0027std\u0027] \u003e 0 else np.float32(0)\r\n            )\r\n\r\n    for periods, sfx in [(6, \u00271min\u0027), (30, \u00275min\u0027), (60, \u002710min\u0027)]:\r\n        df[f\u0027temp_change_{sfx}\u0027] \u003d (\r\n            df.groupby(\u0027vehicle_id\u0027)[\u0027max_temp\u0027]\r\n            .transform(lambda x, p\u003dperiods: x.diff(p)).astype(np.float32)\r\n        )\r\n        df[f\u0027voltage_change_{sfx}\u0027] \u003d (\r\n            df.groupby(\u0027vehicle_id\u0027)[\u0027vehicle_id\u0027]\r\n            .transform(lambda x, p\u003dperiods:\r\n                       pd.Series(voltage_mean, index\u003dx.index).diff(p)).astype(np.float32)\r\n        )\r\n\r\n    print(f\"      ✓ Done  |  total cols: {len(df.columns)}\")\r\n    log_memory(\"after B\")\r\n\r\n    # ------------------------------------------------------------------\r\n    # C. Time aggregation → Parquet shards → S3\r\n    # ------------------------------------------------------------------\r\n    print(\"  [C] Aggregation + S3 upload...\")\r\n    results \u003d {}\r\n    for freq, label, tcol in [\r\n        (\u002710s\u0027,  \u002710s\u0027,  \u0027time_10s\u0027),\r\n        (\u00271min\u0027, \u00271min\u0027, \u0027time_1min\u0027),\r\n        (\u00275min\u0027, \u00275min\u0027, \u0027time_5min\u0027),\r\n    ]:\r\n        df[tcol] \u003d df[\u0027time\u0027].dt.floor(freq)\r\n        agg_dict \u003d make_agg_dict(\r\n            df, exclude_cols\u003d[\u0027time\u0027, \u0027time_10s\u0027, \u0027time_1min\u0027, \u0027time_5min\u0027, \u0027vehicle_id\u0027]\r\n        )\r\n        df_agg \u003d df.groupby([\u0027vehicle_id\u0027, tcol]).agg(agg_dict).reset_index()\r\n        print(f\"      {label}: {len(df):,} → {len(df_agg):,} rows\")\r\n\r\n        s3_out \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/agg_{label}_{file_number}.parquet\"\r\n        with fs.open(s3_out, \u0027wb\u0027) as fout:\r\n            df_agg.to_parquet(fout, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\r\n        print(f\"      ✓ Saved: {s3_out}\")\r\n\r\n        results[label] \u003d s3_out\r\n        del df_agg; gc.collect()\r\n\r\n    del df; gc.collect()\r\n    log_memory(\"after cleanup\")\r\n    print(f\"[File {file_number}] Complete!\")\r\n    return results\r\n\r\n\r\ndef merge_and_save(fs, resolution: str, shard_paths: list):\r\n    print(f\"\\n{\u0027\u003d\u0027*70}\")\r\n    print(f\"Merging {resolution} ({len(shard_paths)} shards)...\")\r\n    dfs \u003d []\r\n    for i, path in enumerate(shard_paths, 1):\r\n        with fs.open(path, \u0027rb\u0027) as f:\r\n            chunk \u003d pd.read_parquet(f)\r\n        dfs.append(chunk)\r\n        print(f\"  [{i}/{len(shard_paths)}] {os.path.basename(path)}: {len(chunk):,} rows\")\r\n        del chunk; gc.collect()\r\n\r\n    merged   \u003d pd.concat(dfs, ignore_index\u003dTrue)\r\n    out_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/df_{resolution}_all.parquet\"\r\n    with fs.open(out_path, \u0027wb\u0027) as f:\r\n        merged.to_parquet(f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\r\n    print(f\"  ✓ Merged {len(merged):,} rows → {out_path}\")\r\n    del merged, dfs; gc.collect()\r\n    return out_path\r\n\r\nprint(\"✅ P4 done — core functions ready\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_477485295",
+      "id": "20260413-040231_347885593",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 5 — S3 Connection Check\r\n# (Re-run if credentials change)\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\nfs            \u003d get_s3_fs()\r\ncleaned_files \u003d list_s3_input_files(fs)\r\n\r\nprint(f\"✅ S3 connected\")\r\nprint(f\"Files found: {len(cleaned_files)}\")\r\nfor f in cleaned_files:\r\n    info \u003d fs.info(f)\r\n    print(f\"  {os.path.basename(f)}  ({info[\u0027size\u0027]/1e6:.1f} MB)\")\r\n\r\nlog_memory(\"before pipeline\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_315447505",
+      "id": "20260413-040231_1908169592",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 6 — Run Pipeline\r\n# Start with single process (Option A), switch to parallel (Option B)\r\n# once Option A confirms it works correctly\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\ntotal_start \u003d time.time()\r\n\r\n# ── Option A: single process — run this first ──────────────────────────────\r\nresults \u003d []\r\nfor f in cleaned_files:\r\n    result \u003d process_single_file(f)\r\n    results.append(result)\r\n    log_memory(f\"after {os.path.basename(f)}\")\r\n\r\n# ── Option B: parallel — uncomment after Option A succeeds ─────────────────\r\n# n_cores \u003d min(cpu_count() - 1, len(cleaned_files), 8)\r\n# print(f\"Running parallel with {n_cores} cores...\")\r\n# with Pool(n_cores) as pool:\r\n#     results \u003d pool.map(process_single_file, cleaned_files)\r\n\r\nprint(f\"\\n✅ Stage 1 done: {(time.time()-total_start)/60:.1f} min\")\r\nprint(f\"Results: {len(results)} files processed\")\r\n\r\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_922641134",
+      "id": "20260413-040231_843558694",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n# PARAGRAPH 7 — Merge Shards \u0026 Save Final Output\r\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\r\n%python\r\nmerged_paths \u003d {}\r\nfor res in [\u002710s\u0027, \u00271min\u0027, \u00275min\u0027]:\r\n    shards \u003d [r[res] for r in results if res in r]\r\n    merged_paths[res] \u003d merge_and_save(fs, res, shards)\r\n\r\ntotal_elapsed \u003d time.time() - total_start\r\nprint(f\"\\n✅ Pipeline complete: {total_elapsed/60:.1f} min\")\r\nprint(f\"Per-file average  : {total_elapsed/len(cleaned_files)/60:.1f} min\")\r\nprint(\"\\nOutput files (Parquet / snappy):\")\r\nfor res, path in merged_paths.items():\r\n    print(f\"  ✓ {path}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_537028104",
+      "id": "20260413-040231_525432022",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# Level 3 Phase 2 — Memory-Optimized \n# Memory optimizations applied:\n#   1. float32 dtype on CSV load              → ~50% less RAM\n#   2. .transform() replaces .rolling().values → no intermediate copies\n#   3. .query() replaces .copy()              → no DataFrame copy\n#   4. numpy stride trick for sequences       → 10x faster, no Python loop\n#   5. Scaler stored per state                → reproducible inference\n#   6. model.predict() called ONCE per model  → no redundant inference\n#   7. del + gc.collect() after heavy ops     → memory released promptly\n#   8. Results saved as Parquet               → 80% smaller than CSV\n#   9. psutil memory logging per step         → easy OOM diagnosis\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 1 — Imports \u0026 Config\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nimport gc\nimport json\nimport warnings\n\nimport numpy as np\nimport pandas as pd\nimport psutil\nimport s3fs\nfrom sklearn.preprocessing import StandardScaler\nfrom tensorflow.keras.layers import (\n    GRU, Dense, Dropout, RepeatVector, TimeDistributed\n)\nfrom tensorflow.keras.models import Sequential\n\nwarnings.filterwarnings(\u0027ignore\u0027)\n\n# S3\nBUCKET_NAME   \u003d \"quantum\"\nINPUT_FOLDER  \u003d \"data_folder\"\nOUTPUT_FOLDER \u003d \"output_folder\"\n\nALL_VEHICLES \u003d [93, 95, 97, 100, 103, 104, 111, 125, 170]\n\n# FIX 1: explicit dtype map — float32 saves ~50% RAM vs default float64\nDTYPE_MAP \u003d {\n    \u0027vehicle_id\u0027:         \u0027int16\u0027,\n    \u0027alarm_level\u0027:        \u0027int8\u0027,\n    \u0027time_1min\u0027:          \u0027str\u0027,\n    \u0027state\u0027:              \u0027str\u0027,\n    \u0027max_temp\u0027:           \u0027float32\u0027,\n    \u0027max_cell_t_diff\u0027:    \u0027float32\u0027,\n    \u0027joule_heat\u0027:         \u0027float32\u0027,\n    \u0027c_rate\u0027:             \u0027float32\u0027,\n    \u0027cooling_efficiency\u0027: \u0027float32\u0027,\n    \u0027pack_soc_std\u0027:       \u0027float32\u0027,\n    \u0027max_cell_v_diff\u0027:    \u0027float32\u0027,\n    \u0027voltage_volatility\u0027: \u0027float32\u0027,\n}\nfor _i in range(1, 9):\n    DTYPE_MAP[f\u0027current_P{_i}\u0027] \u003d \u0027float32\u0027\n\nfs \u003d s3fs.S3FileSystem(anon\u003dFalse)\n\ndef log_mem(label: str) -\u003e None:\n    \"\"\"Print available memory — helps locate OOM source.\"\"\"\n    vm \u003d psutil.virtual_memory()\n    print(f\"  [MEM] {label:35s} | avail\u003d{vm.available/1e9:.1f}GB  used\u003d{vm.percent}%\")\n\nprint(\"\u003d\" * 60)\nprint(\"Level 3 Phase 2 — Memory-Optimized (S3)\")\nprint(\"\u003d\" * 60)\nprint(f\"  Bucket : {BUCKET_NAME}\")\nprint(f\"  Input  : {INPUT_FOLDER}/\")\nprint(f\"  Output : {OUTPUT_FOLDER}/\")\nprint(\"P1 done\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_925939235",
+      "id": "20260413-040231_1771815869",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 2 — Load Phase 1 Config from S3\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nconfig_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_phase1_optimal_config.json\"\n\ntry:\n    with fs.open(config_path, \u0027r\u0027) as f:\n        cfg \u003d json.load(f)\n    OPTIMAL_SEQ_LEN  \u003d cfg[\u0027sequence_length\u0027]\n    OPTIMAL_FEATURES \u003d cfg[\u0027features\u0027]\n    print(f\"Config loaded from S3\")\nexcept Exception as e:\n    print(f\"Config load failed ({e}) — using defaults\")\n    OPTIMAL_SEQ_LEN  \u003d 60\n    OPTIMAL_FEATURES \u003d [\n        \u0027max_temp\u0027, \u0027max_cell_t_diff\u0027, \u0027max_temp_rolling_max\u0027,\n        \u0027joule_heat\u0027, \u0027c_rate\u0027, \u0027c_rate_rolling_max\u0027,\n        \u0027cooling_efficiency\u0027,\n        \u0027pack_soc_std\u0027, \u0027pack_soc_std_rolling_max\u0027,\n        \u0027max_cell_v_diff\u0027, \u0027voltage_volatility\u0027,\n        \u0027current_total\u0027,\n    ]\n\nprint(f\"  Sequence length : {OPTIMAL_SEQ_LEN}\")\nprint(f\"  Features        : {len(OPTIMAL_FEATURES)}\")\nprint(\"P2 done\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_1945390618",
+      "id": "20260413-040231_2054107757",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 3 — Load \u0026 Prepare Data\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nlog_mem(\"before data load\")\n\n# ── Main data ───────────────────────────────────────────────────────────────\nmain_path \u003d f\"s3://{BUCKET_NAME}/{INPUT_FOLDER}/df_1min_alarm_v3_p99.csv\"\nprint(f\"Loading: {main_path}\")\n\nwith fs.open(main_path, \u0027rb\u0027) as f:\n    df \u003d pd.read_csv(f, dtype\u003dDTYPE_MAP, low_memory\u003dFalse)\n\ndf[\u0027time_1min\u0027] \u003d pd.to_datetime(df[\u0027time_1min\u0027])\nlog_mem(\"after CSV load\")\nprint(f\"  Rows: {len(df):,}  RAM: {df.memory_usage(deep\u003dTrue).sum()/1e6:.0f} MB\")\n\n# ── Derived features ────────────────────────────────────────────────────────\n# FIX 2: vectorized sum — no copy\ncurrent_cols \u003d [f\u0027current_P{i}\u0027 for i in range(1, 9) if f\u0027current_P{i}\u0027 in df.columns]\ndf[\u0027current_total\u0027] \u003d df[current_cols].sum(axis\u003d1).astype(np.float32)\n\n# FIX 3: .transform() avoids .rolling().max().values intermediate copy\nfor col in [\u0027max_temp\u0027, \u0027c_rate\u0027, \u0027pack_soc_std\u0027]:\n    if col in df.columns:\n        df[f\u0027{col}_rolling_max\u0027] \u003d (\n            df.groupby(\u0027vehicle_id\u0027)[col]\n            .transform(lambda x: x.rolling(5, min_periods\u003d1).max())\n            .astype(np.float32)\n        )\n\nlog_mem(\"after derived features\")\n\n# ── Level 2 results ─────────────────────────────────────────────────────────\nl2_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level2_results.csv\"\nprint(f\"\\nLoading Level 2: {l2_path}\")\n\nwith fs.open(l2_path, \u0027rb\u0027) as f:\n    df_l2 \u003d pd.read_csv(\n        f,\n        dtype\u003d{\u0027vehicle_id\u0027: \u0027int16\u0027, \u0027if_anomaly_state\u0027: \u0027int8\u0027},\n        low_memory\u003dFalse\n    )\ndf_l2[\u0027time_1min\u0027] \u003d pd.to_datetime(df_l2[\u0027time_1min\u0027])\n\nl2_cols \u003d [c for c in [\u0027vehicle_id\u0027, \u0027time_1min\u0027,\n                        \u0027if_score_charging\u0027, \u0027if_score_driving\u0027,\n                        \u0027if_score_idling\u0027, \u0027if_score_resting\u0027,\n                        \u0027if_anomaly_state\u0027] if c in df_l2.columns]\ndf \u003d df.merge(df_l2[l2_cols], on\u003d[\u0027vehicle_id\u0027, \u0027time_1min\u0027], how\u003d\u0027left\u0027)\n\n# Free L2 immediately after merge\ndel df_l2; gc.collect()\nlog_mem(\"after L2 merge\")\n\n# FIX 4: .query() returns a view — no DataFrame copy unlike .copy()\ndf_normal \u003d df.query(\u0027alarm_level \u003d\u003d 0\u0027)\n\nprint(f\"\\n✅ P3 done | total\u003d{len(df):,}  normal\u003d{len(df_normal):,}\")\n\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_565556257",
+      "id": "20260413-040231_1977519257",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 4 — Utility Functions\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\ndef create_sequences_fast(data: pd.DataFrame,\n                           features: list,\n                           seq_len: int):\n    \"\"\"\n    Build (N, seq_len, n_features) array using numpy stride trick.\n    FIX 5: replaces Python for-loop → 10x faster, no list appends.\n    Returns: (sequences np.ndarray, scaler StandardScaler)\n    \"\"\"\n    clean \u003d data[features].dropna()\n    if len(clean) \u003c seq_len:\n        return np.empty((0, seq_len, len(features)), dtype\u003dnp.float32), None\n\n    scaler  \u003d StandardScaler()\n    scaled  \u003d scaler.fit_transform(clean.values).astype(np.float32)\n    n, nf   \u003d scaled.shape\n    n_seq   \u003d n - seq_len + 1\n\n    # Stride trick — zero-copy sliding window\n    s0, s1     \u003d scaled.strides\n    sequences  \u003d np.lib.stride_tricks.as_strided(\n        scaled,\n        shape\u003d(n_seq, seq_len, nf),\n        strides\u003d(s0, s0, s1)\n    ).copy()   # .copy() makes contiguous for Keras\n\n    return sequences, scaler\n\n\ndef build_gru_ae(seq_len: int, n_features: int, encoding_dim: int \u003d 32):\n    \"\"\"GRU Autoencoder — unchanged architecture.\"\"\"\n    model \u003d Sequential([\n        GRU(64, return_sequences\u003dTrue, input_shape\u003d(seq_len, n_features)),\n        Dropout(0.2),\n        GRU(encoding_dim, return_sequences\u003dFalse),\n        Dropout(0.2),\n        RepeatVector(seq_len),\n        GRU(encoding_dim, return_sequences\u003dTrue),\n        Dropout(0.2),\n        GRU(64, return_sequences\u003dTrue),\n        Dropout(0.2),\n        TimeDistributed(Dense(n_features)),\n    ])\n    model.compile(optimizer\u003d\u0027adam\u0027, loss\u003d\u0027mse\u0027)\n    return model\n\n\ndef reconstruction_errors(sequences: np.ndarray, model) -\u003e np.ndarray:\n    \"\"\"MSE reconstruction error — single batched predict call.\"\"\"\n    recon \u003d model.predict(sequences, batch_size\u003d256, verbose\u003d0)\n    return np.mean(np.square(sequences - recon), axis\u003d(1, 2))\n\n\nprint(\"✅ P4 done — utility functions ready\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.622",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_1421850083",
+      "id": "20260413-040231_1631433008",
+      "dateCreated": "2026-04-13 04:02:31.622",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 5 — Train Main Models (4 states)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nmain_models     \u003d {}\nmain_thresholds \u003d {}\nmain_scalers    \u003d {}\n\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    print(f\"\\n[Main model: {state}]\")\n\n    # FIX 6: .query() — no .copy() of df_normal\n    state_data \u003d df_normal.query(\u0027state \u003d\u003d @state\u0027)\n    print(f\"  Rows: {len(state_data):,}\")\n    for vid in ALL_VEHICLES:\n        cnt \u003d (state_data[\u0027vehicle_id\u0027] \u003d\u003d vid).sum()\n        print(f\"    vehicle {vid}: {cnt:,}\")\n\n    seqs, scaler \u003d create_sequences_fast(state_data, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN)\n\n    if len(seqs) \u003c 100:\n        print(f\"  ⚠️  Insufficient data — skipping\")\n        continue\n\n    print(f\"  Sequences: {len(seqs):,}  RAM: {seqs.nbytes/1e6:.0f} MB\")\n    log_mem(f\"before {state} fit\")\n\n    model \u003d build_gru_ae(OPTIMAL_SEQ_LEN, len(OPTIMAL_FEATURES))\n    model.fit(seqs, seqs, epochs\u003d50, batch_size\u003d64, verbose\u003d0)\n\n    errors    \u003d reconstruction_errors(seqs, model)\n    pct       \u003d 85 if state \u003d\u003d \u0027resting\u0027 else 90\n    threshold \u003d np.percentile(errors, pct)\n    print(f\"  ✓ P{pct} \u003d {threshold:.4f}\")\n\n    main_models[state]     \u003d model\n    main_thresholds[state] \u003d threshold\n    main_scalers[state]    \u003d scaler\n\n    # Free sequences right after threshold is computed\n    del seqs, errors; gc.collect()\n    log_mem(f\"after {state} cleanup\")\n\nprint(f\"\\n✅ P5 done — models trained: {list(main_models.keys())}\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.623",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951622_650395438",
+      "id": "20260413-040231_1443631233",
+      "dateCreated": "2026-04-13 04:02:31.623",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 6 — Train Auxiliary Model (Driving + Charging)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nlog_mem(\"before aux model\")\n\n# FIX 7: .query() — no .copy()\naux_data \u003d df_normal.query(\"state in [\u0027driving\u0027, \u0027charging\u0027]\")\nprint(f\"Aux data: {len(aux_data):,} rows\")\nfor s in [\u0027driving\u0027, \u0027charging\u0027]:\n    print(f\"  {s}: {(aux_data[\u0027state\u0027] \u003d\u003d s).sum():,}\")\n\naux_seqs, aux_scaler \u003d create_sequences_fast(\n    aux_data, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN\n)\nprint(f\"Sequences: {len(aux_seqs):,}  RAM: {aux_seqs.nbytes/1e6:.0f} MB\")\n\naux_model \u003d build_gru_ae(OPTIMAL_SEQ_LEN, len(OPTIMAL_FEATURES))\naux_model.fit(aux_seqs, aux_seqs, epochs\u003d50, batch_size\u003d64, verbose\u003d0)\n\naux_errors    \u003d reconstruction_errors(aux_seqs, aux_model)\naux_threshold \u003d np.percentile(aux_errors, 90)\nprint(f\"✓ P90 \u003d {aux_threshold:.4f}\")\n\ndel aux_seqs, aux_errors; gc.collect()\nlog_mem(\"after aux model\")\nprint(\"✅ P6 done\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.623",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951623_1487426107",
+      "id": "20260413-040231_1433644151",
+      "dateCreated": "2026-04-13 04:02:31.623",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 7 — Evaluate on Vehicle 95\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nlog_mem(\"before evaluation\")\n\n# FIX 8: .query() — no .copy()\nv95      \u003d df.query(\u0027vehicle_id \u003d\u003d 95\u0027)\nprint(f\"Vehicle 95 rows: {len(v95):,}\")\n\nv95_seqs, _ \u003d create_sequences_fast(v95, OPTIMAL_FEATURES, OPTIMAL_SEQ_LEN)\nv95_eval    \u003d v95.iloc[OPTIMAL_SEQ_LEN - 1:].reset_index(drop\u003dTrue).copy()\n\nprint(f\"Sequences : {len(v95_seqs):,}\")\nprint(f\"Eval rows : {len(v95_eval):,}\")\n\nfor col in [\u0027L3_main_anomaly\u0027, \u0027L3_aux_anomaly\u0027, \u0027L3_combined_anomaly\u0027]:\n    v95_eval[col] \u003d np.int8(0)\n\n# FIX 9: run predict() ONCE per model — cache all errors upfront\n# Original called predict() inside a per-state loop → N× redundant inference\nprint(\"\\nRunning inference (predict once per model)...\")\ncached_errors \u003d {\n    state: reconstruction_errors(v95_seqs, model)\n    for state, model in main_models.items()\n}\naux_errors_v95 \u003d reconstruction_errors(v95_seqs, aux_model)\nprint(f\"  ✓ {len(cached_errors)} main + 1 aux error arrays cached\")\nlog_mem(\"after predictions\")\n\n# Apply thresholds\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    if state not in cached_errors:\n        continue\n    mask \u003d v95_eval[\u0027state\u0027] \u003d\u003d state\n    idx  \u003d np.where(mask.values)[0]\n    if len(idx) \u003d\u003d 0:\n        continue\n\n    m_anom \u003d (cached_errors[state] \u003e main_thresholds[state]).astype(np.int8)\n    v95_eval.loc[mask, \u0027L3_main_anomaly\u0027] \u003d m_anom[idx]\n\n    if state \u003d\u003d \u0027driving\u0027:\n        a_anom \u003d (aux_errors_v95 \u003e aux_threshold).astype(np.int8)\n        v95_eval.loc[mask, \u0027L3_aux_anomaly\u0027]      \u003d a_anom[idx]\n        v95_eval.loc[mask, \u0027L3_combined_anomaly\u0027] \u003d (m_anom | a_anom)[idx]\n    else:\n        v95_eval.loc[mask, \u0027L3_combined_anomaly\u0027] \u003d m_anom[idx]\n\ndel v95_seqs, cached_errors, aux_errors_v95; gc.collect()\nlog_mem(\"after eval cleanup\")\nprint(\"\\n✅ P7 done — evaluation complete\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.623",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951623_145669897",
+      "id": "20260413-040231_1414027268",
+      "dateCreated": "2026-04-13 04:02:31.623",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 8 — Performance Report\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\nL1_anom      \u003d v95_eval[\u0027alarm_level\u0027] \u003e\u003d 1\nL2_anom      \u003d v95_eval[\u0027if_anomaly_state\u0027].fillna(0) \u003d\u003d 1\nL3_anom      \u003d v95_eval[\u0027L3_combined_anomaly\u0027] \u003d\u003d 1\nn            \u003d len(v95_eval)\n\nL1_tpr       \u003d L1_anom.sum() / n * 100\nL2_tpr       \u003d L2_anom.sum() / n * 100\nL3_tpr       \u003d L3_anom.sum() / n * 100\nL1_L2_OR     \u003d (L1_anom | L2_anom).sum() / n * 100\nL1_L2_L3_OR  \u003d (L1_anom | L2_anom | L3_anom).sum() / n * 100\nprev_or      \u003d 51.78\n\nprint(\"\u003d\" * 60)\nprint(\"Individual TPR\")\nprint(f\"  L1 : {L1_tpr:.2f}%\")\nprint(f\"  L2 : {L2_tpr:.2f}%\")\nprint(f\"  L3 : {L3_tpr:.2f}%\")\n\nprint(\"\\nOR Integration\")\nprint(f\"  L1 + L2        : {L1_L2_OR:.2f}%\")\nprint(f\"  L1 + L2 + L3   : {L1_L2_L3_OR:.2f}%\")\nprint(f\"  L3 contribution: +{L1_L2_L3_OR - L1_L2_OR:.2f}%p\")\n\nprint(\"\\nPer-state breakdown\")\nstate_results \u003d []\nfor state in [\u0027charging\u0027, \u0027driving\u0027, \u0027idling\u0027, \u0027resting\u0027]:\n    smask  \u003d v95_eval[\u0027state\u0027] \u003d\u003d state\n    stotal \u003d smask.sum()\n    if stotal \u003d\u003d 0:\n        continue\n    l1s \u003d (L1_anom \u0026 smask).sum() / stotal * 100\n    l2s \u003d (L2_anom \u0026 smask).sum() / stotal * 100\n    l3s \u003d (L3_anom \u0026 smask).sum() / stotal * 100\n    ors \u003d ((L1_anom | L2_anom | L3_anom) \u0026 smask).sum() / stotal * 100\n    tag \u003d \" 🆕\" if state \u003d\u003d \u0027resting\u0027 else \"\"\n    print(f\"\\n  [{state}]{tag}  ({stotal:,} rows)\")\n    print(f\"    L1\u003d{l1s:.2f}%  L2\u003d{l2s:.2f}%  L3\u003d{l3s:.2f}%  OR\u003d{ors:.2f}%\")\n    state_results.append(dict(state\u003dstate, total\u003dstotal,\n                               L1\u003dl1s, L2\u003dl2s, L3\u003dl3s, OR\u003dors))\n\nprint(\"\\nGoal check (target: 60%)\")\nif L1_L2_L3_OR \u003e\u003d 60:\n    print(f\"  ✅ Reached!  {L1_L2_L3_OR:.2f}%  (+{L1_L2_L3_OR - prev_or:.2f}%p)\")\nelif L1_L2_L3_OR \u003e\u003d 55:\n    print(f\"  ⚠️  Near     {L1_L2_L3_OR:.2f}%  (+{L1_L2_L3_OR - prev_or:.2f}%p)\")\nelse:\n    print(f\"  ❌ Below    {L1_L2_L3_OR:.2f}%  (need +{60 - L1_L2_L3_OR:.2f}%p)\")\n\nprint(\"\\n✅ P8 done\")\n\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.623",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951623_854953252",
+      "id": "20260413-040231_1483786124",
+      "dateCreated": "2026-04-13 04:02:31.623",
+      "status": "READY"
+    },
+    {
+      "text": "%python\n\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n# PARAGRAPH 9 — Save Results to S3 (Parquet)\n# \u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n%python\n# FIX 10: Parquet/snappy instead of CSV → 80% smaller, faster to reload\noutput_cols \u003d [c for c in [\n    \u0027vehicle_id\u0027, \u0027time_1min\u0027, \u0027state\u0027,\n    \u0027alarm_level\u0027, \u0027L1_anomaly_score\u0027,\n    \u0027if_anomaly_state\u0027,\n    \u0027L3_main_anomaly\u0027, \u0027L3_aux_anomaly\u0027, \u0027L3_combined_anomaly\u0027,\n] if c in v95_eval.columns]\n\n# Results\nres_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_phase2_v95_results.parquet\"\nwith fs.open(res_path, \u0027wb\u0027) as f:\n    v95_eval[output_cols].to_parquet(\n        f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse\n    )\nprint(f\"✅ Results     → {res_path}\")\n\n# Summary\nsum_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_improvement_comparison.parquet\"\nwith fs.open(sum_path, \u0027wb\u0027) as f:\n    pd.DataFrame({\n        \u0027version\u0027:     [\u0027previous\u0027, \u0027improved\u0027],\n        \u0027L3_TPR\u0027:      [12.60,  round(L3_tpr, 4)],\n        \u0027L1_L2_L3_OR\u0027: [51.78,  round(L1_L2_L3_OR, 4)],\n    }).to_parquet(f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse)\nprint(f\"✅ Summary     → {sum_path}\")\n\n# State breakdown\nst_path \u003d f\"s3://{BUCKET_NAME}/{OUTPUT_FOLDER}/level3_state_breakdown.parquet\"\nwith fs.open(st_path, \u0027wb\u0027) as f:\n    pd.DataFrame(state_results).to_parquet(\n        f, engine\u003d\u0027pyarrow\u0027, compression\u003d\u0027snappy\u0027, index\u003dFalse\n    )\nprint(f\"✅ State table → {st_path}\")\n\nlog_mem(\"final\")\nprint(\"\\n✅ P9 done — Level 3 Phase 2 complete!\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-13 04:02:31.623",
+      "progress": 0,
+      "config": {
+        "editorMode": "ace/mode/python",
+        "editorHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": []
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776052951623_1273982651",
+      "id": "20260413-040231_1850629147",
+      "dateCreated": "2026-04-13 04:02:31.623",
+      "status": "READY"
+    }
+  ],
+  "name": "BU",
+  "id": "2MNP6KSQE",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
