@@ -1,0 +1,528 @@
+{
+  "paragraphs": [
+    {
+      "text": "%python\nfrom sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import accuracy_score\nimport mlflow\nimport mlflow.sklearn\nimport numpy as np\n\nimport os\n\n# MLflow 서버 주소 확인 (개발사한테 받은 주소로 교체)\nos.environ[\"MLFLOW_TRACKING_URI\"] \u003d \"http://192.168.10.35:5000/\"\nos.environ[\"MLFLOW_S3_ENDPOINT_URL\"] \u003d \"http://192.168.0.105:80\"\nos.environ[\"AWS_ACCESS_KEY_ID\"] \u003d \"8XTYLABJCSLJKUTQBK94\"\nos.environ[\"AWS_SECRET_ACCESS_KEY\"] \u003d \"fKlCAYQBPEA9JOoyrfhTsIeVXr2j58M8upPCAVVR\"\n\n\nprint(mlflow.get_tracking_uri())\n\nX, y \u003d load_breast_cancer(return_X_y\u003dTrue)\nX_train, X_temp, y_train, y_temp \u003d train_test_split(X, y, test_size\u003d0.3, random_state\u003d42)\nX_val, X_test, y_val, y_test \u003d train_test_split(X_temp, y_temp, test_size\u003d0.5, random_state\u003d42)\n\nmlflow.set_experiment(\"zeppelin-test\")\n\n# GradientBoosting — staged_predict로 각 트리 추가될 때마다 평가\nwith mlflow.start_run(run_name\u003d\"GradientBoosting_staged\"):\n    model \u003d GradientBoostingClassifier(n_estimators\u003d100, random_state\u003d42)\n    model.fit(X_train, y_train)\n\n    mlflow.log_param(\"model_type\", \"GradientBoosting\")\n    mlflow.log_param(\"n_estimators\", 100)\n\n    # staged_predict: 트리가 1개일때, 2개일때... 순서대로 예측값 반환\n    for step, (train_pred, val_pred) in enumerate(\n        zip(model.staged_predict(X_train), model.staged_predict(X_val)), start\u003d1\n    ):\n        mlflow.log_metric(\"train_accuracy\", accuracy_score(y_train, train_pred), step\u003dstep)\n        mlflow.log_metric(\"val_accuracy\", accuracy_score(y_val, val_pred), step\u003dstep)\n\n    # 최종 test 성능\n    mlflow.log_metric(\"test_accuracy\", accuracy_score(y_test, model.predict(X_test)))\n    mlflow.sklearn.log_model(model, \"model\")\n    print(\"GradientBoosting 완료\")\n\n# RandomForest — n_estimators 단계별로 증가시키며 평가\nwith mlflow.start_run(run_name\u003d\"RandomForest_staged\"):\n    mlflow.log_param(\"model_type\", \"RandomForest\")\n    mlflow.log_param(\"max_n_estimators\", 100)\n\n    for step in range(1, 101):\n        model \u003d RandomForestClassifier(n_estimators\u003dstep, random_state\u003d42)\n        model.fit(X_train, y_train)\n        mlflow.log_metric(\"train_accuracy\", accuracy_score(y_train, model.predict(X_train)), step\u003dstep)\n        mlflow.log_metric(\"val_accuracy\", accuracy_score(y_val, model.predict(X_val)), step\u003dstep)\n\n    mlflow.log_metric(\"test_accuracy\", accuracy_score(y_test, model.predict(X_test)))\n    mlflow.sklearn.log_model(model, \"model\")\n    print(\"RandomForest 완료\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 08:15:19.329",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "http://192.168.10.35:5000/\n2026/04/14 05:11:16 WARNING mlflow.models.model: `artifact_path` is deprecated. Please use `name` instead.\n2026/04/14 05:11:16 WARNING mlflow.sklearn: Saving scikit-learn models in the pickle or cloudpickle format requires exercising caution because these formats rely on Python\u0027s object serialization mechanism, which can execute arbitrary code during deserialization. The recommended safe alternative is the \u0027skops\u0027 format. For more information, see: https://scikit-learn.org/stable/model_persistence.html\nGradientBoosting 완료\n🏃 View run GradientBoosting_staged at: http://192.168.10.35:5000/#/experiments/123/runs/c085592470314dc7a7623ebd60781ca5\n🧪 View experiment at: http://192.168.10.35:5000/#/experiments/123\n\u0027RandomForest\u0027\n100\nRandomForestClassifier(n_estimators\u003d1, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d2, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d3, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d4, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d5, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d6, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d7, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d8, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d9, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d10, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d11, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d12, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d13, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d14, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d15, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d16, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d17, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d18, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d19, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d20, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d21, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d22, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d23, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d24, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d25, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d26, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d27, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d28, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d29, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d30, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d31, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d32, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d33, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d34, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d35, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d36, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d37, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d38, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d39, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d40, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d41, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d42, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d43, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d44, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d45, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d46, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d47, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d48, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d49, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d50, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d51, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d52, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d53, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d54, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d55, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d56, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d57, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d58, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d59, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d60, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d61, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d62, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d63, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d64, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d65, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d66, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d67, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d68, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d69, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d70, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d71, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d72, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d73, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d74, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d75, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d76, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d77, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d78, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d79, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d80, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d81, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d82, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d83, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d84, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d85, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d86, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d87, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d88, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d89, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d90, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d91, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d92, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d93, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d94, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d95, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d96, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d97, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d98, random_state\u003d42)\nRandomForestClassifier(n_estimators\u003d99, random_state\u003d42)\nRandomForestClassifier(random_state\u003d42)\n2026/04/14 05:11:37 WARNING mlflow.models.model: `artifact_path` is deprecated. Please use `name` instead.\n2026/04/14 05:11:37 WARNING mlflow.sklearn: Saving scikit-learn models in the pickle or cloudpickle format requires exercising caution because these formats rely on Python\u0027s object serialization mechanism, which can execute arbitrary code during deserialization. The recommended safe alternative is the \u0027skops\u0027 format. For more information, see: https://scikit-learn.org/stable/model_persistence.html\n\u003cmlflow.models.model.ModelInfo object at 0x7f3a2a50f890\u003e\nRandomForest 완료\n🏃 View run RandomForest_staged at: http://192.168.10.35:5000/#/experiments/123/runs/aded2e92bd2149c4a653a9f9921ce00b\n🧪 View experiment at: http://192.168.10.35:5000/#/experiments/123\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776140423080_544677212",
+      "id": "paragraph_1776140423080_544677212",
+      "dateCreated": "2026-04-14 04:20:23.080",
+      "dateStarted": "2026-04-14 05:11:04.770",
+      "dateFinished": "2026-04-14 05:11:40.329",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\n\n# Step 1 — 모델 등록 + signature + 커스텀 태그\n\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import accuracy_score, f1_score, roc_auc_score\nfrom mlflow.models.signature import infer_signature\nimport mlflow\nimport mlflow.sklearn\nimport pandas as pd\n\ndata \u003d load_breast_cancer()\nX \u003d pd.DataFrame(data.data, columns\u003ddata.feature_names)\ny \u003d data.target\n\nX_train, X_test, y_train, y_test \u003d train_test_split(X, y, test_size\u003d0.2, random_state\u003d42)\nmlflow.set_experiment(\"zeppelin-test\")\n\nwith mlflow.start_run(run_name\u003d\"GradientBoosting_registry\") as run:\n    model \u003d GradientBoostingClassifier(n_estimators\u003d100, random_state\u003d42)\n    model.fit(X_train, y_train)\n\n    y_pred \u003d model.predict(X_test)\n    y_prob \u003d model.predict_proba(X_test)[:, 1]\n\n    mlflow.log_param(\"n_estimators\", 100)\n    mlflow.log_metric(\"accuracy\", accuracy_score(y_test, y_pred))\n    mlflow.log_metric(\"f1_score\", f1_score(y_test, y_pred))\n    mlflow.log_metric(\"roc_auc\", roc_auc_score(y_test, y_prob))\n\n    # signature: 입출력 스키마 정의\n    signature \u003d infer_signature(X_train, model.predict(X_train))\n\n    # 모델 저장 + 레지스트리 등록 (registered_model_name 으로 바로 등록)\n    mlflow.sklearn.log_model(\n        model,\n        artifact_path\u003d\"model\",\n        signature\u003dsignature,\n        registered_model_name\u003d\"breast_cancer_classifier\"  # ← 레지스트리 등록\n    )\n\n    # 커스텀 태그\n    mlflow.set_tag(\"team\", \"quantum-hitech\")\n    mlflow.set_tag(\"data_version\", \"v1.0\")\n    mlflow.set_tag(\"framework\", \"sklearn\")\n\n    print(f\"Run ID: {run.info.run_id}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 05:34:29.912",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "GradientBoostingClassifier(random_state\u003d42)\n100\n2026/04/14 05:34:30 WARNING mlflow.models.model: `artifact_path` is deprecated. Please use `name` instead.\n2026/04/14 05:34:31 WARNING mlflow.sklearn: Saving scikit-learn models in the pickle or cloudpickle format requires exercising caution because these formats rely on Python\u0027s object serialization mechanism, which can execute arbitrary code during deserialization. The recommended safe alternative is the \u0027skops\u0027 format. For more information, see: https://scikit-learn.org/stable/model_persistence.html\nRegistered model \u0027breast_cancer_classifier\u0027 already exists. Creating a new version of this model...\n2026/04/14 05:34:34 INFO mlflow.store.model_registry.abstract_store: Waiting up to 300 seconds for model version to finish creation. Model name: breast_cancer_classifier, version 2\nCreated version \u00272\u0027 of model \u0027breast_cancer_classifier\u0027.\n\u003cmlflow.models.model.ModelInfo object at 0x7f3a283608d0\u003e\nRun ID: 94ab5b5a373b41c584175f3dde554884\n🏃 View run GradientBoosting_registry at: http://192.168.10.35:5000/#/experiments/123/runs/94ab5b5a373b41c584175f3dde554884\n🧪 View experiment at: http://192.168.10.35:5000/#/experiments/123\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776140442825_416248947",
+      "id": "paragraph_1776140442825_416248947",
+      "dateCreated": "2026-04-14 04:20:42.825",
+      "dateStarted": "2026-04-14 05:34:29.914",
+      "dateFinished": "2026-04-14 05:34:34.379",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nfrom mlflow.tracking import MlflowClient\n\n# API를 활용한 상태 변경 시나리오\nclient \u003d MlflowClient()\n\n# 버전 목록 확인\nversions \u003d client.search_model_versions(\"name\u003d\u0027breast_cancer_classifier\u0027\")\nfor v in versions:\n    print(f\"version\u003d{v.version}, aliases\u003d{v.aliases}, run_id\u003d{v.run_id}\")\n\n# 명시적으로 최신 버전 추출 (버전 번호 기준 정렬)\nlatest_version \u003d max(versions, key\u003dlambda v: int(v.version)).version\nprint(f\"\\n최신 버전: {latest_version}\")\n\n# Alias 설정\nclient.set_registered_model_alias(\n    name\u003d\"breast_cancer_classifier\",\n    alias\u003d\"staging\",\n    version\u003dlatest_version\n)\nclient.set_registered_model_alias(\n    name\u003d\"breast_cancer_classifier\",\n    alias\u003d\"production\",\n    version\u003dlatest_version\n)\nprint(f\"version {latest_version} → staging, production alias 설정 완료\")\n\n# artifact 경로 조회 — run_id 통해서 실제 S3 경로 가져오기\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\nrun \u003d client.get_run(prod.run_id)\n\nprint(f\"\\nProduction 모델:\")\nprint(f\"  version: {prod.version}\")\nprint(f\"  run_id: {prod.run_id}\")\nprint(f\"  artifact_uri (실제 S3): {run.info.artifact_uri}\")  # s3://mlflow/... 형태\nprint(f\"  model 경로: {run.info.artifact_uri}/model\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 05:56:47.726",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "version\u003d1, aliases\u003d[], run_id\u003d83b4f2bb1d734cc6a4245d2c2782cd40\nversion\u003d2, aliases\u003d[], run_id\u003d94ab5b5a373b41c584175f3dde554884\n\n최신 버전: 2\nversion 2 → staging, production alias 설정 완료\n\nProduction 모델:\n  version: 2\n  run_id: 94ab5b5a373b41c584175f3dde554884\n  artifact_uri (실제 S3): s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts\n  model 경로: s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts/model\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776144452231_172359741",
+      "id": "paragraph_1776144452231_172359741",
+      "dateCreated": "2026-04-14 05:27:32.231",
+      "dateStarted": "2026-04-14 05:47:27.923",
+      "dateFinished": "2026-04-14 05:47:28.272",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\n# artifact 경로 조회(운영툴 연동 시나리오)\n# Production 모델의 artifact 경로 조회\nclient \u003d MlflowClient()\n\n# Production alias로 등록된 모델 조회\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\n\n# run_id 통해 실제 S3 경로 조회\nrun \u003d client.get_run(prod.run_id)\n\nprint(f\"version: {prod.version}\")\nprint(f\"aliases: {prod.aliases}\")\nprint(f\"run_id: {prod.run_id}\")\nprint(f\"artifact_uri (S3): {run.info.artifact_uri}\")\nprint(f\"model 경로: {run.info.artifact_uri}/model\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 05:58:20.761",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "version: 2\naliases: [\u0027production\u0027, \u0027staging\u0027]\nrun_id: 94ab5b5a373b41c584175f3dde554884\nartifact_uri (S3): s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts\nmodel 경로: s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts/model\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776145460395_1356820279",
+      "id": "paragraph_1776145460395_1356820279",
+      "dateCreated": "2026-04-14 05:44:20.395",
+      "dateStarted": "2026-04-14 05:58:20.768",
+      "dateFinished": "2026-04-14 05:58:20.813",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\n# 커스텀 태그 테스트\nfrom mlflow.tracking import MlflowClient\n\nclient \u003d MlflowClient()\n\n# 모델 레지스트리에 태그 설정\nclient.set_registered_model_tag(\"breast_cancer_classifier\", \"team\", \"quantum-hitech\")\nclient.set_registered_model_tag(\"breast_cancer_classifier\", \"use_case\", \"binary_classification\")\nclient.set_registered_model_tag(\"breast_cancer_classifier\", \"status\", \"verified\")\n\n# 특정 버전에 태그 설정\nclient.set_model_version_tag(\"breast_cancer_classifier\", \"2\", \"data_version\", \"v1.0\")\nclient.set_model_version_tag(\"breast_cancer_classifier\", \"2\", \"reviewer\", \"kim-jaehyun\")\n\n# 태그 조회\nmodel \u003d client.get_registered_model(\"breast_cancer_classifier\")\nprint(\"\u003d\u003d\u003d 모델 태그 \u003d\u003d\u003d\")\nfor k, v in model.tags.items():\n    print(f\"  {k}: {v}\")\n\n# 태그 기준 필터링\nprint(\"\\n\u003d\u003d\u003d 태그 필터링 \u003d\u003d\u003d\")\nresults \u003d client.search_registered_models(filter_string\u003d\"tags.team \u003d \u0027quantum-hitech\u0027\")\nfor m in results:\n    print(f\"  모델명: {m.name}, 태그: {m.tags}\")\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 06:06:38.106",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\u003d\u003d\u003d 모델 태그 \u003d\u003d\u003d\n  team: quantum-hitech\n  use_case: binary_classification\n  status: verified\n\n\u003d\u003d\u003d 태그 필터링 \u003d\u003d\u003d\n  모델명: breast_cancer_classifier, 태그: {\u0027team\u0027: \u0027quantum-hitech\u0027, \u0027use_case\u0027: \u0027binary_classification\u0027, \u0027status\u0027: \u0027verified\u0027}\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776146221661_22978284",
+      "id": "paragraph_1776146221661_22978284",
+      "dateCreated": "2026-04-14 05:57:01.661",
+      "dateStarted": "2026-04-14 06:06:38.115",
+      "dateFinished": "2026-04-14 06:06:38.663",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nimport mlflow\nimport json\nimport matplotlib\nmatplotlib.use(\u0027Agg\u0027)  # 제플린 환경에서 GUI 없이 그래프 저장\nimport matplotlib.pyplot as plt\nfrom sklearn.ensemble import GradientBoostingClassifier\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc\n\n# 데이터 준비\ndata \u003d load_breast_cancer()\nX_train, X_test, y_train, y_test \u003d train_test_split(\n    data.data, data.target, test_size\u003d0.2, random_state\u003d42\n)\n\n# 모델 학습\nclf \u003d GradientBoostingClassifier(n_estimators\u003d100, random_state\u003d42)\nclf.fit(X_train, y_train)\n\nmlflow.set_experiment(\"zeppelin-test\")\n\nwith mlflow.start_run(run_name\u003d\"artifact_test\") as run:\n\n    # 1. config 파일\n    config \u003d {\n        \"model\": \"GradientBoosting\",\n        \"n_estimators\": 100,\n        \"data_version\": \"v1.0\",\n        \"train_period\": \"2024-01 ~ 2024-12\"\n    }\n    with open(\"/tmp/config.json\", \"w\") as f:\n        json.dump(config, f, indent\u003d2)\n    mlflow.log_artifact(\"/tmp/config.json\", artifact_path\u003d\"config\")\n\n    # 2. feature importance\n    with open(\"/tmp/feature_importance.txt\", \"w\") as f:\n        for name, imp in sorted(\n            zip(data.feature_names, clf.feature_importances_),\n            key\u003dlambda x: -x[1]\n        ):\n            f.write(f\"{name}: {imp:.4f}\\n\")\n    mlflow.log_artifact(\"/tmp/feature_importance.txt\", artifact_path\u003d\"analysis\")\n\n    # 3. confusion matrix\n    cm \u003d confusion_matrix(y_test, clf.predict(X_test))\n    fig, ax \u003d plt.subplots()\n    ConfusionMatrixDisplay(cm).plot(ax\u003dax)\n    plt.savefig(\"/tmp/confusion_matrix.png\")\n    plt.close()\n    mlflow.log_artifact(\"/tmp/confusion_matrix.png\", artifact_path\u003d\"plots\")\n\n    # 4. ROC curve\n    fpr, tpr, _ \u003d roc_curve(y_test, clf.predict_proba(X_test)[:, 1])\n    roc_auc_score \u003d auc(fpr, tpr)\n    fig, ax \u003d plt.subplots()\n    ax.plot(fpr, tpr, label\u003df\"AUC \u003d {roc_auc_score:.3f}\")\n    ax.plot([0, 1], [0, 1], \"--\")\n    ax.set_xlabel(\"FPR\")\n    ax.set_ylabel(\"TPR\")\n    ax.legend()\n    plt.savefig(\"/tmp/roc_curve.png\")\n    plt.close()\n    mlflow.log_artifact(\"/tmp/roc_curve.png\", artifact_path\u003d\"plots\")\n\n    print(f\"Run ID: {run.info.run_id}\")\n    print(\"Artifacts 저장 완료\")\n    print(f\"Artifact URI: {run.info.artifact_uri}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 06:13:27.257",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "28\n29\n21\n24\n22\n19\n21\n24\n24\n19\n21\n25\n32\n22\n25\n26\n24\n29\n23\n24\n23\n23\n25\n22\n26\n18\n23\n32\n31\n20\n\u003csklearn.metrics._plot.confusion_matrix.ConfusionMatrixDisplay object at 0x7f3a2ae4a5d0\u003e\n[\u003cmatplotlib.lines.Line2D object at 0x7f3a1df463d0\u003e]\n[\u003cmatplotlib.lines.Line2D object at 0x7f3a1df9fdd0\u003e]\nText(0.5, 0, \u0027FPR\u0027)\nText(0, 0.5, \u0027TPR\u0027)\n\u003cmatplotlib.legend.Legend object at 0x7f3a2825bbd0\u003e\nRun ID: 95fc9e2f367e4ad683dbba0f10a03fad\nArtifacts 저장 완료\nArtifact URI: s3://mlflow/artifacts/123/95fc9e2f367e4ad683dbba0f10a03fad/artifacts\n🏃 View run artifact_test at: http://192.168.10.35:5000/#/experiments/123/runs/95fc9e2f367e4ad683dbba0f10a03fad\n🧪 View experiment at: http://192.168.10.35:5000/#/experiments/123\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776146798114_667688219",
+      "id": "paragraph_1776146798114_667688219",
+      "dateCreated": "2026-04-14 06:06:38.114",
+      "dateStarted": "2026-04-14 06:13:27.267",
+      "dateFinished": "2026-04-14 06:13:28.485",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nimport mlflow\nfrom mlflow.tracking import MlflowClient\n\n# MiniO S3 로부터 모델 호출 테스트\n\n# Production 모델을 MinIO에서 직접 로드\nclient \u003d MlflowClient()\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\n\n# 모델 로드 (MinIO에서 직접)\nmodel \u003d mlflow.sklearn.load_model(f\"models:/breast_cancer_classifier@production\")\nprint(type(model))\n\n# 추론 테스트\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nX, y \u003d load_breast_cancer(return_X_y\u003dTrue)\n_, X_test, _, y_test \u003d train_test_split(X, y, test_size\u003d0.2, random_state\u003d42)\n\nresult \u003d model.predict(X_test[:5])\nprint(f\"예측 결과: {result}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:41:25.225",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "\rDownloading artifacts:   0%|          | 0/5 [00:00\u003c?, ?it/s]\rDownloading artifacts:  20%|##        | 1/5 [00:00\u003c00:00, 251.07it/s]\rDownloading artifacts:  40%|####      | 2/5 [00:00\u003c00:00, 46.14it/s] \rDownloading artifacts:  60%|######    | 3/5 [00:00\u003c00:00, 63.54it/s]\rDownloading artifacts:  80%|########  | 4/5 [00:00\u003c00:00, 72.77it/s]\rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 62.32it/s]\rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 61.98it/s]\n\u003cclass \u0027sklearn.ensemble._gb.GradientBoostingClassifier\u0027\u003e\n/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but GradientBoostingClassifier was fitted with feature names\n  warnings.warn(\n예측 결과: [1 0 0 1 1]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776146840239_1626452619",
+      "id": "paragraph_1776146840239_1626452619",
+      "dateCreated": "2026-04-14 06:07:20.239",
+      "dateStarted": "2026-04-14 07:41:25.229",
+      "dateFinished": "2026-04-14 07:41:25.587",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nimport mlflow\nfrom mlflow.tracking import MlflowClient\nimport os\n\n# 직접 모델 다운로드\nclient \u003d MlflowClient()\n\n# Production 모델의 artifact 경로 확인\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\nrun \u003d client.get_run(prod.run_id)\n\nartifact_uri \u003d run.info.artifact_uri\nprint(f\"artifact_uri: {artifact_uri}\")\n\n# 로컬로 다운로드\nlocal_path \u003d mlflow.artifacts.download_artifacts(\n    artifact_uri\u003df\"{artifact_uri}/model\",\n    dst_path\u003d\"/tmp/downloaded_model\"\n)\nprint(f\"다운로드 경로: {local_path}\")\n\n# 다운로드된 파일 확인\nfor f in os.listdir(local_path):\n    print(f\"  {f}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:43:03.328",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "artifact_uri: s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts\n\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "Fail to execute line 17: local_path \u003d mlflow.artifacts.download_artifacts(\nTraceback (most recent call last):\n  File \"/tmp/python402012518569411731/zeppelin_python.py\", line 162, in \u003cmodule\u003e\n    exec(code, _zcUserQueryNameSpace)\n  File \"\u003cstdin\u003e\", line 17, in \u003cmodule\u003e\n  File \"/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/mlflow/artifacts/__init__.py\", line 84, in download_artifacts\n    return _download_artifact_from_uri(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/mlflow/tracking/artifact_utils.py\", line 128, in _download_artifact_from_uri\n    return repo.download_artifacts(artifact_path\u003dartifact_path, dst_path\u003doutput_path)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/mlflow/store/artifact/artifact_repo.py\", line 339, in download_artifacts\n    raise MlflowException(\nmlflow.exceptions.MlflowException: The following failures occurred while downloading one or more artifacts from s3://mlflow/artifacts/123/94ab5b5a373b41c584175f3dde554884/artifacts:\n##### File model #####\nAn error occurred (404) when calling the HeadObject operation: Not Found\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152485228_792203968",
+      "id": "paragraph_1776152485228_792203968",
+      "dateCreated": "2026-04-14 07:41:25.228",
+      "dateStarted": "2026-04-14 07:43:03.332",
+      "dateFinished": "2026-04-14 07:43:03.672",
+      "status": "ERROR"
+    },
+    {
+      "text": "%python\nfrom mlflow.tracking import MlflowClient\n\nclient \u003d MlflowClient()\n\n# production alias 모델 확인\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\nprint(f\"version: {prod.version}\")\nprint(f\"run_id: {prod.run_id}\")\nprint(f\"source: {prod.source}\")  # 실제 모델이 저장된 경로\n\n# 해당 run의 artifact 목록 확인\nartifacts \u003d client.list_artifacts(prod.run_id)\nfor a in artifacts:\n    print(f\"  {a.path} (is_dir: {a.is_dir})\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:43:35.103",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "version: 2\nrun_id: 94ab5b5a373b41c584175f3dde554884\nsource: models:/m-88a0ced3f6b342368d7b54c43d200deb\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152583331_1109095281",
+      "id": "paragraph_1776152583331_1109095281",
+      "dateCreated": "2026-04-14 07:43:03.332",
+      "dateStarted": "2026-04-14 07:43:35.106",
+      "dateFinished": "2026-04-14 07:43:35.156",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nfrom mlflow.tracking import MlflowClient\n\nclient \u003d MlflowClient()\n\n# version 2 run의 artifact 목록 직접 확인\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\nprint(f\"run_id: {prod.run_id}\")\n\n# 루트 artifact 목록\nartifacts \u003d client.list_artifacts(prod.run_id)\nprint(\"\\n\u003d\u003d\u003d 루트 artifacts \u003d\u003d\u003d\")\nfor a in artifacts:\n    print(f\"  {a.path} (is_dir: {a.is_dir})\")\n\n# model 폴더 안 확인\nartifacts_model \u003d client.list_artifacts(prod.run_id, path\u003d\"model\")\nprint(\"\\n\u003d\u003d\u003d model/ 폴더 \u003d\u003d\u003d\")\nfor a in artifacts_model:\n    print(f\"  {a.path}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:43:59.961",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "run_id: 94ab5b5a373b41c584175f3dde554884\n\n\u003d\u003d\u003d 루트 artifacts \u003d\u003d\u003d\n\n\u003d\u003d\u003d model/ 폴더 \u003d\u003d\u003d\n  model/MLmodel\n  model/conda.yaml\n  model/model.pkl\n  model/python_env.yaml\n  model/requirements.txt\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152615106_1843745662",
+      "id": "paragraph_1776152615106_1843745662",
+      "dateCreated": "2026-04-14 07:43:35.106",
+      "dateStarted": "2026-04-14 07:43:59.964",
+      "dateFinished": "2026-04-14 07:44:00.141",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nimport mlflow\nfrom mlflow.tracking import MlflowClient\nimport os\n\nclient \u003d MlflowClient()\n\n# production alias 모델\nprod \u003d client.get_model_version_by_alias(\"breast_cancer_classifier\", \"production\")\nrun_id \u003d prod.run_id\nprint(f\"run_id: {run_id}\")\n\n# run_id 기반으로 직접 artifact 다운로드\nlocal_path \u003d mlflow.artifacts.download_artifacts(\n    run_id\u003drun_id,\n    artifact_path\u003d\"model\",\n    dst_path\u003d\"/tmp/downloaded_model\"\n)\nprint(f\"다운로드 경로: {local_path}\")\n\n# 다운로드된 파일 확인\nfor f in os.listdir(local_path):\n    print(f\"  {f}\")\n\n# 모델 로드 및 추론 테스트\nimport mlflow.sklearn\nmodel \u003d mlflow.sklearn.load_model(local_path)\nprint(f\"\\n모델 타입: {type(model)}\")\n\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nX, y \u003d load_breast_cancer(return_X_y\u003dTrue)\n_, X_test, _, y_test \u003d train_test_split(X, y, test_size\u003d0.2, random_state\u003d42)\n\nresult \u003d model.predict(X_test[:5])\nprint(f\"예측 결과: {result}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:44:44.962",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "run_id: 94ab5b5a373b41c584175f3dde554884\n\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\n\rDownloading artifacts:   0%|          | 0/5 [00:00\u003c?, ?it/s]\rDownloading artifacts:  20%|##        | 1/5 [00:00\u003c00:00, 149.54it/s]\rDownloading artifacts:  40%|####      | 2/5 [00:00\u003c00:00, 224.87it/s]\rDownloading artifacts:  60%|######    | 3/5 [00:00\u003c00:00, 64.97it/s] \rDownloading artifacts:  80%|########  | 4/5 [00:00\u003c00:00, 78.56it/s]\rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 94.61it/s]\rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 94.08it/s]\n다운로드 경로: /tmp/downloaded_model/model/\n  MLmodel\n  model.pkl\n  conda.yaml\n  python_env.yaml\n  requirements.txt\n\n모델 타입: \u003cclass \u0027sklearn.ensemble._gb.GradientBoostingClassifier\u0027\u003e\n/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but GradientBoostingClassifier was fitted with feature names\n  warnings.warn(\n예측 결과: [1 0 0 1 1]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152639964_901070696",
+      "id": "paragraph_1776152639964_901070696",
+      "dateCreated": "2026-04-14 07:43:59.964",
+      "dateStarted": "2026-04-14 07:44:44.965",
+      "dateFinished": "2026-04-14 07:44:45.175",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\nimport mlflow\nfrom mlflow.tracking import MlflowClient\n\ndef download_model_by_alias(model_name, alias, dst_path\u003d\"/tmp/model\"):\n    client \u003d MlflowClient()\n    \n    # 1. alias → version → run_id 자동 조회\n    version \u003d client.get_model_version_by_alias(model_name, alias)\n    run_id \u003d version.run_id\n    print(f\"alias: {alias} → version: {version.version} → run_id: {run_id}\")\n    \n    # 2. run_id 기반으로 다운로드\n    local_path \u003d mlflow.artifacts.download_artifacts(\n        run_id\u003drun_id,\n        artifact_path\u003d\"model\",\n        dst_path\u003ddst_path\n    )\n    print(f\"다운로드 완료: {local_path}\")\n    return local_path\n\n# 운영툴 사용 시나리오 — alias만 알면 됨\nlocal_path \u003d download_model_by_alias(\"breast_cancer_classifier\", \"production\")\n\n# 모델 로드 및 추론\nmodel \u003d mlflow.sklearn.load_model(local_path)\nprint(f\"모델 타입: {type(model)}\")\n\nfrom sklearn.datasets import load_breast_cancer\nfrom sklearn.model_selection import train_test_split\nX, y \u003d load_breast_cancer(return_X_y\u003dTrue)\n_, X_test, _, y_test \u003d train_test_split(X, y, test_size\u003d0.2, random_state\u003d42)\nprint(f\"예측 결과: {model.predict(X_test[:5])}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 07:46:56.710",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "alias: production → version: 2 → run_id: 94ab5b5a373b41c584175f3dde554884\n\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\rDownloading artifacts:   0%|          | 0/1 [00:00\u003c?, ?it/s]\n\rDownloading artifacts:   0%|          | 0/5 [00:00\u003c?, ?it/s]\rDownloading artifacts:  20%|##        | 1/5 [00:00\u003c00:00, 21732.15it/s]\rDownloading artifacts:  40%|####      | 2/5 [00:00\u003c00:00, 232.31it/s]  \rDownloading artifacts:  60%|######    | 3/5 [00:00\u003c00:00, 338.05it/s]\rDownloading artifacts:  80%|########  | 4/5 [00:00\u003c00:00, 98.57it/s] \rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 50.78it/s]\rDownloading artifacts: 100%|##########| 5/5 [00:00\u003c00:00, 50.59it/s]\n다운로드 완료: /tmp/model/model/\n모델 타입: \u003cclass \u0027sklearn.ensemble._gb.GradientBoostingClassifier\u0027\u003e\n/opt/zeppelin/packages/miniforge3/envs/ai/lib/python3.11/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but GradientBoostingClassifier was fitted with feature names\n  warnings.warn(\n예측 결과: [1 0 0 1 1]\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152684965_79471203",
+      "id": "paragraph_1776152684965_79471203",
+      "dateCreated": "2026-04-14 07:44:44.965",
+      "dateStarted": "2026-04-14 07:46:56.714",
+      "dateFinished": "2026-04-14 07:46:57.065",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%python\n\nmodified some codes",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-14 08:52:57.020",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776152816713_1177612592",
+      "id": "paragraph_1776152816713_1177612592",
+      "dateCreated": "2026-04-14 07:46:56.713",
+      "status": "READY"
+    }
+  ],
+  "name": "test_mlflow",
+  "id": "2MNJUKWES",
+  "defaultInterpreterGroup": "python",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
