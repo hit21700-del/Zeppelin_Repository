@@ -1,0 +1,2051 @@
+{
+  "paragraphs": [
+    {
+      "title": "skr parquet 버킷 데이터 건수 확인",
+      "text": "#%spark.pyspark\r\n\r\njvm  \u003d spark._jvm\r\nconf \u003d sc._jsc.hadoopConfiguration()\r\nfs   \u003d jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    jvm.java.net.URI(\"s3a://parquet\"),\r\n    conf\r\n)\r\n\r\nbase_path \u003d jvm.org.apache.hadoop.fs.Path(\"s3a://parquet/skr\")\r\ntotal_count \u003d 0\r\n\r\nprint(f\"{\u0027단말기ID\u0027:\u003c20} {\u0027건수\u0027:\u003e15}\")\r\nprint(\"\u003d\" * 40)\r\n\r\nfor device in fs.listStatus(base_path):\r\n    name \u003d device.getPath().getName()\r\n    if not name.startswith(\"_deviceId\u003d\"):\r\n        continue\r\n    device_id \u003d name.replace(\"_deviceId\u003d\", \"\")\r\n    \r\n    # 단말기별 parquet read → count\r\n    df \u003d spark.read.option(\"basePath\", \"s3a://parquet/skr\") \\\r\n               .parquet(f\"s3a://parquet/skr/{name}\")\r\n    cnt \u003d df.count()\r\n    total_count +\u003d cnt\r\n    print(f\"{device_id:\u003c20} {cnt:\u003e15,}\")\r\n\r\nprint(\"\u003d\" * 40)\r\nprint(f\"{\u0027전체 합계\u0027:\u003c20} {total_count:\u003e15,}\")",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 07:58:07.599",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "단말기ID                             건수\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\nM1200606299                4,856,744\nM1200607167                7,821,417\nM1200607171                7,437,225\nM1200607176                8,207,719\nM1200607194                8,038,314\nM1200607195                6,411,511\nM1200607232                6,690,987\nM1200607241               15,482,206\nM2210703615                1,845,280\nM2210703695                1,199,801\nM2210703804                1,702,616\nM2210703935                1,566,387\nM2210703939                3,801,594\nM2210703944                1,763,446\nM2210703946                1,235,715\nM2210704163                1,724,778\nM2210704201                1,890,090\nM2210704209                1,834,979\nM2210704240                1,937,295\nM2210704248                1,630,513\nM2210704270                  738,615\nM2210704273                2,007,016\nM2210704282                1,210,622\nM2210704284                  656,203\nM2211120114                1,573,939\nM2211120125                1,586,083\nM2211120129                1,777,148\nM2211120137                1,587,387\nM2211120160                1,193,547\nM2211120170                2,734,741\nM2211120181                1,737,063\nM2211120185                1,855,090\nM2211120189                1,663,163\nM2211120191                1,836,505\nM2211120220                1,840,837\nM2211120229                1,579,314\nM2211120230                1,579,726\nM2211120247                1,385,084\nM2211120265                  501,460\nM2211120266                  569,419\nM2211120271                1,189,066\nM2211120272                1,634,808\nM2211120304                1,989,908\nM2211120317                1,675,749\nM2211120331                1,864,000\nM2211120356                2,024,975\nM2211120366                1,778,826\nM2211120379                1,855,204\nM2211120383                1,723,262\nM2211120391                1,782,774\nM2211120393                1,662,597\nM2211120405                1,668,587\nM2211120426                1,826,328\nM2211120443                1,738,685\nM2211120446                1,606,095\nM2211120460                1,806,678\nM2211120468                2,079,453\nM2211120479                1,844,960\nM2211120490                1,911,753\nM2211120496                1,699,120\nM2211120503                1,992,372\nM2211120504                1,886,832\nM2211120523                1,671,872\nM2211120532                1,572,221\nM2211120537                1,685,418\nM2211120563                2,104,779\nM2211120565                1,837,232\nM2211120570                  807,904\nM2211120572                1,553,416\nM2211120578                1,590,714\nM2211120584                1,547,670\nM2211120590                  728,380\nM2211120591                1,638,730\nM2211120596                1,634,293\nM2211120771                1,438,311\nM2211120798                1,846,212\nM2211120829                2,026,524\nM2211120854                1,869,216\nM2211120865                1,983,874\nM2211120907                1,890,665\nM2211120918                1,674,990\nM2211120936                1,942,276\nM2211120980                1,823,493\nM2211120982                1,699,106\nM2211120997                1,643,687\nM2211121217                1,744,478\nM2211121223                1,788,539\nM2211121241                1,510,849\nM2211121248                1,734,517\nM2211121252                1,611,303\nM2211121260                1,746,478\nM2211121269                1,726,149\nM2211121272                1,354,408\nM2211121292                1,629,383\nM2211121326                1,945,086\nM2211121330                1,771,799\nM2211121362                1,534,679\nM2211121394                1,657,359\nM2211121403                2,027,710\nM2211121436                1,151,590\nM2211121453                2,590,281\nM2211121494                1,064,659\nM2211121497                1,112,457\nM2211121500                2,024,243\nM2211121505                1,606,621\nM2211121530                  783,600\nM2211121535                1,232,970\nM2211121553                1,673,762\nM2211121566                1,666,960\nM2211121578                1,962,357\nM2211122603                1,717,076\nM2211122630                2,064,074\nM2211122675                  684,893\nM2211122684                  876,325\nM2211122685                  740,305\nM2211122692                1,131,708\nM2211122704                2,046,082\nM2211122747                1,661,426\nM2211122750                1,954,910\nM2211122880                1,638,716\nM2211122916                1,827,977\nM2211122941                1,632,613\nM2211123023                1,593,609\nM2220343140                  524,380\nM2220343345                1,272,521\nM2220343366                  576,011\nM2220343611                  650,268\nM2220343620                  649,749\nM2220343629                  549,179\nM2220343742                1,027,560\nM2220343975                  698,279\nM2220344183                  858,702\nM2220344199                  638,136\nM2220344285                  704,417\nM2220344514                  481,556\nM2220344721                  544,669\nM2220344841                  509,312\nM2220344846                  495,193\nM2220344870                  467,416\nM2220344874                  416,273\nM2220344882                  477,718\nM2220878581                  453,948\n\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\u003d\n전체 합계                    266,361,832\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d1"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d2"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d3"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d4"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d5"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d6"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d7"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d8"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d9"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d10"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d11"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d12"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d13"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d14"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d15"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d16"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d17"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d18"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d19"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d20"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d21"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d22"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d23"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d24"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d25"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d26"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d27"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d28"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d29"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d30"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d31"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d32"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d33"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d34"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d35"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d36"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d37"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d38"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d39"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d40"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d41"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d42"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d43"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d44"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d45"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d46"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d47"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d48"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d49"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d50"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d51"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d52"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d53"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d54"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d55"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d56"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d57"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d58"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d59"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d60"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d61"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d62"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d63"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d64"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d65"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d66"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d67"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d68"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d69"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d70"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d71"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d72"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d73"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d74"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d75"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d76"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d77"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d78"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d79"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d80"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d81"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d82"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d83"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d84"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d85"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d86"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d87"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d88"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d89"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d90"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d91"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d92"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d93"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d94"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d95"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d96"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d97"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d98"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d99"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d100"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d101"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d102"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d103"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d104"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d105"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d106"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d107"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d108"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d109"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d110"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d111"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d112"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d113"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d114"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d115"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d116"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d117"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d118"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d119"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d120"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d121"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d122"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d123"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d124"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d125"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d126"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d127"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d128"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d129"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d130"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d131"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d132"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d133"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d134"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d135"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d136"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d137"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d138"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d139"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d140"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d141"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d142"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d143"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d144"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d145"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d146"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d147"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d148"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d149"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d150"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d151"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d152"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d153"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d154"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d155"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d156"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d157"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d158"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d159"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d160"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d161"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d162"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d163"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d164"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d165"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d166"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d167"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d168"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d169"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d170"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d171"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d172"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d173"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d174"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d175"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d176"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d177"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d178"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d179"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d180"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d181"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d182"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d183"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d184"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d185"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d186"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d187"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d188"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d189"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d190"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d191"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d192"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d193"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d194"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d195"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d196"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d197"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d198"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d199"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d200"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d201"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d202"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d203"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d204"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d205"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d206"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d207"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d208"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d209"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d210"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d211"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d212"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d213"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d214"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d215"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d216"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d217"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d218"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d219"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d220"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d221"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d222"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d223"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d224"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d225"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d226"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d227"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d228"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d229"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d230"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d231"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d232"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d233"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d234"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d235"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d236"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d237"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d238"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d239"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d240"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d241"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d242"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d243"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d244"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d245"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d246"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d247"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d248"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d249"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d250"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d251"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d252"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d253"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d254"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d255"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d256"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d257"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d258"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d259"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d260"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d261"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d262"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d263"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d264"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d265"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d266"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d267"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d268"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d269"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d270"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d271"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d272"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d273"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d274"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d275"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d276"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d277"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d278"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d279"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d280"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d281"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d282"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d283"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d284"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d285"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d286"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d287"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d288"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d289"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d290"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d291"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d292"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d293"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d294"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d295"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d296"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d297"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d298"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d299"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d300"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d301"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d302"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d303"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d304"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d305"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d306"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d307"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d308"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d309"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d310"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d311"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d312"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d313"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d314"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d315"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d316"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d317"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d318"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d319"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d320"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d321"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d322"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d323"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d324"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d325"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d326"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d327"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d328"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d329"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d330"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d331"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d332"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d333"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d334"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d335"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d336"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d337"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d338"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d339"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d340"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d341"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d342"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d343"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d344"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d345"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d346"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d347"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d348"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d349"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d350"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d351"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d352"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d353"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d354"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d355"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d356"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d357"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d358"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d359"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d360"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d361"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d362"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d363"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d364"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d365"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d366"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d367"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d368"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d369"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d370"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d371"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d372"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d373"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d374"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d375"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d376"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d377"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d378"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d379"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d380"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d381"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d382"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d383"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d384"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d385"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d386"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d387"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d388"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d389"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d390"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d391"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d392"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d393"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d394"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d395"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d396"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d397"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d398"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d399"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d400"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d401"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d402"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d403"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d404"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d405"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d406"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d407"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d408"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d409"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d410"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d411"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d412"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d413"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d414"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d415"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d416"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d417"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d418"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d419"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d420"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d421"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d422"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d423"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d424"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d425"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d426"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d427"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d428"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d429"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d430"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d431"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d432"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d433"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d434"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d435"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d436"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d437"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d438"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d439"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d440"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d441"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d442"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d443"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d444"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d445"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d446"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d447"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d448"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d449"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d450"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d451"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d452"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d453"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d454"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d455"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d456"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d457"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d458"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d459"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d460"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d461"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d462"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d463"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d464"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d465"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d466"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d467"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d468"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d469"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d470"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d471"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d472"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d473"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d474"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d475"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d476"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d477"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d478"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d479"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d480"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d481"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d482"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d483"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d484"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d485"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d486"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d487"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d488"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d489"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d490"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d491"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d492"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d493"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d494"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d495"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d496"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d497"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d498"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d499"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d500"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d501"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d502"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d503"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d504"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d505"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d506"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d507"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d508"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d509"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d510"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d511"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d512"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d513"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d514"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d515"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d516"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d517"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d518"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d519"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d520"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d521"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d522"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d523"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d524"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d525"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d526"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d527"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d528"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d529"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d530"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d531"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d532"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d533"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d534"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d535"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d536"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d537"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d538"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d539"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d540"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d541"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d542"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d543"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d544"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d545"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d546"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d547"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d548"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d549"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d550"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d551"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d552"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d553"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d554"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d555"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d556"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d557"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d558"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d559"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d560"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d561"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d562"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d563"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d564"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d565"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d566"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d567"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d568"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776043687268_1739889284",
+      "id": "paragraph_1776043687268_1739889284",
+      "dateCreated": "2026-04-13 01:28:07.268",
+      "dateStarted": "2026-04-13 01:59:02.685",
+      "dateFinished": "2026-04-13 02:09:41.725",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2024-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-01-07\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\r\n        \"is_change\",\r\n        F.when(F.col(\"isEvReady\") !\u003d F.lag(\"isEvReady\").over(w), 1).otherwise(0)\r\n    ) \\\r\n    .withColumn(\"evr_group\", F.sum(\"is_change\").over(w))\r\n\r\ndf_group \u003d df.groupBy(\"deviceId\", \"evr_group\", \"isEvReady\") \\\r\n             .agg(F.count(\"*\").alias(\"group_size\"))\r\n\r\ndf_group.filter(F.col(\"group_size\") \u003c\u003d 5).show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 08:10:16.909",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+---------+---------+----------+\n|   deviceId|evr_group|isEvReady|group_size|\n+-----------+---------+---------+----------+\n|01229438897|        4|        0|         1|\n|01229438897|        8|        0|         1|\n|01229438897|       16|        0|         1|\n+-----------+---------+---------+----------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d579"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d580"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d581"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d582"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776239889892_1417373088",
+      "id": "paragraph_1776239889892_1417373088",
+      "dateCreated": "2026-04-15 07:58:09.892",
+      "dateStarted": "2026-04-15 08:07:36.758",
+      "dateFinished": "2026-04-15 08:07:42.054",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\r\n        \"is_change\",\r\n        F.when(F.col(\"isEvReady\") !\u003d F.lag(\"isEvReady\").over(w), 1).otherwise(0)\r\n    ) \\\r\n    .withColumn(\"evr_group\", F.sum(\"is_change\").over(w))\r\n\r\ndf_group \u003d df.groupBy(\"deviceId\", \"evr_group\", \"isEvReady\") \\\r\n             .agg(F.count(\"*\").alias(\"group_size\"))\r\n\r\ndf \u003d df.join(df_group, on\u003d[\"deviceId\", \"evr_group\", \"isEvReady\"], how\u003d\"left\")\r\n\r\ndf.filter(F.col(\"group_size\") \u003c\u003d 5) \\\r\n  .select(\"deviceId\", \"createdAt\", \"isEvReady\", \"evr_group\", \"group_size\") \\\r\n  .orderBy(\"createdAt\") \\\r\n  .show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 08:18:06.764",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+---------+---------+----------+\n|   deviceId|          createdAt|isEvReady|evr_group|group_size|\n+-----------+-------------------+---------+---------+----------+\n|01229438897|2023-04-13 19:09:33|        1|        1|         2|\n|01229438897|2023-04-13 19:09:34|        1|        1|         2|\n|01229438897|2023-04-26 12:24:38|        1|        3|         2|\n|01229438897|2023-04-26 12:24:39|        1|        3|         2|\n|01229438897|2023-05-19 12:55:17|        1|        5|         2|\n|01229438897|2023-05-19 12:55:18|        1|        5|         2|\n|01229438897|2023-05-28 08:45:03|        1|        7|         2|\n|01229438897|2023-05-28 08:45:04|        1|        7|         2|\n|01229438897|2023-06-01 08:10:00|        1|        9|         2|\n|01229438897|2023-06-01 08:10:01|        1|        9|         2|\n|01229438897|2023-06-05 05:59:47|        1|       11|         2|\n|01229438897|2023-06-05 05:59:48|        1|       11|         2|\n|01229438897|2023-06-12 15:48:02|        1|       13|         2|\n|01229438897|2023-06-12 15:48:03|        1|       13|         2|\n|01229438897|2023-06-13 19:42:20|        1|       15|         2|\n|01229438897|2023-06-13 19:42:21|        1|       15|         2|\n|01229438897|2023-08-09 18:49:14|        0|       22|         1|\n|01229438897|2023-08-09 21:01:37|        0|       24|         1|\n|01229438897|2023-08-10 10:28:29|        0|       28|         2|\n|01229438897|2023-08-10 10:28:30|        0|       28|         2|\n|01229438897|2023-08-18 06:54:47|        0|       36|         1|\n|01229438897|2023-08-18 12:40:36|        0|       38|         1|\n|01229438897|2023-08-24 07:55:51|        0|       62|         1|\n|01229438897|2023-08-28 18:55:35|        0|       74|         1|\n|01229438897|2023-08-29 16:07:56|        0|       78|         2|\n|01229438897|2023-08-29 16:07:57|        0|       78|         2|\n|01229438897|2023-08-30 12:57:29|        0|       82|         2|\n|01229438897|2023-08-30 12:57:30|        0|       82|         2|\n|01229438897|2023-08-31 04:54:01|        0|       84|         2|\n|01229438897|2023-08-31 04:54:02|        0|       84|         2|\n|01229438897|2023-09-03 07:28:59|        0|       96|         1|\n|01229438897|2023-09-04 18:32:45|        0|      102|         1|\n|01229438897|2023-09-04 18:32:46|        1|      103|         4|\n|01229438897|2023-09-04 18:32:47|        1|      103|         4|\n|01229438897|2023-09-04 18:32:48|        1|      103|         4|\n|01229438897|2023-09-04 18:32:49|        1|      103|         4|\n|01229438897|2023-09-06 16:41:12|        0|      110|         1|\n|01229438897|2023-09-06 18:43:56|        0|      112|         4|\n|01229438897|2023-09-06 18:43:57|        0|      112|         4|\n|01229438897|2023-09-06 18:43:58|        0|      112|         4|\n|01229438897|2023-09-06 18:43:59|        0|      112|         4|\n|01229438897|2023-09-06 23:05:46|        0|      114|         1|\n|01229438897|2023-09-07 13:12:27|        0|      118|         1|\n|01229438897|2023-09-07 23:12:45|        0|      120|         1|\n|01229438897|2023-09-10 11:48:54|        0|      128|         1|\n|01229438897|2023-09-12 12:25:30|        0|      136|         1|\n|01229438897|2023-09-13 12:30:14|        0|      140|         1|\n|01229438897|2023-09-17 12:11:42|        0|      154|         1|\n|01229438897|2023-09-17 19:21:25|        0|      156|         1|\n|01229438897|2023-09-18 18:37:18|        0|      162|         1|\n|01229438897|2023-09-18 20:13:23|        0|      164|         1|\n|01229438897|2023-09-21 20:46:04|        0|      174|         1|\n|01229438897|2023-09-24 18:33:37|        0|      182|         1|\n|01229438897|2023-09-28 10:53:06|        0|      192|         1|\n|01229438897|2023-10-02 07:06:22|        0|      204|         1|\n|01229438897|2023-10-04 09:53:22|        0|      210|         1|\n|01229438897|2023-10-04 20:23:13|        0|      214|         1|\n|01229438897|2023-10-06 11:47:33|        0|      220|         1|\n|01229438897|2023-10-06 12:35:00|        0|      222|         1|\n|01229438897|2023-10-06 18:56:35|        0|      224|         1|\n|01229438897|2023-10-07 07:17:39|        0|      228|         1|\n|01229438897|2023-10-07 17:26:24|        0|      230|         4|\n|01229438897|2023-10-07 17:26:25|        0|      230|         4|\n|01229438897|2023-10-07 17:26:26|        0|      230|         4|\n|01229438897|2023-10-07 17:26:27|        0|      230|         4|\n|01229438897|2023-10-08 13:55:49|        0|      234|         1|\n|01229438897|2023-10-10 17:02:13|        0|      240|         1|\n|01229438897|2023-10-11 16:32:16|        0|      244|         2|\n|01229438897|2023-10-11 16:32:17|        0|      244|         2|\n|01229438897|2023-10-12 10:24:58|        0|      248|         1|\n|01229438897|2023-10-13 20:23:06|        0|      252|         1|\n|01229438897|2023-10-14 02:09:28|        1|      255|         1|\n|01229438897|2023-10-14 02:09:28|        0|      255|         1|\n|01229438897|2023-10-14 02:09:29|        0|      257|         1|\n|01229438897|2023-10-14 02:09:29|        1|      257|         1|\n|01229438897|2023-10-14 02:09:30|        1|      259|         1|\n|01229438897|2023-10-14 02:09:30|        0|      259|         1|\n|01229438897|2023-10-14 02:09:31|        1|      261|         1|\n|01229438897|2023-10-14 02:09:31|        0|      261|         1|\n|01229438897|2023-10-14 02:09:32|        0|      263|         1|\n|01229438897|2023-10-14 02:09:32|        1|      263|         1|\n|01229438897|2023-10-14 02:09:33|        1|      265|         1|\n|01229438897|2023-10-14 02:09:33|        0|      265|         1|\n|01229438897|2023-10-14 02:09:34|        1|      267|         1|\n|01229438897|2023-10-14 02:09:34|        0|      267|         1|\n|01229438897|2023-10-14 02:09:35|        0|      269|         1|\n|01229438897|2023-10-14 02:09:35|        1|      269|         1|\n|01229438897|2023-10-14 02:09:36|        1|      271|         1|\n|01229438897|2023-10-14 02:09:36|        0|      271|         1|\n|01229438897|2023-10-14 02:09:37|        0|      273|         1|\n|01229438897|2023-10-14 02:09:37|        1|      273|         1|\n|01229438897|2023-10-14 02:09:38|        1|      275|         1|\n|01229438897|2023-10-14 02:09:38|        0|      275|         1|\n|01229438897|2023-10-14 02:09:39|        1|      277|         1|\n|01229438897|2023-10-14 02:09:39|        0|      277|         1|\n|01229438897|2023-10-14 02:09:40|        0|      279|         1|\n|01229438897|2023-10-14 02:09:40|        1|      279|         1|\n|01229438897|2023-10-14 02:09:41|        1|      281|         1|\n|01229438897|2023-10-14 02:09:41|        0|      281|         1|\n|01229438897|2023-10-14 02:09:42|        0|      283|         1|\n+-----------+-------------------+---------+---------+----------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d597"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d598"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d599"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d600"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d601"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d602"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d603"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776043691923_1266817734",
+      "id": "paragraph_1776043691923_1266817734",
+      "dateCreated": "2026-04-13 01:28:11.923",
+      "dateStarted": "2026-04-15 08:18:06.770",
+      "dateFinished": "2026-04-15 08:19:04.798",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.window import Window\n\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\n    .drop(\"_deviceId\", \"_date\")\n\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\n\ndf \u003d df.withColumn(\"t_dist_prev\", F.lag(\"totalMileage\").over(w)) \\\n       .withColumn(\"bacc_prev\",   F.lag(\"batteryTotalChargedCapacity\").over(w)) \\\n       .withColumn(\"badc_prev\",   F.lag(\"batteryTotalDischargedCapacity\").over(w))\n\ndf.filter(\n    (F.col(\"totalMileage\") \u003c F.col(\"t_dist_prev\")) |\n    (F.col(\"batteryTotalChargedCapacity\") \u003c F.col(\"bacc_prev\")) |\n    (F.col(\"batteryTotalDischargedCapacity\") \u003c F.col(\"badc_prev\"))\n) \\\n.select(\n    \"deviceId\", \"createdAt\",\n    \"totalMileage\", \"t_dist_prev\",\n    \"batteryTotalChargedCapacity\", \"bacc_prev\",\n    \"batteryTotalDischargedCapacity\", \"badc_prev\"\n) \\\n.orderBy(\"createdAt\") \\\n.show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 09:02:28.165",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\n|   deviceId|          createdAt|totalMileage|t_dist_prev|batteryTotalChargedCapacity|bacc_prev|batteryTotalDischargedCapacity|badc_prev|\n+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\n|01229438897|1999-12-07 07:33:17|      197797|       8109|                     1362.1|   2812.2|                        1331.3|   2774.7|\n|01229438897|2000-01-01 00:03:01|       36665|     197797|                    12980.9|   1362.1|                       12889.2|   1331.4|\n|01229438897|2000-01-01 01:58:02|          19|      36665|                        1.5|  12980.9|                           8.9|  12889.2|\n|01229438897|2000-01-01 01:58:17|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:23|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:31|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:43|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:44|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:26|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:30|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:01|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:22|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:31|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:41|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:45|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:14|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:24|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:34|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:45|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:55|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:06|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:11|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:16|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:22|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:27|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:37|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:56|           0|         19|                        0.0|      1.5|                           0.0|      8.9|\n|01229438897|2000-01-01 02:04:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:20|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:26|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:30|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:42|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:52|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:03|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:25|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:46|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:03|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:17|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:32|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:51|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:55|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:01|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:12|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:18|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:32|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:53|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:04|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:16|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:20|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:43|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:06|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:25|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:41|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:58|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:18|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:24|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:29|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:47|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:51|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d604"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d605"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d606"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d607"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776240618464_963096626",
+      "id": "paragraph_1776240618464_963096626",
+      "dateCreated": "2026-04-15 08:10:18.464",
+      "dateStarted": "2026-04-15 09:02:28.172",
+      "dateFinished": "2026-04-15 09:03:01.435",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf.withColumn(\"t_dist_prev\", F.lag(\"totalMileage\").over(w)) \\\r\n  .withColumn(\"bacc_prev\",   F.lag(\"batteryTotalChargedCapacity\").over(w)) \\\r\n  .withColumn(\"badc_prev\",   F.lag(\"batteryTotalDischargedCapacity\").over(w)) \\\r\n  .withColumn(\"createdAt_prev\", F.lag(\"createdAt\").over(w)) \\\r\n  .filter(\r\n      (F.col(\"totalMileage\") \u003c F.col(\"t_dist_prev\")) |\r\n      (F.col(\"batteryTotalChargedCapacity\") \u003c F.col(\"bacc_prev\")) |\r\n      (F.col(\"batteryTotalDischargedCapacity\") \u003c F.col(\"badc_prev\"))\r\n  ) \\\r\n  .select(\r\n      \"deviceId\",\r\n      \"createdAt_prev\", \"createdAt\",\r\n      \"t_dist_prev\",    \"totalMileage\",\r\n      \"bacc_prev\",      \"batteryTotalChargedCapacity\",\r\n      \"badc_prev\",      \"batteryTotalDischargedCapacity\"\r\n  ) \\\r\n  .orderBy(\"createdAt\") \\\r\n  .show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 09:36:24.815",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+-------------------+-----------+------------+---------+---------------------------+---------+------------------------------+\n|   deviceId|     createdAt_prev|          createdAt|t_dist_prev|totalMileage|bacc_prev|batteryTotalChargedCapacity|badc_prev|batteryTotalDischargedCapacity|\n+-----------+-------------------+-------------------+-----------+------------+---------+---------------------------+---------+------------------------------+\n|01229438897|2023-03-06 18:27:46|2023-03-06 18:53:36|       1030|           0|    359.7|                      359.7|    355.8|                         355.8|\n|01229438897|2023-03-07 05:31:36|2023-03-07 12:23:08|       1042|           0|    403.8|                      403.9|    359.1|                         359.6|\n|01229438897|2023-03-07 13:42:34|2023-03-07 13:53:36|       1058|           0|    405.2|                      405.2|    363.3|                         363.3|\n|01229438897|2023-03-08 19:27:34|2023-03-09 01:42:29|       1336|           0|    487.4|                      487.4|    454.2|                         454.2|\n|01229438897|2023-03-09 12:06:21|2023-03-09 12:55:03|       1358|           0|    490.1|                      490.1|    461.5|                         461.5|\n|01229438897|2023-03-10 09:07:21|2023-03-10 16:38:51|       1510|           0|    549.3|                      549.3|    514.3|                         514.3|\n|01229438897|2023-03-10 16:39:39|2023-03-10 16:39:40|       1510|           0|    549.3|                        0.0|    514.3|                           0.0|\n|01229438897|2023-03-10 20:59:10|2023-03-10 20:59:11|       1592|           0|    559.4|                        0.0|    541.9|                           0.0|\n|01229438897|2023-03-10 23:54:18|2023-03-10 23:56:00|       1623|           0|    562.1|                      562.1|    552.1|                         552.1|\n|01229438897|2023-03-11 18:20:45|2023-03-11 18:42:49|       1809|           0|    625.0|                      625.0|    615.4|                         615.5|\n|01229438897|2023-03-12 11:27:56|2023-03-12 12:21:59|       1822|           0|    669.3|                      669.3|    619.5|                         619.5|\n|01229438897|2023-03-13 00:18:52|2023-03-13 00:20:41|       2130|           0|    702.5|                      702.5|    745.0|                         745.0|\n|01229438897|2023-03-13 12:15:33|2023-03-13 13:25:31|       2199|           0|    802.1|                      802.1|    766.3|                         766.4|\n|01229438897|2023-03-13 13:58:34|2023-03-13 14:02:47|       2203|           0|    802.3|                      802.3|    767.6|                         767.6|\n|01229438897|2023-03-13 16:52:22|2023-03-13 18:48:17|       2228|           0|    803.8|                      803.8|    775.8|                         775.8|\n|01229438897|2023-03-14 02:39:32|2023-03-14 08:11:25|       2263|           0|    843.7|                      843.8|    790.9|                         790.9|\n|01229438897|2023-03-14 15:22:42|2023-03-14 17:00:39|       2359|           0|    856.2|                      856.8|    824.4|                         825.9|\n|01229438897|2023-03-14 23:09:42|2023-03-14 23:12:17|       2476|           0|    868.6|                      868.6|    864.2|                         864.2|\n|01229438897|2023-03-15 11:25:52|2023-03-15 11:39:49|       2517|           0|    925.5|                      925.5|    877.1|                         877.1|\n|01229438897|2023-03-15 17:31:26|2023-03-15 19:05:16|       2528|           0|    926.7|                      926.7|    880.4|                         880.4|\n|01229438897|2023-03-15 19:16:59|2023-03-15 19:49:47|       2529|           0|    926.8|                      926.8|    880.8|                         880.8|\n|01229438897|2023-03-16 09:27:09|2023-03-16 09:49:07|       2630|           0|    967.3|                      967.3|    911.8|                         911.8|\n|01229438897|2023-03-17 23:30:39|2023-03-17 23:38:01|       3283|           0|   1134.0|                     1134.1|   1148.1|                        1148.1|\n|01229438897|2023-03-18 15:49:39|2023-03-18 16:26:56|       3382|           0|   1225.3|                     1225.3|   1179.6|                        1179.6|\n|01229438897|2023-03-19 14:56:07|2023-03-19 15:30:58|       3607|           0|   1309.7|                     1309.7|   1265.0|                        1265.0|\n|01229438897|2023-03-19 16:45:37|2023-03-19 19:13:28|       3636|           0|   1312.8|                     1312.8|   1275.9|                        1275.9|\n|01229438897|2023-03-20 20:00:27|2023-03-20 20:09:21|       3974|           0|   1410.4|                     1410.4|   1392.7|                        1392.7|\n|01229438897|2023-03-21 13:02:59|2023-03-21 18:00:52|       4212|           0|   1487.6|                     1487.6|   1478.8|                        1478.8|\n|01229438897|2023-03-22 19:09:35|2023-03-22 20:46:12|       4523|           0|   1594.0|                     1594.0|   1579.1|                        1579.2|\n|01229438897|2023-03-23 05:47:28|2023-03-23 08:18:53|       4627|           0|   1681.0|                     1681.2|   1617.4|                        1617.4|\n|01229438897|2023-03-23 23:53:45|2023-03-24 09:06:48|       4877|           0|   1726.4|                     1756.9|   1692.1|                        1692.1|\n|01229438897|2023-03-25 00:28:35|2023-03-25 05:43:14|       5110|           0|   1805.2|                     1833.1|   1767.8|                        1767.8|\n|01229438897|2023-03-26 18:27:17|2023-03-26 18:27:18|       5154|        5154|   1835.4|                     1835.4|   1780.3|                        1780.2|\n|01229438897|2023-03-26 18:27:18|2023-03-26 18:27:19|       5154|        5154|   1835.4|                     1835.4|   1780.3|                        1780.2|\n|01229438897|2023-03-26 18:27:19|2023-03-26 18:27:20|       5154|        5154|   1835.4|                     1835.4|   1780.3|                        1780.2|\n|01229438897|2023-03-27 09:33:07|2023-03-27 10:03:00|       5252|           0|   1875.5|                     1875.5|   1814.1|                        1814.1|\n|01229438897|2023-03-27 10:03:07|2023-03-27 10:03:08|       5252|           0|   1875.5|                     1875.5|   1814.1|                        1814.1|\n|01229438897|2023-03-27 10:03:13|2023-03-27 10:03:14|          0|        5252|   1875.5|                        0.0|   1814.1|                           0.0|\n|01229438897|2023-03-27 10:06:11|2023-03-27 11:12:52|       5252|           0|   1875.5|                     1875.5|   1814.2|                        1814.2|\n|01229438897|2023-03-27 16:55:29|2023-03-27 18:52:16|       5335|           0|   1884.3|                     1890.2|   1840.2|                        1855.2|\n|01229438897|2023-03-28 14:16:21|2023-03-28 14:21:09|       5592|           0|   1965.4|                     1965.4|   1922.1|                        1922.1|\n|01229438897|2023-03-29 08:53:54|2023-03-29 09:11:55|       5823|           0|   2074.0|                     2074.0|   2008.0|                        2008.0|\n|01229438897|2023-03-29 09:16:10|2023-03-29 09:43:53|       5825|           0|   2074.2|                     2074.3|   2008.6|                        2008.8|\n|01229438897|2023-03-29 10:52:08|2023-03-29 11:15:34|       5842|           0|   2076.4|                     2076.4|   2013.9|                        2013.9|\n|01229438897|2023-03-29 11:16:37|2023-03-29 17:36:47|       5842|           0|   2076.4|                     2076.4|   2013.9|                        2013.9|\n|01229438897|2023-03-30 12:04:32|2023-03-30 12:43:24|       6029|           0|   2117.2|                     2117.2|   2070.1|                        2070.1|\n|01229438897|2023-03-30 18:16:01|2023-03-30 19:37:49|       6081|           0|   2121.8|                     2121.8|   2087.5|                        2087.5|\n|01229438897|2023-03-30 23:30:20|2023-03-30 23:32:36|       6196|           0|   2136.1|                     2136.1|   2131.2|                        2131.2|\n|01229438897|2023-03-31 12:11:22|2023-03-31 12:48:52|       6308|           0|   2211.9|                     2211.9|   2165.2|                        2165.2|\n|01229438897|2023-03-31 13:41:07|2023-03-31 14:30:24|       6320|           0|   2213.5|                     2213.5|   2168.8|                        2168.9|\n|01229438897|2023-04-01 12:19:01|2023-04-01 13:05:31|       6404|           0|   2259.3|                     2259.3|   2195.1|                        2195.1|\n|01229438897|2023-04-01 22:58:12|2023-04-01 23:00:12|       6601|           0|   2285.5|                     2285.5|   2263.8|                        2263.8|\n|01229438897|2023-04-02 23:19:53|2023-04-03 08:25:15|       6924|           0|   2389.2|                     2447.4|   2375.5|                        2375.5|\n|01229438897|2023-04-03 09:40:58|2023-04-03 10:08:52|       6947|           0|   2450.1|                     2450.1|   2382.2|                        2382.2|\n|01229438897|2023-04-04 16:41:00|2023-04-04 16:53:18|       7355|           0|   2576.7|                     2576.8|   2520.0|                        2520.0|\n|01229438897|2023-04-05 02:34:23|2023-04-05 08:23:32|       7441|           0|   2623.4|                     2623.5|   2547.0|                        2547.0|\n|01229438897|2023-04-05 14:23:40|2023-04-05 16:51:13|       7564|           0|   2637.8|                     2637.9|   2590.3|                        2590.3|\n|01229438897|2023-04-05 22:35:47|2023-04-06 07:28:34|       7599|           0|   2640.9|                     2678.8|   2602.4|                        2602.4|\n|01229438897|2023-04-06 16:39:07|2023-04-06 16:58:08|       7854|           0|   2706.9|                     2706.9|   2687.5|                        2687.5|\n|01229438897|2023-04-07 12:05:18|2023-04-07 12:53:12|       7954|           0|   2793.5|                     2793.5|   2723.7|                        2723.7|\n|01229438897|2023-04-07 16:58:25|2023-04-07 17:31:54|       8078|           0|   2809.0|                     2809.0|   2765.0|                        2765.0|\n|01229438897|2023-04-08 00:33:59|2023-04-08 00:33:59|       8154|           0|   2834.7|                     3003.8|   2793.9|                        2927.5|\n|01229438897|2023-04-08 00:33:59|2023-04-08 00:34:00|          0|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:00|2023-04-08 00:34:01|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:01|2023-04-08 00:34:02|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:02|2023-04-08 00:34:03|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:03|2023-04-08 00:34:04|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:04|2023-04-08 00:34:05|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:05|2023-04-08 00:34:06|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:06|2023-04-08 00:34:07|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:07|2023-04-08 00:34:08|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:08|2023-04-08 00:34:09|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:09|2023-04-08 00:34:10|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:10|2023-04-08 00:34:11|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:11|2023-04-08 00:34:12|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:12|2023-04-08 00:34:13|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:13|2023-04-08 00:34:14|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:14|2023-04-08 00:34:15|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:15|2023-04-08 00:34:16|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:16|2023-04-08 00:34:17|       8546|        8154|   3003.8|                     2834.7|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:17|2023-04-08 00:34:18|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:18|2023-04-08 00:34:19|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:19|2023-04-08 00:34:20|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:20|2023-04-08 00:34:21|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:21|2023-04-08 00:34:22|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:22|2023-04-08 00:34:23|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:23|2023-04-08 00:34:24|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:24|2023-04-08 00:34:25|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:25|2023-04-08 00:34:26|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:26|2023-04-08 00:34:27|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:27|2023-04-08 00:34:28|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:28|2023-04-08 00:34:29|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:29|2023-04-08 00:34:30|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:30|2023-04-08 00:34:31|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:31|2023-04-08 00:34:32|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:32|2023-04-08 00:34:33|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:33|2023-04-08 00:34:34|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:34|2023-04-08 00:34:35|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:35|2023-04-08 00:34:36|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n|01229438897|2023-04-08 00:34:36|2023-04-08 00:34:37|       8546|        8154|   3003.8|                     2834.8|   2927.5|                        2793.9|\n+-----------+-------------------+-------------------+-----------+------------+---------+---------------------------+---------+------------------------------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d621"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d622"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d623"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d624"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776243748171_1393233045",
+      "id": "paragraph_1776243748171_1393233045",
+      "dateCreated": "2026-04-15 09:02:28.171",
+      "dateStarted": "2026-04-15 09:36:24.821",
+      "dateFinished": "2026-04-15 09:36:52.891",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 09:06:12.979",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776243972979_9660461",
+      "id": "paragraph_1776243972979_9660461",
+      "dateCreated": "2026-04-15 09:06:12.979",
+      "status": "READY"
+    }
+  ],
+  "name": "test",
+  "id": "2MNGMV1KU",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
