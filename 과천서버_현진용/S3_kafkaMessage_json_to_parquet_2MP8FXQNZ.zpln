@@ -119,9 +119,9 @@
       "status": "FINISHED"
     },
     {
-      "text": "%spark_high.pyspark\r\nfrom datetime import datetime\r\n\r\nresults \u003d {}\r\nbatch_start \u003d datetime.now()\r\n\r\nfor src in SOURCES:\r\n    src_start \u003d datetime.now()\r\n    try:\r\n        convert_to_parquet(src)\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"SUCCESS ({elapsed})\"\r\n    except Exception as e:\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"FAILED: {e}\"\r\n        print(f\"[{src}] 오류: {e}\")\r\n\r\ntotal_elapsed \u003d datetime.now() - batch_start\r\nprint(\"\\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\")\r\nfor src, status in results.items():\r\n    print(f\"  {src}: {status}\")\r\nprint(f\"\\n총 소요 시간: {total_elapsed}\")",
+      "text": "%spark_high.pyspark\r\nfrom datetime import datetime\r\n\r\nresults \u003d {}\r\nbatch_start \u003d datetime.now()\r\n\r\nfor src in SOURCES:\r\n    src_start \u003d datetime.now()\r\n    try:\r\n        convert_to_parquet(src)\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"SUCCESS ({elapsed})\"\r\n    except Exception as e:\r\n        elapsed \u003d datetime.now() - src_start\r\n        results[src] \u003d f\"FAILED: {e}\"\r\n        print(f\"[{src}] 오류: {e}\")\r\n\r\ntotal_elapsed \u003d datetime.now() - batch_start\r\nprint(\"\\n\u003d\u003d\u003d 결과 요약 \u003d\u003d\u003d\")\r\nfor src, status in results.items():\r\n    print(f\"  {src}: {status}\")\r\nprint(f\"\\n총 소요 시간test: {total_elapsed}\")",
       "user": "anonymous",
-      "dateUpdated": "2026-03-27 09:19:17.429",
+      "dateUpdated": "2026-04-23 10:48:40.855",
       "progress": 0,
       "config": {
         "editorSetting": {
@@ -281,7 +281,7 @@
       "status": "FINISHED"
     }
   ],
-  "name": "S3_json_parquet_변환",
+  "name": "S3_kafkaMessage_json_to_parquet",
   "id": "2MP8FXQNZ",
   "defaultInterpreterGroup": "spark",
   "version": "0.11.2",
@@ -291,7 +291,5 @@
   "config": {
     "isZeppelinNotebookCronEnable": false
   },
-  "info": {
-    "isRunning": true
-  }
+  "info": {}
 }
