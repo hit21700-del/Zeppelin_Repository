@@ -50,9 +50,9 @@
       "status": "FINISHED"
     },
     {
-      "text": "%python\n\nfrom datetime import datetime\n\nprint(datetime.now().strftime(\"%H:%M:%S\"))\n# print(f\"[{USER_NAME}] 시작!\")\nprint(\"26-04-21 15:19 PM\")",
+      "text": "%python\n\nfrom datetime import datetime\n\nprint(datetime.now().strftime(\"%H:%M:%S\"))\n# print(f\"[{USER_NAME}] 시작!\")\nprint(\"26-04-23 10:19 AM\")",
       "user": "jhkim",
-      "dateUpdated": "2026-04-21 15:19:37.973",
+      "dateUpdated": "2026-04-23 10:19:43.681",
       "progress": 0,
       "config": {
         "editorSetting": {
@@ -76,7 +76,7 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "06:19:37\n26-04-21 15:19 PM\n"
+            "data": "01:19:43\n26-04-23 10:19 AM\n"
           }
         ]
       },
@@ -86,8 +86,8 @@
       "jobName": "paragraph_1776151187590_1347600891",
       "id": "paragraph_1776151187590_1347600891",
       "dateCreated": "2026-04-14 07:19:47.590",
-      "dateStarted": "2026-04-21 15:19:37.976",
-      "dateFinished": "2026-04-21 15:19:37.994",
+      "dateStarted": "2026-04-23 10:19:43.685",
+      "dateFinished": "2026-04-23 10:19:43.702",
       "status": "FINISHED"
     },
     {
