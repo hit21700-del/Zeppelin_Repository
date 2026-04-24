@@ -50,9 +50,9 @@
       "status": "FINISHED"
     },
     {
-      "text": "%python\n\nfrom datetime import datetime\n\nprint(datetime.now().strftime(\"%H:%M:%S\"))\n# print(f\"[{USER_NAME}] 시작!\")\nprint(\"26-04-23 10:19 AM\")",
+      "text": "%python\n\nfrom datetime import datetime\n\nprint(datetime.now().strftime(\"%H:%M:%S\"))\n# print(f\"[{USER_NAME}] 시작!\")\nprint(\"26-04-24 10:34 AM\")",
       "user": "jhkim",
-      "dateUpdated": "2026-04-23 10:19:43.681",
+      "dateUpdated": "2026-04-24 10:34:28.047",
       "progress": 0,
       "config": {
         "editorSetting": {
@@ -76,7 +76,7 @@
         "msg": [
           {
             "type": "TEXT",
-            "data": "01:19:43\n26-04-23 10:19 AM\n"
+            "data": "01:34:28\n26-04-24 10:34 AM\n"
           }
         ]
       },
@@ -86,14 +86,55 @@
       "jobName": "paragraph_1776151187590_1347600891",
       "id": "paragraph_1776151187590_1347600891",
       "dateCreated": "2026-04-14 07:19:47.590",
-      "dateStarted": "2026-04-23 10:19:43.685",
-      "dateFinished": "2026-04-23 10:19:43.702",
+      "dateStarted": "2026-04-24 10:34:28.051",
+      "dateFinished": "2026-04-24 10:34:28.063",
       "status": "FINISHED"
     },
     {
-      "text": "%python\n",
-      "user": "anonymous",
-      "dateUpdated": "2026-04-14 07:24:44.789",
+      "text": "%spark.pyspark\n\n\nprint(\"11111\")\n",
+      "user": "jhkim",
+      "dateUpdated": "2026-04-24 10:34:16.567",
+      "progress": 0,
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionSupport": true,
+          "completionKey": "TAB"
+        },
+        "editorMode": "ace/mode/python"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: POST at: https://10.96.0.1/api/v1/namespaces/zeppelin-qh/pods. Message: Pod \"spark-2mq7kc2sg-lcfkgn\" is invalid: spec.containers[0].resources.requests: Invalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi. Received status: Status(apiVersion\u003dv1, code\u003d422, details\u003dStatusDetails(causes\u003d[StatusCause(field\u003dspec.containers[0].resources.requests, message\u003dInvalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi, reason\u003dFieldValueInvalid, additionalProperties\u003d{})], group\u003dnull, kind\u003dPod, name\u003dspark-2mq7kc2sg-lcfkgn, retryAfterSeconds\u003dnull, uid\u003dnull, additionalProperties\u003d{}), kind\u003dStatus, message\u003dPod \"spark-2mq7kc2sg-lcfkgn\" is invalid: spec.containers[0].resources.requests: Invalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi, metadata\u003dListMeta(_continue\u003dnull, remainingItemCount\u003dnull, resourceVersion\u003dnull, selfLink\u003dnull, additionalProperties\u003d{}), reason\u003dInvalid, status\u003dFailure, additionalProperties\u003d{}).\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.requestFailure(OperationSupport.java:684)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.requestFailure(OperationSupport.java:664)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.assertResponseCode(OperationSupport.java:615)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleResponse(OperationSupport.java:558)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleResponse(OperationSupport.java:521)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleCreate(OperationSupport.java:308)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.handleCreate(BaseOperation.java:644)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.handleCreate(BaseOperation.java:83)\n\tat io.fabric8.kubernetes.client.dsl.base.CreateOnlyResourceOperation.create(CreateOnlyResourceOperation.java:61)\n\tat io.fabric8.kubernetes.client.utils.CreateOrReplaceHelper.createOrReplace(CreateOrReplaceHelper.java:48)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.createOrReplace(BaseOperation.java:318)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.createOrReplace(BaseOperation.java:83)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableImpl.java:105)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.lambda$createOrReplace$7(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:174)\n\tat java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:195)\n\tat java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1655)\n\tat java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:484)\n\tat java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)\n\tat java.base/java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:913)\n\tat java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)\n\tat java.base/java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:578)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:176)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:54)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.apply(K8sRemoteInterpreterProcess.java:288)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.apply(K8sRemoteInterpreterProcess.java:276)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.start(K8sRemoteInterpreterProcess.java:158)\n\tat org.apache.zeppelin.interpreter.ManagedInterpreterGroup.getOrCreateInterpreterProcess(ManagedInterpreterGroup.java:68)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getOrCreateInterpreterProcess(RemoteInterpreter.java:103)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.internal_create(RemoteInterpreter.java:153)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.open(RemoteInterpreter.java:125)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getFormType(RemoteInterpreter.java:270)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:428)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:68)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.RemoteScheduler$JobRunner.run(RemoteScheduler.java:186)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\tat java.base/java.lang.Thread.run(Thread.java:829)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776151484789_638619148",
+      "id": "paragraph_1776151484789_638619148",
+      "dateCreated": "2026-04-14 07:24:44.789",
+      "dateStarted": "2026-04-24 10:34:16.570",
+      "dateFinished": "2026-04-24 10:34:16.595",
+      "status": "ERROR"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "jhkim",
+      "dateUpdated": "2026-04-24 10:34:16.570",
       "progress": 0,
       "config": {},
       "settings": {
@@ -103,9 +144,9 @@
       "apps": [],
       "runtimeInfos": {},
       "progressUpdateIntervalMs": 500,
-      "jobName": "paragraph_1776151484789_638619148",
-      "id": "paragraph_1776151484789_638619148",
-      "dateCreated": "2026-04-14 07:24:44.789",
+      "jobName": "paragraph_1776994456570_972759534",
+      "id": "paragraph_1776994456570_972759534",
+      "dateCreated": "2026-04-24 10:34:16.570",
       "status": "READY"
     }
   ],
