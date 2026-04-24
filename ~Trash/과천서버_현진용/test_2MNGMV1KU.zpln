@@ -1,0 +1,655 @@
+{
+  "paragraphs": [
+    {
+      "title": "skr parquet 버킷 데이터 건수 확인",
+      "text": "#%spark.pyspark\r\n\r\njvm  \u003d spark._jvm\r\nconf \u003d sc._jsc.hadoopConfiguration()\r\nfs   \u003d jvm.org.apache.hadoop.fs.FileSystem.get(\r\n    jvm.java.net.URI(\"s3a://parquet\"),\r\n    conf\r\n)\r\n\r\nbase_path \u003d jvm.org.apache.hadoop.fs.Path(\"s3a://parquet/skr\")\r\ntotal_count \u003d 0\r\n\r\nprint(f\"{\u0027단말기ID\u0027:\u003c20} {\u0027건수\u0027:\u003e15}\")\r\nprint(\"\u003d\" * 40)\r\n\r\nfor device in fs.listStatus(base_path):\r\n    name \u003d device.getPath().getName()\r\n    if not name.startswith(\"_deviceId\u003d\"):\r\n        continue\r\n    device_id \u003d name.replace(\"_deviceId\u003d\", \"\")\r\n    \r\n    # 단말기별 parquet read → count\r\n    df \u003d spark.read.option(\"basePath\", \"s3a://parquet/skr\") \\\r\n               .parquet(f\"s3a://parquet/skr/{name}\")\r\n    cnt \u003d df.count()\r\n    total_count +\u003d cnt\r\n    print(f\"{device_id:\u003c20} {cnt:\u003e15,}\")\r\n\r\nprint(\"\u003d\" * 40)\r\nprint(f\"{\u0027전체 합계\u0027:\u003c20} {total_count:\u003e15,}\")",
+      "user": "wlsdyd427",
+      "dateUpdated": "2026-04-23 18:29:15.255",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/scala",
+        "fontSize": 9.0,
+        "title": true,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "ERROR",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "io.fabric8.kubernetes.client.KubernetesClientException: Failure executing: POST at: https://10.96.0.1/api/v1/namespaces/zeppelin-qh/pods. Message: Pod \"spark-2mngmv1ku-zcmury\" is invalid: spec.containers[0].resources.requests: Invalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi. Received status: Status(apiVersion\u003dv1, code\u003d422, details\u003dStatusDetails(causes\u003d[StatusCause(field\u003dspec.containers[0].resources.requests, message\u003dInvalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi, reason\u003dFieldValueInvalid, additionalProperties\u003d{})], group\u003dnull, kind\u003dPod, name\u003dspark-2mngmv1ku-zcmury, retryAfterSeconds\u003dnull, uid\u003dnull, additionalProperties\u003d{}), kind\u003dStatus, message\u003dPod \"spark-2mngmv1ku-zcmury\" is invalid: spec.containers[0].resources.requests: Invalid value: \"9011Mi\": must be less than or equal to memory limit of 4Gi, metadata\u003dListMeta(_continue\u003dnull, remainingItemCount\u003dnull, resourceVersion\u003dnull, selfLink\u003dnull, additionalProperties\u003d{}), reason\u003dInvalid, status\u003dFailure, additionalProperties\u003d{}).\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.requestFailure(OperationSupport.java:684)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.requestFailure(OperationSupport.java:664)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.assertResponseCode(OperationSupport.java:615)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleResponse(OperationSupport.java:558)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleResponse(OperationSupport.java:521)\n\tat io.fabric8.kubernetes.client.dsl.base.OperationSupport.handleCreate(OperationSupport.java:308)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.handleCreate(BaseOperation.java:644)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.handleCreate(BaseOperation.java:83)\n\tat io.fabric8.kubernetes.client.dsl.base.CreateOnlyResourceOperation.create(CreateOnlyResourceOperation.java:61)\n\tat io.fabric8.kubernetes.client.utils.CreateOrReplaceHelper.createOrReplace(CreateOrReplaceHelper.java:48)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.createOrReplace(BaseOperation.java:318)\n\tat io.fabric8.kubernetes.client.dsl.base.BaseOperation.createOrReplace(BaseOperation.java:83)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableImpl.java:105)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.lambda$createOrReplace$7(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:174)\n\tat java.base/java.util.stream.ReferencePipeline$3$1.accept(ReferencePipeline.java:195)\n\tat java.base/java.util.ArrayList$ArrayListSpliterator.forEachRemaining(ArrayList.java:1655)\n\tat java.base/java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:484)\n\tat java.base/java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:474)\n\tat java.base/java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:913)\n\tat java.base/java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:234)\n\tat java.base/java.util.stream.ReferencePipeline.collect(ReferencePipeline.java:578)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:176)\n\tat io.fabric8.kubernetes.client.dsl.internal.NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.createOrReplace(NamespaceVisitFromServerGetWatchDeleteRecreateWaitApplicableListImpl.java:54)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.apply(K8sRemoteInterpreterProcess.java:288)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.apply(K8sRemoteInterpreterProcess.java:276)\n\tat org.apache.zeppelin.interpreter.launcher.K8sRemoteInterpreterProcess.start(K8sRemoteInterpreterProcess.java:158)\n\tat org.apache.zeppelin.interpreter.ManagedInterpreterGroup.getOrCreateInterpreterProcess(ManagedInterpreterGroup.java:68)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getOrCreateInterpreterProcess(RemoteInterpreter.java:103)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.internal_create(RemoteInterpreter.java:153)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.open(RemoteInterpreter.java:125)\n\tat org.apache.zeppelin.interpreter.remote.RemoteInterpreter.getFormType(RemoteInterpreter.java:270)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:428)\n\tat org.apache.zeppelin.notebook.Paragraph.jobRun(Paragraph.java:68)\n\tat org.apache.zeppelin.scheduler.Job.run(Job.java:186)\n\tat org.apache.zeppelin.scheduler.AbstractScheduler.runJob(AbstractScheduler.java:135)\n\tat org.apache.zeppelin.scheduler.RemoteScheduler$JobRunner.run(RemoteScheduler.java:186)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1128)\n\tat java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:628)\n\tat java.base/java.lang.Thread.run(Thread.java:829)\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776043687268_1739889284",
+      "id": "paragraph_1776043687268_1739889284",
+      "dateCreated": "2026-04-13 01:28:07.268",
+      "dateStarted": "2026-04-23 18:29:15.383",
+      "dateFinished": "2026-04-23 18:29:15.471",
+      "status": "ERROR"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2024-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-01-07\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\r\n        \"is_change\",\r\n        F.when(F.col(\"isEvReady\") !\u003d F.lag(\"isEvReady\").over(w), 1).otherwise(0)\r\n    ) \\\r\n    .withColumn(\"evr_group\", F.sum(\"is_change\").over(w))\r\n\r\ndf_group \u003d df.groupBy(\"deviceId\", \"evr_group\", \"isEvReady\") \\\r\n             .agg(F.count(\"*\").alias(\"group_size\"))\r\n\r\ndf_group.filter(F.col(\"group_size\") \u003c\u003d 5).show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 08:10:16.909",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+---------+---------+----------+\n|   deviceId|evr_group|isEvReady|group_size|\n+-----------+---------+---------+----------+\n|01229438897|        4|        0|         1|\n|01229438897|        8|        0|         1|\n|01229438897|       16|        0|         1|\n+-----------+---------+---------+----------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d579"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d580"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d581"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d582"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776239889892_1417373088",
+      "id": "paragraph_1776239889892_1417373088",
+      "dateCreated": "2026-04-15 07:58:09.892",
+      "dateStarted": "2026-04-15 08:07:36.758",
+      "dateFinished": "2026-04-15 08:07:42.054",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\r\n        \"is_change\",\r\n        F.when(F.col(\"isEvReady\") !\u003d F.lag(\"isEvReady\").over(w), 1).otherwise(0)\r\n    ) \\\r\n    .withColumn(\"evr_group\", F.sum(\"is_change\").over(w))\r\n\r\ndf_group \u003d df.groupBy(\"deviceId\", \"evr_group\", \"isEvReady\") \\\r\n             .agg(F.count(\"*\").alias(\"group_size\"))\r\n\r\ndf \u003d df.join(df_group, on\u003d[\"deviceId\", \"evr_group\", \"isEvReady\"], how\u003d\"left\")\r\n\r\ndf.filter(F.col(\"group_size\") \u003c\u003d 5) \\\r\n  .select(\"deviceId\", \"createdAt\", \"isEvReady\", \"evr_group\", \"group_size\") \\\r\n  .orderBy(\"createdAt\") \\\r\n  .show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 08:18:06.764",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+---------+---------+----------+\n|   deviceId|          createdAt|isEvReady|evr_group|group_size|\n+-----------+-------------------+---------+---------+----------+\n|01229438897|2023-04-13 19:09:33|        1|        1|         2|\n|01229438897|2023-04-13 19:09:34|        1|        1|         2|\n|01229438897|2023-04-26 12:24:38|        1|        3|         2|\n|01229438897|2023-04-26 12:24:39|        1|        3|         2|\n|01229438897|2023-05-19 12:55:17|        1|        5|         2|\n|01229438897|2023-05-19 12:55:18|        1|        5|         2|\n|01229438897|2023-05-28 08:45:03|        1|        7|         2|\n|01229438897|2023-05-28 08:45:04|        1|        7|         2|\n|01229438897|2023-06-01 08:10:00|        1|        9|         2|\n|01229438897|2023-06-01 08:10:01|        1|        9|         2|\n|01229438897|2023-06-05 05:59:47|        1|       11|         2|\n|01229438897|2023-06-05 05:59:48|        1|       11|         2|\n|01229438897|2023-06-12 15:48:02|        1|       13|         2|\n|01229438897|2023-06-12 15:48:03|        1|       13|         2|\n|01229438897|2023-06-13 19:42:20|        1|       15|         2|\n|01229438897|2023-06-13 19:42:21|        1|       15|         2|\n|01229438897|2023-08-09 18:49:14|        0|       22|         1|\n|01229438897|2023-08-09 21:01:37|        0|       24|         1|\n|01229438897|2023-08-10 10:28:29|        0|       28|         2|\n|01229438897|2023-08-10 10:28:30|        0|       28|         2|\n|01229438897|2023-08-18 06:54:47|        0|       36|         1|\n|01229438897|2023-08-18 12:40:36|        0|       38|         1|\n|01229438897|2023-08-24 07:55:51|        0|       62|         1|\n|01229438897|2023-08-28 18:55:35|        0|       74|         1|\n|01229438897|2023-08-29 16:07:56|        0|       78|         2|\n|01229438897|2023-08-29 16:07:57|        0|       78|         2|\n|01229438897|2023-08-30 12:57:29|        0|       82|         2|\n|01229438897|2023-08-30 12:57:30|        0|       82|         2|\n|01229438897|2023-08-31 04:54:01|        0|       84|         2|\n|01229438897|2023-08-31 04:54:02|        0|       84|         2|\n|01229438897|2023-09-03 07:28:59|        0|       96|         1|\n|01229438897|2023-09-04 18:32:45|        0|      102|         1|\n|01229438897|2023-09-04 18:32:46|        1|      103|         4|\n|01229438897|2023-09-04 18:32:47|        1|      103|         4|\n|01229438897|2023-09-04 18:32:48|        1|      103|         4|\n|01229438897|2023-09-04 18:32:49|        1|      103|         4|\n|01229438897|2023-09-06 16:41:12|        0|      110|         1|\n|01229438897|2023-09-06 18:43:56|        0|      112|         4|\n|01229438897|2023-09-06 18:43:57|        0|      112|         4|\n|01229438897|2023-09-06 18:43:58|        0|      112|         4|\n|01229438897|2023-09-06 18:43:59|        0|      112|         4|\n|01229438897|2023-09-06 23:05:46|        0|      114|         1|\n|01229438897|2023-09-07 13:12:27|        0|      118|         1|\n|01229438897|2023-09-07 23:12:45|        0|      120|         1|\n|01229438897|2023-09-10 11:48:54|        0|      128|         1|\n|01229438897|2023-09-12 12:25:30|        0|      136|         1|\n|01229438897|2023-09-13 12:30:14|        0|      140|         1|\n|01229438897|2023-09-17 12:11:42|        0|      154|         1|\n|01229438897|2023-09-17 19:21:25|        0|      156|         1|\n|01229438897|2023-09-18 18:37:18|        0|      162|         1|\n|01229438897|2023-09-18 20:13:23|        0|      164|         1|\n|01229438897|2023-09-21 20:46:04|        0|      174|         1|\n|01229438897|2023-09-24 18:33:37|        0|      182|         1|\n|01229438897|2023-09-28 10:53:06|        0|      192|         1|\n|01229438897|2023-10-02 07:06:22|        0|      204|         1|\n|01229438897|2023-10-04 09:53:22|        0|      210|         1|\n|01229438897|2023-10-04 20:23:13|        0|      214|         1|\n|01229438897|2023-10-06 11:47:33|        0|      220|         1|\n|01229438897|2023-10-06 12:35:00|        0|      222|         1|\n|01229438897|2023-10-06 18:56:35|        0|      224|         1|\n|01229438897|2023-10-07 07:17:39|        0|      228|         1|\n|01229438897|2023-10-07 17:26:24|        0|      230|         4|\n|01229438897|2023-10-07 17:26:25|        0|      230|         4|\n|01229438897|2023-10-07 17:26:26|        0|      230|         4|\n|01229438897|2023-10-07 17:26:27|        0|      230|         4|\n|01229438897|2023-10-08 13:55:49|        0|      234|         1|\n|01229438897|2023-10-10 17:02:13|        0|      240|         1|\n|01229438897|2023-10-11 16:32:16|        0|      244|         2|\n|01229438897|2023-10-11 16:32:17|        0|      244|         2|\n|01229438897|2023-10-12 10:24:58|        0|      248|         1|\n|01229438897|2023-10-13 20:23:06|        0|      252|         1|\n|01229438897|2023-10-14 02:09:28|        1|      255|         1|\n|01229438897|2023-10-14 02:09:28|        0|      255|         1|\n|01229438897|2023-10-14 02:09:29|        0|      257|         1|\n|01229438897|2023-10-14 02:09:29|        1|      257|         1|\n|01229438897|2023-10-14 02:09:30|        1|      259|         1|\n|01229438897|2023-10-14 02:09:30|        0|      259|         1|\n|01229438897|2023-10-14 02:09:31|        1|      261|         1|\n|01229438897|2023-10-14 02:09:31|        0|      261|         1|\n|01229438897|2023-10-14 02:09:32|        0|      263|         1|\n|01229438897|2023-10-14 02:09:32|        1|      263|         1|\n|01229438897|2023-10-14 02:09:33|        1|      265|         1|\n|01229438897|2023-10-14 02:09:33|        0|      265|         1|\n|01229438897|2023-10-14 02:09:34|        1|      267|         1|\n|01229438897|2023-10-14 02:09:34|        0|      267|         1|\n|01229438897|2023-10-14 02:09:35|        0|      269|         1|\n|01229438897|2023-10-14 02:09:35|        1|      269|         1|\n|01229438897|2023-10-14 02:09:36|        1|      271|         1|\n|01229438897|2023-10-14 02:09:36|        0|      271|         1|\n|01229438897|2023-10-14 02:09:37|        0|      273|         1|\n|01229438897|2023-10-14 02:09:37|        1|      273|         1|\n|01229438897|2023-10-14 02:09:38|        1|      275|         1|\n|01229438897|2023-10-14 02:09:38|        0|      275|         1|\n|01229438897|2023-10-14 02:09:39|        1|      277|         1|\n|01229438897|2023-10-14 02:09:39|        0|      277|         1|\n|01229438897|2023-10-14 02:09:40|        0|      279|         1|\n|01229438897|2023-10-14 02:09:40|        1|      279|         1|\n|01229438897|2023-10-14 02:09:41|        1|      281|         1|\n|01229438897|2023-10-14 02:09:41|        0|      281|         1|\n|01229438897|2023-10-14 02:09:42|        0|      283|         1|\n+-----------+-------------------+---------+---------+----------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d597"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d598"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d599"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d600"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d601"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d602"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d603"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776043691923_1266817734",
+      "id": "paragraph_1776043691923_1266817734",
+      "dateCreated": "2026-04-13 01:28:11.923",
+      "dateStarted": "2026-04-15 08:18:06.770",
+      "dateFinished": "2026-04-15 08:19:04.798",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.window import Window\n\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229438897/\") \\\n    .drop(\"_deviceId\", \"_date\")\n\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\n\ndf \u003d df.withColumn(\"t_dist_prev\", F.lag(\"totalMileage\").over(w)) \\\n       .withColumn(\"bacc_prev\",   F.lag(\"batteryTotalChargedCapacity\").over(w)) \\\n       .withColumn(\"badc_prev\",   F.lag(\"batteryTotalDischargedCapacity\").over(w))\n\ndf.filter(\n    (F.col(\"totalMileage\") \u003c F.col(\"t_dist_prev\")) |\n    (F.col(\"batteryTotalChargedCapacity\") \u003c F.col(\"bacc_prev\")) |\n    (F.col(\"batteryTotalDischargedCapacity\") \u003c F.col(\"badc_prev\"))\n) \\\n.select(\n    \"deviceId\", \"createdAt\",\n    \"totalMileage\", \"t_dist_prev\",\n    \"batteryTotalChargedCapacity\", \"bacc_prev\",\n    \"batteryTotalDischargedCapacity\", \"badc_prev\"\n) \\\n.orderBy(\"createdAt\") \\\n.show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-15 09:02:28.165",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\n|   deviceId|          createdAt|totalMileage|t_dist_prev|batteryTotalChargedCapacity|bacc_prev|batteryTotalDischargedCapacity|badc_prev|\n+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\n|01229438897|1999-12-07 07:33:17|      197797|       8109|                     1362.1|   2812.2|                        1331.3|   2774.7|\n|01229438897|2000-01-01 00:03:01|       36665|     197797|                    12980.9|   1362.1|                       12889.2|   1331.4|\n|01229438897|2000-01-01 01:58:02|          19|      36665|                        1.5|  12980.9|                           8.9|  12889.2|\n|01229438897|2000-01-01 01:58:17|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:23|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:31|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:43|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:58:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:44|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 01:59:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:26|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:30|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:00:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:01|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:22|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:31|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:41|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:45|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:01:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:14|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:24|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:34|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:45|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:02:55|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:06|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:11|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:16|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:22|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:27|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:37|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:03:56|           0|         19|                        0.0|      1.5|                           0.0|      8.9|\n|01229438897|2000-01-01 02:04:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:20|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:26|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:30|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:42|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:04:52|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:03|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:15|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:25|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:46|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:05:54|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:03|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:17|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:32|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:51|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:06:55|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:01|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:07|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:12|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:18|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:32|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:39|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:07:53|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:00|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:04|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:09|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:16|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:20|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:43|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:49|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:08:57|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:06|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:10|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:25|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:35|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:41|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:48|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:09:58|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:18|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:24|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:29|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:36|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:40|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:47|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n|01229438897|2000-01-01 02:10:51|          19|   14746112|                        1.5|      1.5|                           8.9|      8.9|\n+-----------+-------------------+------------+-----------+---------------------------+---------+------------------------------+---------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d604"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d605"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d606"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d607"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776240618464_963096626",
+      "id": "paragraph_1776240618464_963096626",
+      "dateCreated": "2026-04-15 08:10:18.464",
+      "dateStarted": "2026-04-15 09:02:28.172",
+      "dateFinished": "2026-04-15 09:03:01.435",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229968996/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf.withColumn(\"t_dist_prev\", F.lag(\"totalMileage\").over(w)) \\\r\n  .withColumn(\"bacc_prev\",   F.lag(\"batteryTotalChargedCapacity\").over(w)) \\\r\n  .withColumn(\"badc_prev\",   F.lag(\"batteryTotalDischargedCapacity\").over(w)) \\\r\n  .withColumn(\"createdAt_prev\", F.lag(\"createdAt\").over(w)) \\\r\n  .filter(\r\n      (F.col(\"totalMileage\") \u003c F.col(\"t_dist_prev\")) |\r\n      (F.col(\"batteryTotalChargedCapacity\") \u003c F.col(\"bacc_prev\")) |\r\n      (F.col(\"batteryTotalDischargedCapacity\") \u003c F.col(\"badc_prev\"))\r\n  ) \\\r\n  .select(\r\n      \"deviceId\",\r\n      \"createdAt_prev\", \"createdAt\",\r\n      \"t_dist_prev\",    \"totalMileage\",\r\n      \"bacc_prev\",      \"batteryTotalChargedCapacity\",\r\n      \"badc_prev\",      \"batteryTotalDischargedCapacity\"\r\n  ) \\\r\n  .orderBy(\"createdAt\") \\\r\n  .show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-16 01:24:48.892",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+-------------------+-----------+------------+-------------+---------------------------+-------------+------------------------------+\n|   deviceId|     createdAt_prev|          createdAt|t_dist_prev|totalMileage|    bacc_prev|batteryTotalChargedCapacity|    badc_prev|batteryTotalDischargedCapacity|\n+-----------+-------------------+-------------------+-----------+------------+-------------+---------------------------+-------------+------------------------------+\n|01229968996|2023-12-02 09:43:25|2023-12-02 11:56:29|     213527|      208228|      70947.4|              3.103588349E8|      70776.8|                 4.291668751E8|\n|01229968996|2023-12-02 11:56:31|2023-12-02 11:56:32|     208228|      208228|3.103588349E8|                    69255.6|4.291668751E8|                       69125.1|\n|01229968996|2023-12-02 11:56:49|2023-12-03 03:20:25|     208228|           0|      69255.6|                        0.0|      69125.1|                           0.0|\n|01229968996|2023-12-05 08:50:07|2023-12-15 20:22:16|     230622|           0|      76648.6|                        0.0|      76427.1|                           0.0|\n|01229968996|2023-12-15 20:22:25|2023-12-22 02:47:33|     219163|           0|          0.0|                        0.0|          0.0|                           0.0|\n|01229968996|2023-12-22 03:49:20|2024-04-15 09:03:35|     206962|      201548|      68884.5|                    67188.7|      68717.3|                       67029.4|\n|01229968996|2024-04-15 09:57:30|2024-04-15 09:59:51|     201564|      201564|      67191.6|                        0.0|      67032.6|                           0.0|\n|01229968996|2024-04-15 12:49:30|2024-04-15 13:27:31|     201618|      201618|      67195.9|                        0.0|      67046.5|                           0.0|\n|01229968996|2024-04-15 14:14:54|2024-04-15 14:35:33|     201619|      201619|      67195.9|                        0.0|      67046.9|                           0.0|\n|01229968996|2024-04-15 14:35:39|2024-04-15 14:35:40|     201619|           0|      67195.9|                    67195.9|      67046.9|                       67046.9|\n|01229968996|2024-04-15 14:35:45|2024-04-15 16:54:00|          0|      201619|      67195.9|                        0.0|      67046.9|                           0.0|\n|01229968996|2024-04-15 17:55:30|2024-04-15 17:56:11|     201660|      201660|      67199.8|                        0.0|      67058.5|                           0.0|\n|01229968996|2024-04-15 17:58:33|2024-04-15 23:08:58|     201660|           0|      67199.8|                        0.0|      67058.5|                           0.0|\n|01229968996|2024-04-16 02:00:01|2024-04-16 03:00:00|     201660|           0|      67221.7|                        0.0|      67058.5|                           0.0|\n|01229968996|2024-04-17 14:15:16|2024-04-17 14:50:20|     202073|      202073|      67331.5|                        0.0|      67189.1|                           0.0|\n|01229968996|2024-04-17 15:30:35|2024-04-17 16:48:13|     202074|      202074|      67331.5|                        0.0|      67189.2|                           0.0|\n|01229968996|2024-04-18 11:30:09|2024-04-18 11:55:44|     202413|      202413|      67381.3|                        0.0|      67296.5|                           0.0|\n|01229968996|2024-04-18 12:20:22|2024-04-18 12:20:23|     202424|           0|      67382.1|                        0.0|      67300.0|                           0.0|\n|01229968996|2024-04-18 12:20:36|2024-04-18 12:20:37|     202424|           0|      67382.1|                        0.0|      67300.0|                           0.0|\n|01229968996|2024-04-19 04:43:21|2024-04-19 04:43:22|     202485|           0|      67483.1|                    67483.3|      67320.2|                       67320.2|\n|01229968996|2024-04-19 04:43:27|2024-04-19 05:26:54|          0|      202485|      67483.3|                        0.0|      67320.2|                           0.0|\n|01229968996|2024-04-19 18:37:41|2024-04-19 18:38:58|     202879|      202879|      67549.4|                        0.0|      67443.1|                           0.0|\n|01229968996|2024-04-19 18:40:03|2024-04-19 20:10:09|     202879|      202879|      67549.5|                        0.0|      67443.1|                           0.0|\n|01229968996|2024-04-19 20:10:24|2024-04-19 20:15:35|     202879|      202879|      67549.5|                        0.0|      67443.1|                           0.0|\n|01229968996|2024-04-19 20:15:38|2024-04-19 21:00:51|     202879|      202879|4.294770683E8|                        0.0|4.291668751E8|                           0.0|\n|01229968996|2024-04-19 21:00:52|2024-04-19 21:00:53|     202879|           0|      67549.5|                        0.0|      67443.1|                           0.0|\n|01229968996|2024-04-20 03:38:10|2024-04-20 03:47:22|     202879|      202879|4.294901756E8|                        0.0|4.291668751E8|                           0.0|\n|01229968996|2024-04-20 03:51:52|2024-04-20 03:51:53|     202879|           0|      67607.9|                        0.0|      67443.1|                           0.0|\n|01229968996|2024-04-20 07:39:06|2024-04-20 07:39:49|     202973|      202973|      67621.5|                        0.0|      67468.7|                           0.0|\n|01229968996|2024-04-21 03:32:01|2024-04-21 08:36:11|     203132|      203132|      67684.7|                        0.0|      67520.3|                           0.0|\n|01229968996|2024-04-21 10:35:33|2024-04-21 10:42:23|     203215|      203215|      67692.1|                        0.0|      67541.8|                           0.0|\n|01229968996|2024-04-21 12:38:15|2024-04-21 14:21:39|     203258|      203258|      67696.7|                        0.0|      67553.8|                           0.0|\n|01229968996|2024-04-21 18:40:54|2024-04-21 18:40:55|     203315|           0|      67703.0|                    67703.0|      67572.5|                       67572.5|\n|01229968996|2024-04-21 18:48:50|2024-04-21 19:43:56|     203315|           0|      67703.0|                        0.0|      67572.5|                           0.0|\n|01229968996|2024-04-21 19:44:04|2024-04-21 20:44:01|          0|      203315|      67703.0|                        0.0|      67572.5|                           0.0|\n|01229968996|2024-04-21 20:44:18|2024-04-21 21:00:22|     203315|      203315|      67703.0|                        0.0|      67572.5|                           0.0|\n|01229968996|2024-04-22 19:26:44|2024-04-22 19:27:45|     203634|      203634|      67772.5|                        0.0|      67670.7|                           0.0|\n|01229968996|2024-04-23 12:09:27|2024-04-23 12:18:32|     203891|      203891|      67878.1|                        0.0|      67749.5|                           0.0|\n|01229968996|2024-04-23 17:39:12|2024-04-23 20:39:59|     203926|      203926|      67882.0|                        0.0|      67761.3|                           0.0|\n|01229968996|2024-04-24 12:21:02|2024-04-24 13:30:35|     204076|      204076|      67941.6|                        0.0|      67804.9|                           0.0|\n|01229968996|2024-04-24 14:04:38|2024-04-24 14:35:54|     204089|      204089|      67943.3|                        0.0|      67809.0|                           0.0|\n|01229968996|2024-04-25 03:38:56|2024-04-25 03:38:57|     204242|           0|      68028.8|                        0.0|      67862.1|                           0.0|\n|01229968996|2024-04-25 12:25:43|2024-04-25 18:13:15|     204597|      204597|      68074.0|                        0.0|      67978.5|                           0.0|\n|01229968996|2024-04-25 19:41:55|2024-04-25 19:42:55|     204632|      204632|      68077.0|                        0.0|      67988.1|                           0.0|\n|01229968996|2024-04-26 11:33:58|2024-04-26 11:33:59|     204861|           0|      68176.4|                    68176.4|      68055.7|                       68055.7|\n|01229968996|2024-04-26 19:17:14|2024-04-26 19:18:16|     204997|      204997|      68190.0|                        0.0|      68096.1|                           0.0|\n|01229968996|2024-04-27 02:32:25|2024-04-27 02:32:26|     205313|      204997|      68349.0|                    68252.7|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:26|2024-04-27 02:32:27|     205313|      204997|      68349.0|                    68252.7|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:27|2024-04-27 02:32:28|     205313|      204997|      68349.0|                    68252.7|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:28|2024-04-27 02:32:29|     205313|      204997|      68349.0|                    68252.7|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:29|2024-04-27 02:32:30|     205313|      204997|      68349.0|                    68252.7|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:30|2024-04-27 02:32:31|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:31|2024-04-27 02:32:32|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:32|2024-04-27 02:32:33|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:33|2024-04-27 02:32:34|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:34|2024-04-27 02:32:35|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:35|2024-04-27 02:32:36|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:36|2024-04-27 02:32:37|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:37|2024-04-27 02:32:38|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:38|2024-04-27 02:32:39|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:39|2024-04-27 02:32:40|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:40|2024-04-27 02:32:41|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:41|2024-04-27 02:32:42|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:42|2024-04-27 02:32:43|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:43|2024-04-27 02:32:44|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:44|2024-04-27 02:32:45|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:45|2024-04-27 02:32:46|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:46|2024-04-27 02:32:47|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:47|2024-04-27 02:32:48|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:48|2024-04-27 02:32:49|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:49|2024-04-27 02:32:50|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:50|2024-04-27 02:32:51|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:51|2024-04-27 02:32:52|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:52|2024-04-27 02:32:53|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:53|2024-04-27 02:32:54|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:54|2024-04-27 02:32:55|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:55|2024-04-27 02:32:56|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:56|2024-04-27 02:32:57|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:57|2024-04-27 02:32:58|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:58|2024-04-27 02:32:59|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:32:59|2024-04-27 02:33:00|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:00|2024-04-27 02:33:01|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:01|2024-04-27 02:33:02|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:02|2024-04-27 02:33:03|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:03|2024-04-27 02:33:04|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:04|2024-04-27 02:33:05|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:05|2024-04-27 02:33:06|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:06|2024-04-27 02:33:07|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:07|2024-04-27 02:33:08|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:08|2024-04-27 02:33:09|     205313|      204997|      68349.0|                    68252.8|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:09|2024-04-27 02:33:10|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:10|2024-04-27 02:33:11|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:11|2024-04-27 02:33:12|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:12|2024-04-27 02:33:13|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:29|2024-04-27 02:33:30|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:30|2024-04-27 02:33:31|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:31|2024-04-27 02:33:32|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:32|2024-04-27 02:33:33|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:33|2024-04-27 02:33:34|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n|01229968996|2024-04-27 02:33:34|2024-04-27 02:33:35|     205313|      204997|      68349.0|                    68252.9|      68189.6|                       68096.1|\n+-----------+-------------------+-------------------+-----------+------------+-------------+---------------------------+-------------+------------------------------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d625"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d626"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d627"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d628"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776243748171_1393233045",
+      "id": "paragraph_1776243748171_1393233045",
+      "dateCreated": "2026-04-15 09:02:28.171",
+      "dateStarted": "2026-04-16 01:24:48.899",
+      "dateFinished": "2026-04-16 01:24:59.006",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229968996/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\"SOC_prev\",                F.lag(\"SOC\").over(w)) \\\r\n       .withColumn(\"SOC_next\",                F.lead(\"SOC\").over(w)) \\\r\n       .withColumn(\"speed_prev\",              F.lag(\"speed\").over(w)) \\\r\n       .withColumn(\"speed_next\",              F.lead(\"speed\").over(w)) \\\r\n       .withColumn(\"batteryPackCurrent_prev\", F.lag(\"batteryPackCurrent\").over(w)) \\\r\n       .withColumn(\"batteryPackCurrent_next\", F.lead(\"batteryPackCurrent\").over(w)) \\\r\n       .withColumn(\"mcuMotorRpm_prev\",        F.lag(\"mcuMotorRpm\").over(w)) \\\r\n       .withColumn(\"mcuMotorRpm_next\",        F.lead(\"mcuMotorRpm\").over(w))\r\n\r\ndf_result \u003d df.filter(\r\n    ((F.col(\"SOC\") \u003e F.col(\"SOC_prev\") * 2) \u0026 (F.col(\"SOC\") \u003e F.col(\"SOC_next\") * 2)) |\r\n    ((F.col(\"SOC\") \u003c F.col(\"SOC_prev\") * 0.5) \u0026 (F.col(\"SOC\") \u003c F.col(\"SOC_next\") * 0.5)) |\r\n    ((F.col(\"speed\") \u003e F.col(\"speed_prev\") * 2) \u0026 (F.col(\"speed\") \u003e F.col(\"speed_next\") * 2)) |\r\n    ((F.col(\"speed\") \u003c F.col(\"speed_prev\") * 0.5) \u0026 (F.col(\"speed\") \u003c F.col(\"speed_next\") * 0.5)) |\r\n    ((F.col(\"batteryPackCurrent\") \u003e F.col(\"batteryPackCurrent_prev\") * 2) \u0026 (F.col(\"batteryPackCurrent\") \u003e F.col(\"batteryPackCurrent_next\") * 2)) |\r\n    ((F.col(\"batteryPackCurrent\") \u003c F.col(\"batteryPackCurrent_prev\") * 0.5) \u0026 (F.col(\"batteryPackCurrent\") \u003c F.col(\"batteryPackCurrent_next\") * 0.5)) |\r\n    ((F.col(\"mcuMotorRpm\") \u003e F.col(\"mcuMotorRpm_prev\") * 2) \u0026 (F.col(\"mcuMotorRpm\") \u003e F.col(\"mcuMotorRpm_next\") * 2)) |\r\n    ((F.col(\"mcuMotorRpm\") \u003c F.col(\"mcuMotorRpm_prev\") * 0.5) \u0026 (F.col(\"mcuMotorRpm\") \u003c F.col(\"mcuMotorRpm_next\") * 0.5))\r\n)\r\n\r\ndf_result.select(\r\n    \"deviceId\", \"createdAt\",\r\n    \"SOC_prev\", \"SOC\", \"SOC_next\",\r\n    \"speed_prev\", \"speed\", \"speed_next\",\r\n    \"batteryPackCurrent_prev\", \"batteryPackCurrent\", \"batteryPackCurrent_next\",\r\n    \"mcuMotorRpm_prev\", \"mcuMotorRpm\", \"mcuMotorRpm_next\"\r\n).orderBy(\"createdAt\").show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-16 06:47:23.816",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+--------+----+--------+----------+-----+----------+-----------------------+------------------+-----------------------+----------------+-----------+----------------+\n|   deviceId|          createdAt|SOC_prev| SOC|SOC_next|speed_prev|speed|speed_next|batteryPackCurrent_prev|batteryPackCurrent|batteryPackCurrent_next|mcuMotorRpm_prev|mcuMotorRpm|mcuMotorRpm_next|\n+-----------+-------------------+--------+----+--------+----------+-----+----------+-----------------------+------------------+-----------------------+----------------+-----------+----------------+\n|01229968996|2023-12-02 11:56:41|    64.5|64.5|    64.5|        26|   26|        22|                   26.6|              -8.7|                   -8.7|          1763.0|     2069.0|          2069.0|\n|01229968996|2023-12-02 11:56:42|    64.5|64.5|    64.5|        26|   22|        22|                   -8.7|              -8.7|                   -8.7|          2069.0|     2069.0|          1743.0|\n|01229968996|2023-12-02 11:56:43|    64.5|64.5|    64.5|        22|   22|        22|                   -8.7|              -8.7|                    4.4|          2069.0|     1743.0|          1743.0|\n|01229968996|2023-12-03 08:54:38|    96.5|96.5|    96.5|        19|   19|        15|                    6.0|              -2.9|                   -2.9|          1492.0|     1480.0|          1480.0|\n|01229968996|2023-12-03 08:54:39|    96.5|96.5|    96.5|        19|   15|        15|                   -2.9|              -2.9|                   -2.9|          1480.0|     1480.0|           928.0|\n|01229968996|2023-12-03 08:54:40|    96.5|96.5|    96.5|        15|   15|        15|                   -2.9|              -2.9|                   -4.8|          1480.0|      928.0|           928.0|\n|01229968996|2023-12-03 08:54:41|    96.5|96.5|    96.5|        15|   15|         5|                   -2.9|              -4.8|                   -4.8|           928.0|      928.0|           312.0|\n|01229968996|2023-12-03 08:54:42|    96.5|96.5|    96.5|        15|    5|         5|                   -4.8|              -4.8|                    3.1|           928.0|      312.0|           312.0|\n|01229968996|2023-12-03 08:54:53|    96.5|96.5|    96.5|        23|   21|        21|                    9.7|              -2.4|                   -2.4|          1857.0|     1857.0|          1805.0|\n|01229968996|2023-12-03 08:54:54|    96.5|96.5|    96.5|        21|   21|        21|                   -2.4|              -2.4|                   -4.2|          1857.0|     1805.0|          1805.0|\n|01229968996|2023-12-03 08:54:55|    96.5|96.5|    96.5|        21|   21|        21|                   -2.4|              -4.2|                   -4.2|          1805.0|     1805.0|          1805.0|\n|01229968996|2023-12-03 08:54:56|    96.5|96.5|    96.5|        21|   21|        21|                   -4.2|              -4.2|                   -1.1|          1805.0|     1805.0|          1688.0|\n|01229968996|2023-12-03 08:54:57|    96.5|96.5|    96.5|        21|   21|        20|                   -4.2|              -1.1|                   -1.1|          1805.0|     1688.0|          1688.0|\n|01229968996|2023-12-03 08:54:58|    96.5|96.5|    96.5|        21|   20|        20|                   -1.1|              -1.1|                   -1.1|          1688.0|     1688.0|          1753.0|\n|01229968996|2023-12-03 08:54:59|    96.5|96.5|    96.5|        20|   20|        29|                   -1.1|              -1.1|                   38.0|          1688.0|     1753.0|          1753.0|\n|01229968996|2023-12-03 08:55:07|    96.5|96.5|    96.5|        34|   34|        29|                    5.2|             -10.8|                  -10.8|          2593.0|     2593.0|          2210.0|\n|01229968996|2023-12-03 08:55:08|    96.5|96.5|    96.5|        34|   29|        29|                  -10.8|             -10.8|                    7.1|          2593.0|     2210.0|          2210.0|\n|01229968996|2023-12-03 08:55:18|    96.5|96.5|    96.5|        43|   43|        39|                   15.9|             -14.7|                  -14.7|          3324.0|     3366.0|          3366.0|\n|01229968996|2023-12-03 08:55:19|    96.5|96.5|    96.5|        43|   39|        39|                  -14.7|             -14.7|                  -14.7|          3366.0|     3366.0|          2977.0|\n|01229968996|2023-12-03 08:55:20|    96.5|96.5|    96.5|        39|   39|        39|                  -14.7|             -14.7|                   36.5|          3366.0|     2977.0|          2977.0|\n|01229968996|2023-12-03 08:55:37|    96.5|96.5|    96.5|        63|   63|        57|                   75.6|             -20.0|                  -20.0|          4819.0|     4906.0|          4906.0|\n|01229968996|2023-12-03 08:55:38|    96.5|96.5|    96.5|        63|   57|        57|                  -20.0|             -20.0|                  -20.0|          4906.0|     4906.0|          4525.0|\n|01229968996|2023-12-03 08:55:39|    96.5|96.5|    96.5|        57|   57|        59|                  -20.0|             -20.0|                   73.8|          4906.0|     4525.0|          4525.0|\n|01229968996|2023-12-03 08:55:44|    96.5|96.5|    96.5|        57|   57|        47|                   15.9|             -22.1|                  -22.1|          4705.0|     4258.0|          4258.0|\n|01229968996|2023-12-03 08:55:45|    96.5|96.5|    96.5|        57|   47|        47|                  -22.1|             -22.1|                  -22.1|          4258.0|     4258.0|          3731.0|\n|01229968996|2023-12-03 08:55:46|    96.5|96.5|    96.5|        47|   47|        47|                  -22.1|             -22.1|                   24.9|          4258.0|     3731.0|          3731.0|\n|01229968996|2023-12-03 08:55:51|    96.5|96.5|    96.5|        50|   50|        47|                   23.1|             -16.7|                  -16.7|          3841.0|     3924.0|          3924.0|\n|01229968996|2023-12-03 08:55:52|    96.5|96.5|    96.5|        50|   47|        47|                  -16.7|             -16.7|                  -16.7|          3924.0|     3924.0|          3492.0|\n|01229968996|2023-12-03 08:55:53|    96.5|96.5|    96.5|        47|   47|        39|                  -16.7|             -16.7|                  -16.7|          3924.0|     3492.0|          3492.0|\n|01229968996|2023-12-03 08:55:54|    96.5|96.5|    96.5|        47|   39|        39|                  -16.7|             -16.7|                  -16.7|          3492.0|     3492.0|          2905.0|\n|01229968996|2023-12-03 08:55:55|    96.5|96.5|    96.5|        39|   39|        39|                  -16.7|             -16.7|                  -20.6|          3492.0|     2905.0|          2905.0|\n|01229968996|2023-12-03 08:55:56|    96.5|96.5|    96.5|        39|   39|        31|                  -16.7|             -20.6|                  -20.6|          2905.0|     2905.0|          2905.0|\n|01229968996|2023-12-03 08:55:57|    96.5|96.5|    96.5|        39|   31|        31|                  -20.6|             -20.6|                    3.5|          2905.0|     2905.0|          2441.0|\n|01229968996|2023-12-03 08:56:03|    96.5|96.5|    96.5|        35|   35|        33|                   21.3|              -7.4|                   -7.4|          2743.0|     2743.0|          2743.0|\n|01229968996|2023-12-03 08:56:04|    96.5|96.5|    96.5|        35|   33|        33|                   -7.4|              -7.4|                   13.5|          2743.0|     2743.0|          2802.0|\n|01229968996|2023-12-03 08:56:08|    96.5|96.5|    96.5|        36|   36|        30|                   13.5|             -17.6|                  -17.6|          2774.0|     2774.0|          1960.0|\n|01229968996|2023-12-03 08:56:09|    96.5|96.5|    96.5|        36|   30|        30|                  -17.6|             -17.6|                  -29.5|          2774.0|     1960.0|          1960.0|\n|01229968996|2023-12-03 08:56:10|    96.5|96.5|    96.5|        30|   30|        13|                  -17.6|             -29.5|                  -29.5|          1960.0|     1960.0|          1960.0|\n|01229968996|2023-12-03 08:56:11|    96.5|96.5|    96.5|        30|   13|        13|                  -29.5|             -29.5|                   -1.1|          1960.0|     1960.0|           645.0|\n|01229968996|2023-12-03 08:56:12|    96.5|96.5|    96.5|        13|   13|         2|                  -29.5|              -1.1|                   -1.1|          1960.0|      645.0|           645.0|\n|01229968996|2023-12-03 08:56:13|    96.5|96.5|    96.5|        13|    2|         2|                   -1.1|              -1.1|                   -1.1|           645.0|      645.0|           298.0|\n|01229968996|2023-12-03 08:56:14|    96.5|96.5|    96.5|         2|    2|         2|                   -1.1|              -1.1|                    7.5|           645.0|      298.0|           298.0|\n|01229968996|2023-12-03 08:56:24|    96.5|96.5|    96.5|        24|   24|        19|                    7.3|              -6.0|                   -6.0|          1827.0|     1827.0|          1827.0|\n|01229968996|2023-12-03 08:56:25|    96.5|96.5|    96.5|        24|   19|        19|                   -6.0|              -6.0|                   -0.7|          1827.0|     1827.0|          1366.0|\n|01229968996|2023-12-03 08:56:26|    96.5|96.5|    96.5|        19|   19|        16|                   -6.0|              -0.7|                   -0.7|          1827.0|     1366.0|          1366.0|\n|01229968996|2023-12-03 08:56:27|    96.5|96.5|    96.5|        19|   16|        16|                   -0.7|              -0.7|                   -0.7|          1366.0|     1366.0|          1452.0|\n|01229968996|2023-12-03 08:56:28|    96.5|96.5|    96.5|        16|   16|        16|                   -0.7|              -0.7|                   10.4|          1366.0|     1452.0|          1452.0|\n|01229968996|2023-12-03 08:56:36|    96.5|96.5|    96.5|        19|   19|        12|                    0.3|              -6.1|                   -6.1|          1369.0|     1369.0|           856.0|\n|01229968996|2023-12-03 08:56:37|    96.5|96.5|    96.5|        19|   12|        12|                   -6.1|              -6.1|                    3.1|          1369.0|      856.0|           856.0|\n|01229968996|2023-12-03 08:56:47|    96.5|96.5|    96.5|        18|   18|        15|                    6.1|              -0.7|                   -0.7|          1381.0|     1421.0|          1421.0|\n|01229968996|2023-12-03 08:56:48|    96.5|96.5|    96.5|        18|   15|        15|                   -0.7|              -0.7|                   -0.7|          1421.0|     1421.0|          1118.0|\n|01229968996|2023-12-03 08:56:49|    96.5|96.5|    96.5|        15|   15|        15|                   -0.7|              -0.7|                    9.9|          1421.0|     1118.0|          1118.0|\n|01229968996|2023-12-03 08:56:57|    96.5|96.5|    96.5|        16|   16|         5|                    5.2|              -8.2|                   -8.2|          1070.0|     1070.0|          1070.0|\n|01229968996|2023-12-03 08:56:58|    96.5|96.5|    96.5|        16|    5|         5|                   -8.2|              -8.2|                    5.5|          1070.0|     1070.0|           318.0|\n|01229968996|2023-12-03 08:57:04|    96.5|96.5|    96.5|        12|   12|         6|                   11.2|              -2.1|                   -2.1|           827.0|      827.0|           827.0|\n|01229968996|2023-12-03 08:57:05|    96.5|96.5|    96.5|        12|    6|         6|                   -2.1|              -2.1|                    7.0|           827.0|      827.0|           524.0|\n|01229968996|2023-12-03 08:57:31|    96.5|96.5|    96.5|         4|   -1|        -1|                    1.5|               1.5|                    1.4|           322.0|     -197.0|          -197.0|\n|01229968996|2023-12-03 08:57:32|    96.5|96.5|    96.5|        -1|   -1|        -2|                    1.5|               1.4|                    1.4|          -197.0|     -197.0|          -197.0|\n|01229968996|2023-12-03 08:57:33|    96.5|96.5|    96.5|        -1|   -2|        -2|                    1.4|               1.4|                    1.4|          -197.0|     -197.0|          -197.0|\n|01229968996|2023-12-03 08:57:34|    96.5|96.5|    96.5|        -2|   -2|         0|                    1.4|               1.4|                    1.4|          -197.0|     -197.0|          -197.0|\n|01229968996|2023-12-03 08:57:35|    96.5|96.5|    96.5|        -2|    0|         0|                    1.4|               1.4|                    1.4|          -197.0|     -197.0|           -14.0|\n|01229968996|2023-12-03 08:57:36|    96.5|96.5|    96.5|         0|    0|         0|                    1.4|               1.4|                    1.3|          -197.0|      -14.0|           -14.0|\n|01229968996|2023-12-03 08:57:37|    96.5|96.5|    96.5|         0|    0|         0|                    1.4|               1.3|                    1.3|           -14.0|      -14.0|             0.0|\n|01229968996|2023-12-03 09:04:09|    96.5|96.5|    96.5|        13|   11|        11|                   17.7|              -2.6|                   -2.6|          1193.0|     1193.0|           823.0|\n|01229968996|2023-12-03 09:04:10|    96.5|96.5|    96.5|        11|   11|        11|                   -2.6|              -2.6|                    3.5|          1193.0|      823.0|           823.0|\n|01229968996|2023-12-03 09:04:27|    96.0|96.0|    96.0|        27|   27|        27|                   11.9|              -4.7|                   -4.7|          1884.0|     2176.0|          2176.0|\n|01229968996|2023-12-03 09:04:28|    96.0|96.0|    96.0|        27|   27|        27|                   -4.7|              -4.7|                   -4.7|          2176.0|     2176.0|          2079.0|\n|01229968996|2023-12-03 09:04:29|    96.0|96.0|    96.0|        27|   27|        27|                   -4.7|              -4.7|                  -20.8|          2176.0|     2079.0|          2079.0|\n|01229968996|2023-12-03 09:04:30|    96.0|96.0|    96.0|        27|   27|        20|                   -4.7|             -20.8|                  -20.8|          2079.0|     2079.0|          1086.0|\n|01229968996|2023-12-03 09:04:31|    96.0|96.0|    96.5|        27|   20|        20|                  -20.8|             -20.8|                   -2.1|          2079.0|     1086.0|          1086.0|\n|01229968996|2023-12-03 09:04:32|    96.0|96.5|    96.5|        20|   20|         8|                  -20.8|              -2.1|                   -2.1|          1086.0|     1086.0|          1086.0|\n|01229968996|2023-12-03 09:04:33|    96.5|96.5|    96.5|        20|    8|         8|                   -2.1|              -2.1|                   10.8|          1086.0|     1086.0|           712.0|\n|01229968996|2023-12-03 09:04:39|    96.5|96.0|    96.0|        23|   23|        22|                   19.6|              -6.9|                   -6.9|          1924.0|     1924.0|          1924.0|\n|01229968996|2023-12-03 09:04:40|    96.0|96.0|    96.5|        23|   22|        22|                   -6.9|              -6.9|                  -15.3|          1924.0|     1924.0|          1556.0|\n|01229968996|2023-12-03 09:04:41|    96.0|96.5|    96.5|        22|   22|        14|                   -6.9|             -15.3|                  -15.3|          1924.0|     1556.0|          1556.0|\n|01229968996|2023-12-03 09:04:42|    96.5|96.5|    96.5|        22|   14|        14|                  -15.3|             -15.3|                  -15.3|          1556.0|     1556.0|           924.0|\n|01229968996|2023-12-03 09:04:43|    96.5|96.5|    96.5|        14|   14|        14|                  -15.3|             -15.3|                   11.0|          1556.0|      924.0|           924.0|\n|01229968996|2023-12-03 09:04:53|    96.0|96.0|    96.0|        23|   23|        20|                    8.3|              -3.9|                   -3.9|          1779.0|     1779.0|          1779.0|\n|01229968996|2023-12-03 09:04:54|    96.0|96.0|    96.0|        23|   20|        20|                   -3.9|              -3.9|                    4.2|          1779.0|     1779.0|          1567.0|\n|01229968996|2023-12-03 09:04:58|    96.0|96.0|    96.0|        19|   19|        14|                    4.2|              -1.8|                   -1.8|          1372.0|     1372.0|          1094.0|\n|01229968996|2023-12-03 09:04:59|    96.0|96.0|    96.0|        19|   14|        14|                   -1.8|              -1.8|                   -6.7|          1372.0|     1094.0|          1094.0|\n|01229968996|2023-12-03 09:05:00|    96.0|96.0|    96.0|        14|   14|         8|                   -1.8|              -6.7|                   -6.7|          1094.0|     1094.0|          1094.0|\n|01229968996|2023-12-03 09:05:01|    96.0|96.0|    96.0|        14|    8|         8|                   -6.7|              -6.7|                    1.3|          1094.0|     1094.0|           666.0|\n|01229968996|2023-12-22 03:47:40|    96.5|96.5|    96.5|         0|    4|         4|                    0.6|               2.5|                    0.7|            98.0|       98.0|           216.0|\n|01229968996|2023-12-22 03:47:43|    96.5|96.5|    96.5|         0|    0|         0|                    0.7|               0.7|                    1.3|           216.0|      -80.0|           -80.0|\n|01229968996|2023-12-22 03:47:44|    96.5|96.5|    96.5|         0|    0|         0|                    0.7|               1.3|                    1.3|           -80.0|      -80.0|           110.0|\n|01229968996|2023-12-22 03:47:54|    96.5|96.5|    96.5|        17|   15|        15|                   23.0|              -3.8|                   13.8|          1466.0|     1466.0|          1404.0|\n|01229968996|2023-12-22 03:48:01|    96.5|96.5|    96.5|        19|   15|        15|                    2.9|              -2.6|                    1.2|          1448.0|     1448.0|          1222.0|\n|01229968996|2023-12-22 03:48:15|    96.5|96.5|    96.5|        24|   22|        22|                   14.1|              -5.0|                   -4.7|          1902.0|     1902.0|          1786.0|\n|01229968996|2023-12-22 03:48:16|    96.5|96.5|    96.5|        22|   22|        19|                   -5.0|              -4.7|                   -4.7|          1902.0|     1786.0|          1786.0|\n|01229968996|2023-12-22 03:48:17|    96.5|96.5|    96.5|        22|   19|        19|                   -4.7|              -4.7|                   -4.7|          1786.0|     1786.0|          1409.0|\n|01229968996|2023-12-22 03:48:18|    96.5|96.5|    96.5|        19|   19|        19|                   -4.7|              -4.7|                  -15.5|          1786.0|     1409.0|          1409.0|\n|01229968996|2023-12-22 03:48:19|    96.5|96.5|    96.5|        19|   19|         9|                   -4.7|             -15.5|                  -15.5|          1409.0|     1409.0|          1409.0|\n|01229968996|2023-12-22 03:48:20|    96.5|96.5|    96.5|        19|    9|         9|                  -15.5|             -15.5|                    0.0|          1409.0|     1409.0|           381.0|\n|01229968996|2023-12-22 03:48:23|    96.5|96.5|    96.5|         1|    1|         0|                    0.0|               0.7|                    0.7|           381.0|       -2.0|            -2.0|\n|01229968996|2023-12-22 03:48:24|    96.5|96.5|    96.5|         1|    0|         0|                    0.7|               0.7|                    0.7|            -2.0|       -2.0|             0.0|\n|01229968996|2023-12-22 03:48:38|    96.5|96.5|    96.5|        24|   21|        21|                    4.9|              -3.9|                   -3.9|          1879.0|     1879.0|          1780.0|\n|01229968996|2023-12-22 03:48:39|    96.5|96.5|    96.5|        21|   21|        21|                   -3.9|              -3.9|                   -3.9|          1879.0|     1780.0|          1780.0|\n|01229968996|2023-12-22 03:48:40|    96.5|96.5|    96.5|        21|   21|        22|                   -3.9|              -3.9|                    5.3|          1780.0|     1780.0|          1780.0|\n|01229968996|2023-12-22 03:48:48|    96.5|96.5|    96.5|        25|   23|        23|                    8.2|              -2.4|                   17.5|          1855.0|     1855.0|          1977.0|\n+-----------+-------------------+--------+----+--------+----------+-----+----------+-----------------------+------------------+-----------------------+----------------+-----------+----------------+\nonly showing top 100 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d639"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d640"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d641"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d642"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776243972979_9660461",
+      "id": "paragraph_1776243972979_9660461",
+      "dateCreated": "2026-04-15 09:06:12.979",
+      "dateStarted": "2026-04-16 06:47:23.826",
+      "dateFinished": "2026-04-16 06:47:34.128",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\nfrom pyspark.sql import functions as F\nfrom pyspark.sql.window import Window\n\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229898903/\") \\\n    .filter(\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\n    ) \\\n    .drop(\"_deviceId\", \"_date\")\n\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\n\ndf \u003d df.withColumn(\"maxCellTemperature_prev\", F.lag(\"maxCellTemperature\").over(w)) \\\n       .withColumn(\"maxCellTemperature_next\", F.lead(\"maxCellTemperature\").over(w)) \\\n       .withColumn(\"minCellTemperature_prev\", F.lag(\"minCellTemperature\").over(w)) \\\n       .withColumn(\"minCellTemperature_next\", F.lead(\"minCellTemperature\").over(w))\n\ndf_result \u003d df.filter(\n    (F.col(\"maxCellTemperature\") \u003e 127) | (F.col(\"maxCellTemperature\") \u003c -128) |\n    (F.col(\"minCellTemperature\") \u003e 127) | (F.col(\"minCellTemperature\") \u003c -128)\n)\n\ndf_result.select(\n    \"deviceId\", \"createdAt\",\n    \"maxCellTemperature_prev\", \"maxCellTemperature\", \"maxCellTemperature_next\",\n    \"minCellTemperature_prev\", \"minCellTemperature\", \"minCellTemperature_next\"\n).orderBy(\"createdAt\").show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-16 06:55:18.033",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+--------+---------+-----------------------+------------------+-----------------------+-----------------------+------------------+-----------------------+\n|deviceId|createdAt|maxCellTemperature_prev|maxCellTemperature|maxCellTemperature_next|minCellTemperature_prev|minCellTemperature|minCellTemperature_next|\n+--------+---------+-----------------------+------------------+-----------------------+-----------------------+------------------+-----------------------+\n+--------+---------+-----------------------+------------------+-----------------------+-----------------------+------------------+-----------------------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d655"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d656"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d657"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d658"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776317417392_421552479",
+      "id": "paragraph_1776317417392_421552479",
+      "dateCreated": "2026-04-16 05:30:17.392",
+      "dateStarted": "2026-04-16 06:55:18.040",
+      "dateFinished": "2026-04-16 06:55:44.529",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229898903/\") \\\r\n    .filter(\r\n        (F.col(\"_date\") \u003e\u003d \"2022-01-01\") \u0026\r\n        (F.col(\"_date\") \u003c\u003d \"2024-12-31\")\r\n    ) \\\r\n    .drop(\"_deviceId\", \"_date\")\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d df.withColumn(\"totalMileage_prev\",                   F.lag(\"totalMileage\").over(w)) \\\r\n       .withColumn(\"totalMileage_next\",                   F.lead(\"totalMileage\").over(w)) \\\r\n       .withColumn(\"batteryTotalChargedCapacity_prev\",    F.lag(\"batteryTotalChargedCapacity\").over(w)) \\\r\n       .withColumn(\"batteryTotalChargedCapacity_next\",    F.lead(\"batteryTotalChargedCapacity\").over(w)) \\\r\n       .withColumn(\"batteryTotalDischargedCapacity_prev\", F.lag(\"batteryTotalDischargedCapacity\").over(w)) \\\r\n       .withColumn(\"batteryTotalDischargedCapacity_next\", F.lead(\"batteryTotalDischargedCapacity\").over(w))\r\n\r\ndf_result \u003d df.filter(\r\n    # totalMileage 순간 스파이크 (올라갔다 내려오는)\r\n    ((F.col(\"totalMileage\") \u003e F.col(\"totalMileage_prev\") + 10) \u0026\r\n     (F.col(\"totalMileage\") \u003e F.col(\"totalMileage_next\") + 10)) |\r\n    # batteryTotalChargedCapacity 순간 스파이크\r\n    ((F.col(\"batteryTotalChargedCapacity\") \u003e F.col(\"batteryTotalChargedCapacity_prev\") + 10) \u0026\r\n     (F.col(\"batteryTotalChargedCapacity\") \u003e F.col(\"batteryTotalChargedCapacity_next\") + 10)) |\r\n    # batteryTotalDischargedCapacity 순간 스파이크\r\n    ((F.col(\"batteryTotalDischargedCapacity\") \u003e F.col(\"batteryTotalDischargedCapacity_prev\") + 10) \u0026\r\n     (F.col(\"batteryTotalDischargedCapacity\") \u003e F.col(\"batteryTotalDischargedCapacity_next\") + 10))\r\n)\r\n\r\ndf_result.select(\r\n    \"deviceId\", \"createdAt\",\r\n    \"totalMileage_prev\", \"totalMileage\", \"totalMileage_next\",\r\n    \"batteryTotalChargedCapacity_prev\", \"batteryTotalChargedCapacity\", \"batteryTotalChargedCapacity_next\",\r\n    \"batteryTotalDischargedCapacity_prev\", \"batteryTotalDischargedCapacity\", \"batteryTotalDischargedCapacity_next\"\r\n).orderBy(\"createdAt\").show(100)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-16 07:18:45.849",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-----------+-------------------+-----------------+------------+-----------------+--------------------------------+---------------------------+--------------------------------+-----------------------------------+------------------------------+-----------------------------------+\n|   deviceId|          createdAt|totalMileage_prev|totalMileage|totalMileage_next|batteryTotalChargedCapacity_prev|batteryTotalChargedCapacity|batteryTotalChargedCapacity_next|batteryTotalDischargedCapacity_prev|batteryTotalDischargedCapacity|batteryTotalDischargedCapacity_next|\n+-----------+-------------------+-----------------+------------+-----------------+--------------------------------+---------------------------+--------------------------------+-----------------------------------+------------------------------+-----------------------------------+\n|01229898903|2023-05-25 21:16:18|                0|      142250|                0|                          3937.2|                     3937.2|                             0.0|                             3902.3|                        3902.3|                                0.0|\n|01229898903|2023-09-12 21:36:15|           172184|      172184|           172184|                         13657.7|              4.294836219E8|                         13657.7|                            13637.2|                 4.291668757E8|                            13637.2|\n|01229898903|2023-09-26 21:18:46|           176168|           0|           176168|                         14929.4|              3.478179335E8|                         14929.4|                            14886.5|                        3174.4|                            14886.5|\n|01229898903|2024-01-20 22:00:19|                0|           0|                0|                             0.0|                    25080.5|                             0.0|                                0.0|                       24997.6|                                0.0|\n|01229898903|2024-02-04 13:15:55|           209903|      209989|                0|                         26293.5|                    26301.3|                             0.0|                            26204.6|                       26234.6|                                0.0|\n|01229898903|2024-02-10 15:27:03|           211535|      211535|           211535|                         26854.8|              3.255371041E8|                         26854.8|                            26794.2|                     9804350.5|                            26794.3|\n|01229898903|2024-02-14 21:25:51|                0|           0|                0|                             0.0|                    27246.4|                             0.0|                                0.0|                       27164.1|                                0.0|\n|01229898903|2024-03-12 21:29:50|           219227|      219227|           219227|                         29715.3|              4.294705146E8|                         29715.3|                            29606.0|                 4.291668757E8|                            29606.0|\n|01229898903|2024-03-23 07:01:14|           221845|      221846|           221846|                         30657.5|              3.439920421E8|                         30657.6|                            30543.0|                     9378375.5|                            30543.2|\n|01229898903|2024-04-03 13:40:09|           225019|      225019|           225019|                         31721.8|              3.137930533E8|                         31721.9|                            31644.6|                     8801782.8|                            31644.6|\n|01229898903|2024-04-09 13:03:35|           226600|      226600|           226600|                         32259.1|              4.294836216E8|                         32259.1|                            32162.9|                 4.291668757E8|                            32162.9|\n|01229898903|2024-04-16 20:42:01|           228344|      228344|           228344|                             0.0|              3.457797637E8|                         32858.9|                                0.0|                        3072.0|                            32718.2|\n|01229898903|2024-05-03 14:35:36|                0|           0|                0|                             0.0|                    34179.5|                             0.0|                                0.0|                       34026.2|                                0.0|\n|01229898903|2024-05-20 21:13:24|                0|           0|                0|                             0.0|                    35564.2|                             0.0|                                0.0|                       35377.2|                                0.0|\n|01229898903|2024-08-18 06:38:38|           259547|      259547|           259547|                         43656.5|              3.423143196E8|                         43656.5|                            43394.9|                     9004832.1|                            43394.9|\n|01229898903|2024-10-03 20:36:34|           272265|      272265|           272265|                         48169.3|               3.36991254E7|                         48169.3|                            47937.5|                  3.52336822E7|                            47937.5|\n|01229898903|2024-11-08 09:59:41|           281940|      281940|           281940|                         51611.2|              3.389769988E8|                         51611.2|                            51268.1|                        2995.2|                            51268.2|\n|01229898903|2024-12-28 07:02:54|           293835|      293835|           293835|                         56001.8|              3.423143212E8|                         56001.8|                            55561.0|                     9883155.7|                            55561.0|\n+-----------+-------------------+-----------------+------------+-----------------+--------------------------------+---------------------------+--------------------------------+-----------------------------------+------------------------------+-----------------------------------+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d667"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d668"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d669"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d670"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776322445621_707189189",
+      "id": "paragraph_1776322445621_707189189",
+      "dateCreated": "2026-04-16 06:54:05.621",
+      "dateStarted": "2026-04-16 07:18:45.858",
+      "dateFinished": "2026-04-16 07:19:12.301",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.types import BooleanType\r\n\r\ndef is_cv_anomaly(cv_str, threshold\u003d0.3):\r\n    if not cv_str:\r\n        return None\r\n    try:\r\n        cells \u003d [float(x.strip()) for x in cv_str.split(\",\")]\r\n        total \u003d len(cells)\r\n        if total \u003d\u003d 0:\r\n            return None\r\n        low_count \u003d sum(1 for v in cells if v \u003c 1.0)\r\n        return (low_count / total) \u003e\u003d threshold\r\n    except:\r\n        return None\r\n\r\nis_cv_anomaly_udf \u003d F.udf(is_cv_anomaly, BooleanType())\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229518902/\") \\\r\n    .filter(F.col(\"cellVoltages\").isNotNull())\r\n\r\ndf \u003d df.withColumn(\"cv_anomaly\", is_cv_anomaly_udf(F.col(\"cellVoltages\")))\r\n\r\ntotal \u003d df.count()\r\nanomaly \u003d df.filter(F.col(\"cv_anomaly\") \u003d\u003d True).count()\r\nprint(f\"전체: {total}, 이상: {anomaly}, 비율: {anomaly/total:.4f}\")\r\n\r\n# 이상 샘플 확인 — 몇 개짜리 셀인지, 어떤 패턴인지\r\ndf.filter(F.col(\"cv_anomaly\") \u003d\u003d True) \\\r\n  .select(\"createdAt\", \"cellVoltages\", \"batteryPackVoltages\", \"maxCellVoltages\", \"minCellVoltages\") \\\r\n  .show(10, truncate\u003d80)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-16 09:20:44.976",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "+-------------------+--------------------------------------------------------------------------------+------------------+--------------+--------------+\n|          createdAt|                                                                    cellVoltages|batteryPackVoltage|maxCellVoltage|minCellVoltage|\n+-------------------+--------------------------------------------------------------------------------+------------------+--------------+--------------+\n|2024-11-26 10:48:34|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|               0.0|           0.0|           0.0|\n|2024-11-26 10:48:35|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|               0.0|           0.0|           0.0|\n|2024-11-26 10:48:36|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|               0.0|           0.0|           0.0|\n|2024-11-26 10:48:37|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|               0.0|           0.0|           0.0|\n|2024-11-26 10:48:38|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n|2024-11-26 10:48:39|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n|2024-11-26 10:48:40|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n|2024-11-26 10:48:41|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n|2024-11-26 10:48:42|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n|2024-11-26 10:48:43|0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0....|             586.7|          3.28|           3.2|\n+-------------------+--------------------------------------------------------------------------------+------------------+--------------+--------------+\nonly showing top 10 rows\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d680"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d681"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776323602138_262945193",
+      "id": "paragraph_1776323602138_262945193",
+      "dateCreated": "2026-04-16 07:13:22.138",
+      "dateStarted": "2026-04-16 09:20:12.482",
+      "dateFinished": "2026-04-16 09:20:22.630",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\r\nfrom pyspark.sql import functions as F\r\nfrom pyspark.sql.window import Window\r\n\r\nw \u003d Window.partitionBy(\"deviceId\").orderBy(\"createdAt\")\r\n\r\ndf \u003d spark.read.option(\"basePath\", \"s3a://parquet/kslab_kmon\") \\\r\n    .parquet(\"s3a://parquet/kslab_kmon/_deviceId\u003d01229898903/\") \\\r\n    .filter(F.col(\"SOC\").isNotNull())\r\n\r\ndf \u003d df.withColumn(\"soc_prev\", F.lag(\"SOC\").over(w)) \\\r\n       .withColumn(\"time_prev\", F.lag(\"createdAt\").over(w)) \\\r\n       .withColumn(\"soc_delta\", F.abs(F.col(\"SOC\") - F.col(\"soc_prev\"))) \\\r\n       .withColumn(\"time_diff_sec\",\r\n           F.unix_timestamp(\"createdAt\") - F.unix_timestamp(\"time_prev\")\r\n       )\r\n\r\ndf_anomaly \u003d df.filter(\r\n    (F.col(\"soc_delta\") \u003e\u003d 3) \u0026\r\n    (F.col(\"time_diff_sec\") \u003c\u003d 2) \u0026\r\n    (F.col(\"SOC\") !\u003d 0) \u0026\r\n    (F.col(\"soc_prev\") !\u003d 0)\r\n)\r\n\r\nprint(f\"이상 건수: {df_anomaly.count()}\")\r\n\r\ndf_anomaly.select(\r\n    \"deviceId\", \"createdAt\", \"SOC\", \"soc_prev\",\r\n    \"soc_delta\", \"time_diff_sec\", \"isEVReady\", \"speed\"\r\n).show(20, truncate\u003dFalse)",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-17 03:02:36.575",
+      "progress": 0,
+      "config": {
+        "editorSetting": {
+          "language": "python",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "colWidth": 12.0,
+        "editorMode": "ace/mode/python",
+        "fontSize": 9.0,
+        "results": {},
+        "enabled": true
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "이상 건수: 4\n+-----------+-------------------+----+--------+---------+-------------+---------+-----+\n|deviceId   |createdAt          |SOC |soc_prev|soc_delta|time_diff_sec|isEVReady|speed|\n+-----------+-------------------+----+--------+---------+-------------+---------+-----+\n|01229898903|2023-11-21 15:18:52|67.5|17.5    |50.0     |1            |1        |0    |\n|01229898903|2024-01-31 14:37:08|55.0|109.0   |54.0     |1            |1        |0    |\n|01229898903|2024-10-03 20:36:35|42.5|85.0    |42.5     |1            |0        |0    |\n|01229898903|2025-06-16 20:27:07|41.0|85.0    |44.0     |1            |0        |0    |\n+-----------+-------------------+----+--------+---------+-------------+---------+-----+\n\n"
+          }
+        ]
+      },
+      "apps": [],
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d700"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d701"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d702"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d703"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d704"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d705"
+            },
+            {
+              "jobUrl": "//4040-spark-2mngmv1ku-kmrixp.local.zeppelin-project.org/jobs/job?id\u003d706"
+            }
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776331099488_438864661",
+      "id": "paragraph_1776331099488_438864661",
+      "dateCreated": "2026-04-16 09:18:19.488",
+      "dateStarted": "2026-04-17 03:02:36.581",
+      "dateFinished": "2026-04-17 03:03:22.828",
+      "status": "FINISHED"
+    },
+    {
+      "text": "%spark.pyspark\n",
+      "user": "anonymous",
+      "dateUpdated": "2026-04-17 02:43:16.975",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1776393796975_1596803087",
+      "id": "paragraph_1776393796975_1596803087",
+      "dateCreated": "2026-04-17 02:43:16.975",
+      "status": "READY"
+    }
+  ],
+  "name": "test",
+  "id": "2MNGMV1KU",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
