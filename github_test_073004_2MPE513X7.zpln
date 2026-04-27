@@ -1,0 +1,34 @@
+{
+  "paragraphs": [
+    {
+      "title": "hello",
+      "text": "%md\n# GitHub sync test\nGenerated for push verification",
+      "user": "feda",
+      "dateUpdated": "2026-04-28 07:30:06.704",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1777329006703_358818299",
+      "id": "paragraph_1777329006703_358818299",
+      "dateCreated": "2026-04-28 07:30:06.703",
+      "status": "READY"
+    }
+  ],
+  "name": "github_test_073004",
+  "id": "2MPE513X7",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
