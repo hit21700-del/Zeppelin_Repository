@@ -1,0 +1,34 @@
+{
+  "paragraphs": [
+    {
+      "title": "hello",
+      "text": "%md\n# new repo sync test",
+      "user": "feda",
+      "dateUpdated": "2026-04-28 14:39:36.374",
+      "progress": 0,
+      "config": {},
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "apps": [],
+      "runtimeInfos": {},
+      "progressUpdateIntervalMs": 500,
+      "jobName": "paragraph_1777354776373_2080192281",
+      "id": "paragraph_1777354776373_2080192281",
+      "dateCreated": "2026-04-28 14:39:36.374",
+      "status": "READY"
+    }
+  ],
+  "name": "newrepo_test_143933",
+  "id": "2MR9PMYCF",
+  "defaultInterpreterGroup": "spark",
+  "version": "0.11.2",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {},
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
